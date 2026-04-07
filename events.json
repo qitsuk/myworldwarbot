@@ -1,0 +1,270 @@
+{
+    "events": [
+        {
+            "type": "economic_crisis",
+            "name": "Economic Crisis",
+            "probability": 0.03,
+            "economy_impact": -0.3,
+            "military_impact": -0.05,
+            "population_impact": 0.0,
+            "flavor": [
+                "Banks collapse as markets spiral out of control.",
+                "The currency crashes overnight, devastating the economy.",
+                "Unemployment skyrockets as industries collapse.",
+                "A financial scandal shakes investor confidence to its core."
+            ]
+        },
+        {
+            "type": "famine",
+            "name": "Famine",
+            "probability": 0.02,
+            "economy_impact": -0.1,
+            "military_impact": -0.05,
+            "population_impact": -0.15,
+            "flavor": [
+                "Crop failures leave millions starving.",
+                "Food shortages spread across the nation.",
+                "A devastating famine grips the country as supplies run dry.",
+                "Hunger spreads as food distribution networks collapse."
+            ]
+        },
+        {
+            "type": "civil_war",
+            "name": "Civil War",
+            "probability": 0.02,
+            "economy_impact": -0.2,
+            "military_impact": -0.35,
+            "population_impact": -0.1,
+            "flavor": [
+                "Rebel factions seize control of key cities.",
+                "The government struggles to maintain order as civil war erupts.",
+                "Armed militias tear the country apart from within.",
+                "Brother fights brother as the nation descends into chaos."
+            ]
+        },
+        {
+            "type": "epidemic",
+            "name": "Epidemic",
+            "probability": 0.02,
+            "economy_impact": -0.15,
+            "military_impact": -0.1,
+            "population_impact": -0.2,
+            "flavor": [
+                "A deadly disease spreads rapidly through the population.",
+                "Hospitals overflow as an epidemic tears through the nation.",
+                "A mysterious illness decimates entire communities.",
+                "Quarantine zones are established as the outbreak spirals."
+            ]
+        },
+        {
+            "type": "drought",
+            "name": "Drought",
+            "probability": 0.03,
+            "economy_impact": -0.1,
+            "military_impact": 0.0,
+            "population_impact": -0.05,
+            "flavor": [
+                "Rivers run dry as a historic drought grips the nation.",
+                "Crops wither under a relentless sun.",
+                "Water rationing is introduced as reservoirs hit record lows.",
+                "Years of drought leave farmland barren and unproductive."
+            ]
+        },
+        {
+            "type": "coup",
+            "name": "Coup",
+            "probability": 0.02,
+            "economy_impact": -0.1,
+            "military_impact": -0.25,
+            "population_impact": 0.0,
+            "flavor": [
+                "Military generals seize power in a sudden coup.",
+                "The government is overthrown in a violent power grab.",
+                "A shadowy faction takes control of the capital overnight.",
+                "The president is deposed as tanks roll through the streets."
+            ]
+        },
+        {
+            "type": "sanctions",
+            "name": "Sanctions",
+            "probability": 0.03,
+            "economy_impact": -0.2,
+            "military_impact": 0.0,
+            "population_impact": 0.0,
+            "flavor": [
+                "International sanctions cripple the nation's trade.",
+                "Exports grind to a halt as sanctions bite hard.",
+                "Foreign assets are frozen as sanctions are imposed.",
+                "The economy reels under the weight of international pressure."
+            ]
+        },
+        {
+            "type": "natural_disaster",
+            "name": "Natural Disaster",
+            "probability": 0.03,
+            "economy_impact": -0.15,
+            "military_impact": -0.05,
+            "population_impact": -0.1,
+            "flavor": [
+                "A massive earthquake levels entire cities.",
+                "Catastrophic flooding displaces millions.",
+                "A powerful hurricane devastates the coastline.",
+                "A volcanic eruption forces mass evacuations."
+            ]
+        },
+        {
+            "type": "military_desertion",
+            "name": "Military Desertion",
+            "probability": 0.02,
+            "economy_impact": 0.0,
+            "military_impact": -0.3,
+            "population_impact": 0.0,
+            "flavor": [
+                "Thousands of soldiers abandon their posts overnight.",
+                "Morale collapses as desertion spreads through the ranks.",
+                "Entire battalions lay down their arms and walk away.",
+                "The army crumbles as soldiers flee en masse."
+            ]
+        },
+        {
+            "type": "economic_boom",
+            "name": "Economic Boom",
+            "probability": 0.03,
+            "economy_impact": 0.3,
+            "military_impact": 0.05,
+            "population_impact": 0.0,
+            "flavor": [
+                "A booming economy lifts millions out of poverty.",
+                "Record growth transforms the nation into a regional powerhouse.",
+                "Foreign investment floods in as the economy takes off.",
+                "A golden era of prosperity reshapes the country."
+            ]
+        },
+        {
+            "type": "population_boom",
+            "name": "Population Boom",
+            "probability": 0.02,
+            "economy_impact": 0.05,
+            "military_impact": 0.05,
+            "population_impact": 0.2,
+            "flavor": [
+                "A baby boom swells the population to record numbers.",
+                "Immigration surges as the nation attracts workers from abroad.",
+                "Birth rates soar as living conditions improve dramatically.",
+                "A demographic explosion reshapes the nation's future."
+            ]
+        },
+        {
+            "type": "military_expansion",
+            "name": "Military Expansion",
+            "probability": 0.03,
+            "economy_impact": -0.05,
+            "military_impact": 0.3,
+            "population_impact": 0.0,
+            "flavor": [
+                "A massive military buildup doubles the size of the armed forces.",
+                "Conscription drives swell the ranks of the army.",
+                "New weapons programs transform the nation's military might.",
+                "Defence spending soars as the military expands rapidly."
+            ]
+        },
+        {
+            "type": "technological_leap",
+            "name": "Technological Leap",
+            "probability": 0.02,
+            "economy_impact": 0.2,
+            "military_impact": 0.2,
+            "population_impact": 0.0,
+            "flavor": [
+                "A breakthrough in weapons technology reshapes the battlefield.",
+                "Scientists unlock new technologies that transform the economy.",
+                "A technological revolution puts the nation decades ahead.",
+                "Innovation drives explosive growth in both industry and defence."
+            ]
+        },
+        {
+            "type": "golden_age",
+            "name": "Golden Age",
+            "probability": 0.01,
+            "economy_impact": 0.4,
+            "military_impact": 0.2,
+            "population_impact": 0.1,
+            "flavor": [
+                "A golden age of prosperity and power dawns.",
+                "History will remember this era as the nation's finest hour.",
+                "Art, science and military might flourish in equal measure.",
+                "The nation enters an unprecedented period of dominance."
+            ]
+        },
+        {
+            "type": "oil_discovery",
+            "name": "Oil Discovery",
+            "probability": 0.02,
+            "economy_impact": 0.5,
+            "military_impact": 0.1,
+            "population_impact": 0.0,
+            "flavor": [
+                "Vast oil reserves are discovered, transforming the economy overnight.",
+                "Black gold flows as a massive oil field is struck.",
+                "An oil boom sends the economy into overdrive.",
+                "The discovery of oil reserves catapults the nation to wealth."
+            ]
+        },
+        {
+            "type": "alliance_bonus",
+            "name": "Alliance Bonus",
+            "probability": 0.02,
+            "economy_impact": 0.05,
+            "military_impact": 0.25,
+            "population_impact": 0.0,
+            "flavor": [
+                "A powerful alliance bolsters the nation's military strength.",
+                "Foreign troops arrive to reinforce the armed forces.",
+                "A new military pact brings weapons and training from abroad.",
+                "Allied support transforms the nation's defensive capabilities."
+            ]
+        },
+        {
+            "type": "agricultural_revolution",
+            "name": "Agricultural Revolution",
+            "probability": 0.02,
+            "economy_impact": 0.15,
+            "military_impact": 0.0,
+            "population_impact": 0.15,
+            "flavor": [
+                "New farming techniques triple crop yields overnight.",
+                "An agricultural revolution ends food insecurity for millions.",
+                "Fertile lands are unlocked as irrigation transforms the countryside.",
+                "Advances in agriculture fuel both population and economic growth."
+            ]
+        },
+        {
+            "type": "trade_boom",
+            "name": "Trade Boom",
+            "probability": 0.03,
+            "economy_impact": 0.25,
+            "military_impact": 0.0,
+            "population_impact": 0.05,
+            "flavor": [
+                "New trade routes open up, flooding the economy with wealth.",
+                "Exports surge as demand for the nation's goods skyrockets.",
+                "A trade agreement unlocks vast new markets abroad.",
+                "Merchants grow rich as commerce booms across the nation."
+            ]
+        },
+        {
+            "type": "military_innovation",
+            "name": "Military Innovation",
+            "probability": 0.02,
+            "economy_impact": 0.0,
+            "military_impact": 0.35,
+            "population_impact": 0.0,
+            "flavor": [
+                "A new generation of weapons gives the army a decisive edge.",
+                "Military doctrine is revolutionised by a tactical breakthrough.",
+                "Advanced armaments pour off the production lines.",
+                "A military genius reshapes the nation's armed forces."
+            ]
+        }
+    ]
+}

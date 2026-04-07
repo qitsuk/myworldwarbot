@@ -1,0 +1,2623 @@
+{
+    "countries": [
+        {
+            "name": "Afghanistan",
+            "population": 40000000,
+            "population_growth": 0.024,
+            "economy": 20000000000,
+            "military_strength": 80000,
+            "territory": 652230,
+            "neighbors": [
+                "China",
+                "Iran",
+                "Pakistan",
+                "Tajikistan",
+                "Turkmenistan",
+                "Uzbekistan"
+            ]
+        },
+        {
+            "name": "Albania",
+            "population": 3000000,
+            "population_growth": 0.002,
+            "economy": 19000000000,
+            "military_strength": 9000,
+            "territory": 28748,
+            "neighbors": [
+                "Greece",
+                "Kosovo",
+                "Montenegro",
+                "North Macedonia",
+                "Serbia"
+            ]
+        },
+        {
+            "name": "Algeria",
+            "population": 45000000,
+            "population_growth": 0.017,
+            "economy": 191000000000,
+            "military_strength": 317000,
+            "territory": 2381741,
+            "neighbors": [
+                "Libya",
+                "Mali",
+                "Mauritania",
+                "Morocco",
+                "Niger",
+                "Tunisia"
+            ]
+        },
+        {
+            "name": "Andorra",
+            "population": 77000,
+            "population_growth": 0.005,
+            "economy": 3000000000,
+            "military_strength": 100,
+            "territory": 468,
+            "neighbors": [
+                "France",
+                "Spain"
+            ]
+        },
+        {
+            "name": "Angola",
+            "population": 35000000,
+            "population_growth": 0.032,
+            "economy": 106000000000,
+            "military_strength": 117000,
+            "territory": 1246700,
+            "neighbors": [
+                "Congo",
+                "DR Congo",
+                "Namibia",
+                "Zambia"
+            ]
+        },
+        {
+            "name": "Argentina",
+            "population": 46000000,
+            "population_growth": 0.008,
+            "economy": 487000000000,
+            "military_strength": 96000,
+            "territory": 2780400,
+            "neighbors": [
+                "Bolivia",
+                "Brazil",
+                "Chile",
+                "Paraguay",
+                "Uruguay"
+            ]
+        },
+        {
+            "name": "Armenia",
+            "population": 3000000,
+            "population_growth": -0.002,
+            "economy": 20000000000,
+            "military_strength": 45000,
+            "territory": 29743,
+            "neighbors": [
+                "Azerbaijan",
+                "Georgia",
+                "Iran",
+                "Turkey"
+            ]
+        },
+        {
+            "name": "Australia",
+            "population": 26000000,
+            "population_growth": 0.01,
+            "economy": 1700000000000,
+            "military_strength": 60000,
+            "territory": 7692024,
+            "neighbors": [
+                "Indonesia",
+                "New Zealand",
+                "Papua New Guinea",
+                "Timor-Leste"
+            ]
+        },
+        {
+            "name": "Austria",
+            "population": 9000000,
+            "population_growth": 0.005,
+            "economy": 477000000000,
+            "military_strength": 22000,
+            "territory": 83871,
+            "neighbors": [
+                "Czech Republic",
+                "Germany",
+                "Hungary",
+                "Liechtenstein",
+                "Slovakia",
+                "Slovenia",
+                "Switzerland"
+            ]
+        },
+        {
+            "name": "Azerbaijan",
+            "population": 10000000,
+            "population_growth": 0.01,
+            "economy": 79000000000,
+            "military_strength": 67000,
+            "territory": 86600,
+            "neighbors": [
+                "Armenia",
+                "Georgia",
+                "Iran",
+                "Russia",
+                "Turkey"
+            ]
+        },
+        {
+            "name": "Bahamas",
+            "population": 390000,
+            "population_growth": 0.01,
+            "economy": 13000000000,
+            "military_strength": 1500,
+            "territory": 13878,
+            "neighbors": [
+                "Cuba",
+                "United States"
+            ]
+        },
+        {
+            "name": "Bahrain",
+            "population": 1000000,
+            "population_growth": 0.02,
+            "economy": 44000000000,
+            "military_strength": 8000,
+            "territory": 765,
+            "neighbors": [
+                "Qatar",
+                "Saudi Arabia"
+            ]
+        },
+        {
+            "name": "Bangladesh",
+            "population": 170000000,
+            "population_growth": 0.01,
+            "economy": 460000000000,
+            "military_strength": 160000,
+            "territory": 147570,
+            "neighbors": [
+                "India",
+                "Myanmar"
+            ]
+        },
+        {
+            "name": "Barbados",
+            "population": 280000,
+            "population_growth": 0.002,
+            "economy": 5000000000,
+            "military_strength": 600,
+            "territory": 430,
+            "neighbors": [
+                "Trinidad and Tobago"
+            ]
+        },
+        {
+            "name": "Belarus",
+            "population": 9000000,
+            "population_growth": -0.003,
+            "economy": 73000000000,
+            "military_strength": 72000,
+            "territory": 207600,
+            "neighbors": [
+                "Latvia",
+                "Lithuania",
+                "Poland",
+                "Russia",
+                "Ukraine"
+            ]
+        },
+        {
+            "name": "Belgium",
+            "population": 11000000,
+            "population_growth": 0.004,
+            "economy": 594000000000,
+            "military_strength": 26000,
+            "territory": 30528,
+            "neighbors": [
+                "France",
+                "Germany",
+                "Luxembourg",
+                "Netherlands"
+            ]
+        },
+        {
+            "name": "Belize",
+            "population": 400000,
+            "population_growth": 0.018,
+            "economy": 3000000000,
+            "military_strength": 1500,
+            "territory": 22966,
+            "neighbors": [
+                "Guatemala",
+                "Mexico"
+            ]
+        },
+        {
+            "name": "Benin",
+            "population": 13000000,
+            "population_growth": 0.027,
+            "economy": 17000000000,
+            "military_strength": 7000,
+            "territory": 112622,
+            "neighbors": [
+                "Burkina Faso",
+                "Niger",
+                "Nigeria",
+                "Togo"
+            ]
+        },
+        {
+            "name": "Bhutan",
+            "population": 800000,
+            "population_growth": 0.01,
+            "economy": 3000000000,
+            "military_strength": 7000,
+            "territory": 38394,
+            "neighbors": [
+                "China",
+                "India"
+            ]
+        },
+        {
+            "name": "Bolivia",
+            "population": 12000000,
+            "population_growth": 0.014,
+            "economy": 44000000000,
+            "military_strength": 46000,
+            "territory": 1098581,
+            "neighbors": [
+                "Argentina",
+                "Brazil",
+                "Chile",
+                "Paraguay",
+                "Peru"
+            ]
+        },
+        {
+            "name": "Bosnia",
+            "population": 3000000,
+            "population_growth": -0.005,
+            "economy": 24000000000,
+            "military_strength": 10000,
+            "territory": 51197,
+            "neighbors": [
+                "Croatia",
+                "Montenegro",
+                "Serbia"
+            ]
+        },
+        {
+            "name": "Botswana",
+            "population": 2000000,
+            "population_growth": 0.018,
+            "economy": 20000000000,
+            "military_strength": 9000,
+            "territory": 581730,
+            "neighbors": [
+                "Namibia",
+                "South Africa",
+                "Zambia",
+                "Zimbabwe"
+            ]
+        },
+        {
+            "name": "Brazil",
+            "population": 215000000,
+            "population_growth": 0.006,
+            "economy": 1920000000000,
+            "military_strength": 334500,
+            "territory": 8515767,
+            "neighbors": [
+                "Argentina",
+                "Bolivia",
+                "Colombia",
+                "Guyana",
+                "Paraguay",
+                "Peru",
+                "Suriname",
+                "Uruguay",
+                "Venezuela"
+            ]
+        },
+        {
+            "name": "Brunei",
+            "population": 440000,
+            "population_growth": 0.01,
+            "economy": 14000000000,
+            "military_strength": 7000,
+            "territory": 5765,
+            "neighbors": [
+                "Malaysia"
+            ]
+        },
+        {
+            "name": "Burkina Faso",
+            "population": 22000000,
+            "population_growth": 0.028,
+            "economy": 19000000000,
+            "military_strength": 12350,
+            "territory": 274222,
+            "neighbors": [
+                "Benin",
+                "Ghana",
+                "Ivory Coast",
+                "Mali",
+                "Niger",
+                "Togo"
+            ]
+        },
+        {
+            "name": "Burundi",
+            "population": 12000000,
+            "population_growth": 0.03,
+            "economy": 3000000000,
+            "military_strength": 30000,
+            "territory": 27834,
+            "neighbors": [
+                "DR Congo",
+                "Rwanda",
+                "Tanzania"
+            ]
+        },
+        {
+            "name": "Cambodia",
+            "population": 17000000,
+            "population_growth": 0.013,
+            "economy": 30000000000,
+            "military_strength": 124300,
+            "territory": 181035,
+            "neighbors": [
+                "Laos",
+                "Thailand",
+                "Vietnam"
+            ]
+        },
+        {
+            "name": "Cameroon",
+            "population": 27000000,
+            "population_growth": 0.026,
+            "economy": 45000000000,
+            "military_strength": 23100,
+            "territory": 475442,
+            "neighbors": [
+                "Central African Republic",
+                "Chad",
+                "Congo",
+                "Equatorial Guinea",
+                "Gabon",
+                "Nigeria"
+            ]
+        },
+        {
+            "name": "Canada",
+            "population": 38000000,
+            "population_growth": 0.009,
+            "economy": 2140000000000,
+            "military_strength": 92000,
+            "territory": 9984670,
+            "neighbors": [
+                "United States"
+            ]
+        },
+        {
+            "name": "Cape Verde",
+            "population": 600000,
+            "population_growth": 0.012,
+            "economy": 2000000000,
+            "military_strength": 1200,
+            "territory": 4033,
+            "neighbors": [
+                "Gambia",
+                "Mauritania",
+                "Senegal"
+            ]
+        },
+        {
+            "name": "Central African Republic",
+            "population": 5000000,
+            "population_growth": 0.025,
+            "economy": 3000000000,
+            "military_strength": 10000,
+            "territory": 622984,
+            "neighbors": [
+                "Cameroon",
+                "Chad",
+                "Congo",
+                "DR Congo",
+                "South Sudan",
+                "Sudan"
+            ]
+        },
+        {
+            "name": "Chad",
+            "population": 17000000,
+            "population_growth": 0.03,
+            "economy": 12000000000,
+            "military_strength": 30000,
+            "territory": 1284000,
+            "neighbors": [
+                "Cameroon",
+                "Central African Republic",
+                "Libya",
+                "Niger",
+                "Nigeria",
+                "Sudan"
+            ]
+        },
+        {
+            "name": "Chile",
+            "population": 19000000,
+            "population_growth": 0.007,
+            "economy": 317000000000,
+            "military_strength": 80000,
+            "territory": 756102,
+            "neighbors": [
+                "Argentina",
+                "Bolivia",
+                "Peru"
+            ]
+        },
+        {
+            "name": "China",
+            "population": 1400000000,
+            "population_growth": 0.003,
+            "economy": 17700000000000,
+            "military_strength": 2185000,
+            "territory": 9596960,
+            "neighbors": [
+                "Afghanistan",
+                "Bhutan",
+                "India",
+                "Kazakhstan",
+                "Kyrgyzstan",
+                "Laos",
+                "Mongolia",
+                "Myanmar",
+                "Nepal",
+                "North Korea",
+                "Pakistan",
+                "Russia",
+                "Tajikistan",
+                "Vietnam"
+            ]
+        },
+        {
+            "name": "Colombia",
+            "population": 51000000,
+            "population_growth": 0.009,
+            "economy": 344000000000,
+            "military_strength": 295000,
+            "territory": 1141748,
+            "neighbors": [
+                "Brazil",
+                "Ecuador",
+                "Panama",
+                "Peru",
+                "Venezuela"
+            ]
+        },
+        {
+            "name": "Comoros",
+            "population": 1000000,
+            "population_growth": 0.022,
+            "economy": 1000000000,
+            "military_strength": 500,
+            "territory": 2235,
+            "neighbors": [
+                "Mozambique"
+            ]
+        },
+        {
+            "name": "Congo",
+            "population": 6000000,
+            "population_growth": 0.026,
+            "economy": 15000000000,
+            "military_strength": 10000,
+            "territory": 342000,
+            "neighbors": [
+                "Angola",
+                "Cameroon",
+                "Central African Republic",
+                "DR Congo",
+                "Gabon"
+            ]
+        },
+        {
+            "name": "Costa Rica",
+            "population": 5000000,
+            "population_growth": 0.009,
+            "economy": 65000000000,
+            "military_strength": 0,
+            "territory": 51100,
+            "neighbors": [
+                "Nicaragua",
+                "Panama"
+            ]
+        },
+        {
+            "name": "Croatia",
+            "population": 4000000,
+            "population_growth": -0.004,
+            "economy": 70000000000,
+            "military_strength": 16000,
+            "territory": 56594,
+            "neighbors": [
+                "Bosnia",
+                "Hungary",
+                "Montenegro",
+                "Serbia",
+                "Slovenia"
+            ]
+        },
+        {
+            "name": "Cuba",
+            "population": 11000000,
+            "population_growth": 0.001,
+            "economy": 107000000000,
+            "military_strength": 49000,
+            "territory": 109884,
+            "neighbors": [
+                "Bahamas",
+                "Jamaica",
+                "United States"
+            ]
+        },
+        {
+            "name": "Cyprus",
+            "population": 1200000,
+            "population_growth": 0.008,
+            "economy": 27000000000,
+            "military_strength": 12000,
+            "territory": 9251,
+            "neighbors": [
+                "Greece",
+                "Lebanon",
+                "Syria",
+                "Turkey"
+            ]
+        },
+        {
+            "name": "Czech Republic",
+            "population": 11000000,
+            "population_growth": 0.002,
+            "economy": 290000000000,
+            "military_strength": 28000,
+            "territory": 78866,
+            "neighbors": [
+                "Austria",
+                "Germany",
+                "Poland",
+                "Slovakia"
+            ]
+        },
+        {
+            "name": "DR Congo",
+            "population": 100000000,
+            "population_growth": 0.032,
+            "economy": 65000000000,
+            "military_strength": 134250,
+            "territory": 2344858,
+            "neighbors": [
+                "Angola",
+                "Burundi",
+                "Central African Republic",
+                "Congo",
+                "Rwanda",
+                "South Sudan",
+                "Tanzania",
+                "Uganda",
+                "Zambia"
+            ]
+        },
+        {
+            "name": "Denmark",
+            "population": 6000000,
+            "population_growth": 0.003,
+            "economy": 395000000000,
+            "military_strength": 17000,
+            "territory": 42924,
+            "neighbors": [
+                "Germany",
+                "Norway",
+                "Sweden"
+            ]
+        },
+        {
+            "name": "Djibouti",
+            "population": 1000000,
+            "population_growth": 0.019,
+            "economy": 4000000000,
+            "military_strength": 10000,
+            "territory": 23200,
+            "neighbors": [
+                "Eritrea",
+                "Ethiopia",
+                "Somalia"
+            ]
+        },
+        {
+            "name": "Djibouti",
+            "population": 1000000,
+            "population_growth": 0.019,
+            "economy": 4000000000,
+            "military_strength": 10000,
+            "territory": 23200,
+            "neighbors": [
+                "Eritrea",
+                "Ethiopia",
+                "Somalia"
+            ]
+        },
+        {
+            "name": "Dominican Republic",
+            "population": 11000000,
+            "population_growth": 0.01,
+            "economy": 113000000000,
+            "military_strength": 57000,
+            "territory": 48671,
+            "neighbors": [
+                "Haiti"
+            ]
+        },
+        {
+            "name": "Ecuador",
+            "population": 18000000,
+            "population_growth": 0.013,
+            "economy": 115000000000,
+            "military_strength": 60000,
+            "territory": 283561,
+            "neighbors": [
+                "Colombia",
+                "Peru"
+            ]
+        },
+        {
+            "name": "Egypt",
+            "population": 104000000,
+            "population_growth": 0.017,
+            "economy": 477000000000,
+            "military_strength": 438500,
+            "territory": 1001449,
+            "neighbors": [
+                "Israel",
+                "Jordan",
+                "Libya",
+                "Sudan"
+            ]
+        },
+        {
+            "name": "El Salvador",
+            "population": 6000000,
+            "population_growth": 0.006,
+            "economy": 33000000000,
+            "military_strength": 24000,
+            "territory": 21041,
+            "neighbors": [
+                "Guatemala",
+                "Honduras"
+            ]
+        },
+        {
+            "name": "Equatorial Guinea",
+            "population": 1000000,
+            "population_growth": 0.025,
+            "economy": 12000000000,
+            "military_strength": 1500,
+            "territory": 28051,
+            "neighbors": [
+                "Cameroon",
+                "Gabon"
+            ]
+        },
+        {
+            "name": "Eritrea",
+            "population": 3000000,
+            "population_growth": 0.015,
+            "economy": 2000000000,
+            "military_strength": 202000,
+            "territory": 117600,
+            "neighbors": [
+                "Djibouti",
+                "Ethiopia",
+                "Sudan"
+            ]
+        },
+        {
+            "name": "Estonia",
+            "population": 1000000,
+            "population_growth": 0.001,
+            "economy": 36000000000,
+            "military_strength": 7000,
+            "territory": 45228,
+            "neighbors": [
+                "Latvia",
+                "Russia"
+            ]
+        },
+        {
+            "name": "Eswatini",
+            "population": 1200000,
+            "population_growth": 0.012,
+            "economy": 5000000000,
+            "military_strength": 3000,
+            "territory": 17364,
+            "neighbors": [
+                "Mozambique",
+                "South Africa"
+            ]
+        },
+        {
+            "name": "Ethiopia",
+            "population": 123000000,
+            "population_growth": 0.025,
+            "economy": 126000000000,
+            "military_strength": 138000,
+            "territory": 1104300,
+            "neighbors": [
+                "Djibouti",
+                "Eritrea",
+                "Kenya",
+                "Somalia",
+                "South Sudan",
+                "Sudan"
+            ]
+        },
+        {
+            "name": "Fiji",
+            "population": 900000,
+            "population_growth": 0.006,
+            "economy": 5000000000,
+            "military_strength": 3500,
+            "territory": 18274,
+            "neighbors": [
+                "Tonga",
+                "Vanuatu"
+            ]
+        },
+        {
+            "name": "Finland",
+            "population": 6000000,
+            "population_growth": 0.002,
+            "economy": 281000000000,
+            "military_strength": 23000,
+            "territory": 338145,
+            "neighbors": [
+                "Norway",
+                "Russia",
+                "Sweden"
+            ]
+        },
+        {
+            "name": "France",
+            "population": 68000000,
+            "population_growth": 0.003,
+            "economy": 2940000000000,
+            "military_strength": 203250,
+            "territory": 643801,
+            "neighbors": [
+                "Andorra",
+                "Belgium",
+                "Germany",
+                "Luxembourg",
+                "Monaco",
+                "Spain",
+                "Switzerland"
+            ]
+        },
+        {
+            "name": "Gabon",
+            "population": 2000000,
+            "population_growth": 0.022,
+            "economy": 20000000000,
+            "military_strength": 5000,
+            "territory": 267668,
+            "neighbors": [
+                "Cameroon",
+                "Congo",
+                "Equatorial Guinea"
+            ]
+        },
+        {
+            "name": "Gambia",
+            "population": 2000000,
+            "population_growth": 0.03,
+            "economy": 2000000000,
+            "military_strength": 800,
+            "territory": 11295,
+            "neighbors": [
+                "Senegal"
+            ]
+        },
+        {
+            "name": "Georgia",
+            "population": 4000000,
+            "population_growth": -0.002,
+            "economy": 25000000000,
+            "military_strength": 20650,
+            "territory": 69700,
+            "neighbors": [
+                "Armenia",
+                "Azerbaijan",
+                "Russia",
+                "Turkey"
+            ]
+        },
+        {
+            "name": "Germany",
+            "population": 84000000,
+            "population_growth": 0.001,
+            "economy": 4260000000000,
+            "military_strength": 183000,
+            "territory": 357114,
+            "neighbors": [
+                "Austria",
+                "Belgium",
+                "Czech Republic",
+                "Denmark",
+                "France",
+                "Luxembourg",
+                "Netherlands",
+                "Poland",
+                "Switzerland"
+            ]
+        },
+        {
+            "name": "Ghana",
+            "population": 32000000,
+            "population_growth": 0.021,
+            "economy": 77000000000,
+            "military_strength": 16000,
+            "territory": 238533,
+            "neighbors": [
+                "Burkina Faso",
+                "Ivory Coast",
+                "Togo"
+            ]
+        },
+        {
+            "name": "Greece",
+            "population": 10000000,
+            "population_growth": -0.003,
+            "economy": 222000000000,
+            "military_strength": 142000,
+            "territory": 131957,
+            "neighbors": [
+                "Albania",
+                "North Macedonia",
+                "Turkey"
+            ]
+        },
+        {
+            "name": "Guatemala",
+            "population": 17000000,
+            "population_growth": 0.02,
+            "economy": 92000000000,
+            "military_strength": 25000,
+            "territory": 108889,
+            "neighbors": [
+                "Belize",
+                "El Salvador",
+                "Honduras",
+                "Mexico"
+            ]
+        },
+        {
+            "name": "Guinea",
+            "population": 13000000,
+            "population_growth": 0.027,
+            "economy": 16000000000,
+            "military_strength": 12300,
+            "territory": 245857,
+            "neighbors": [
+                "Guinea-Bissau",
+                "Ivory Coast",
+                "Liberia",
+                "Mali",
+                "Senegal",
+                "Sierra Leone"
+            ]
+        },
+        {
+            "name": "Guinea-Bissau",
+            "population": 2000000,
+            "population_growth": 0.025,
+            "economy": 2000000000,
+            "military_strength": 4000,
+            "territory": 36125,
+            "neighbors": [
+                "Guinea",
+                "Senegal"
+            ]
+        },
+        {
+            "name": "Guyana",
+            "population": 800000,
+            "population_growth": 0.008,
+            "economy": 15000000000,
+            "military_strength": 3000,
+            "territory": 214969,
+            "neighbors": [
+                "Brazil",
+                "Suriname",
+                "Venezuela"
+            ]
+        },
+        {
+            "name": "Haiti",
+            "population": 11000000,
+            "population_growth": 0.012,
+            "economy": 20000000000,
+            "military_strength": 0,
+            "territory": 27750,
+            "neighbors": [
+                "Dominican Republic"
+            ]
+        },
+        {
+            "name": "Honduras",
+            "population": 10000000,
+            "population_growth": 0.017,
+            "economy": 32000000000,
+            "military_strength": 16000,
+            "territory": 112492,
+            "neighbors": [
+                "El Salvador",
+                "Guatemala",
+                "Nicaragua"
+            ]
+        },
+        {
+            "name": "Hong Kong",
+            "population": 7000000,
+            "population_growth": 0.003,
+            "economy": 369000000000,
+            "military_strength": 0,
+            "territory": 1106,
+            "neighbors": [
+                "China"
+            ]
+        },
+        {
+            "name": "Hungary",
+            "population": 10000000,
+            "population_growth": -0.003,
+            "economy": 185000000000,
+            "military_strength": 37000,
+            "territory": 93028,
+            "neighbors": [
+                "Austria",
+                "Croatia",
+                "Romania",
+                "Serbia",
+                "Slovakia",
+                "Slovenia",
+                "Ukraine"
+            ]
+        },
+        {
+            "name": "Iceland",
+            "population": 370000,
+            "population_growth": 0.01,
+            "economy": 28000000000,
+            "military_strength": 0,
+            "territory": 103000,
+            "neighbors": [
+                "Denmark",
+                "Norway",
+                "United Kingdom"
+            ]
+        },
+        {
+            "name": "India",
+            "population": 1400000000,
+            "population_growth": 0.009,
+            "economy": 3550000000000,
+            "military_strength": 1455550,
+            "territory": 3287263,
+            "neighbors": [
+                "Bangladesh",
+                "Bhutan",
+                "China",
+                "Myanmar",
+                "Nepal",
+                "Pakistan",
+                "Sri Lanka"
+            ]
+        },
+        {
+            "name": "Indonesia",
+            "population": 277000000,
+            "population_growth": 0.011,
+            "economy": 1320000000000,
+            "military_strength": 395500,
+            "territory": 1904569,
+            "neighbors": [
+                "Australia",
+                "Malaysia",
+                "Papua New Guinea",
+                "Timor-Leste"
+            ]
+        },
+        {
+            "name": "Iran",
+            "population": 87000000,
+            "population_growth": 0.01,
+            "economy": 367000000000,
+            "military_strength": 523000,
+            "territory": 1648195,
+            "neighbors": [
+                "Afghanistan",
+                "Armenia",
+                "Azerbaijan",
+                "Iraq",
+                "Pakistan",
+                "Turkey",
+                "Turkmenistan"
+            ]
+        },
+        {
+            "name": "Iraq",
+            "population": 42000000,
+            "population_growth": 0.022,
+            "economy": 264000000000,
+            "military_strength": 193000,
+            "territory": 438317,
+            "neighbors": [
+                "Iran",
+                "Jordan",
+                "Kuwait",
+                "Saudi Arabia",
+                "Syria",
+                "Turkey"
+            ]
+        },
+        {
+            "name": "Ireland",
+            "population": 5000000,
+            "population_growth": 0.01,
+            "economy": 529000000000,
+            "military_strength": 9500,
+            "territory": 70273,
+            "neighbors": [
+                "United Kingdom"
+            ]
+        },
+        {
+            "name": "Israel",
+            "population": 9000000,
+            "population_growth": 0.017,
+            "economy": 522000000000,
+            "military_strength": 170000,
+            "territory": 20770,
+            "neighbors": [
+                "Egypt",
+                "Jordan",
+                "Lebanon",
+                "Syria"
+            ]
+        },
+        {
+            "name": "Ivory Coast",
+            "population": 27000000,
+            "population_growth": 0.025,
+            "economy": 70000000000,
+            "military_strength": 22000,
+            "territory": 322463,
+            "neighbors": [
+                "Burkina Faso",
+                "Ghana",
+                "Guinea",
+                "Liberia",
+                "Mali"
+            ]
+        },
+        {
+            "name": "Jamaica",
+            "population": 3000000,
+            "population_growth": 0.003,
+            "economy": 16000000000,
+            "military_strength": 3000,
+            "territory": 10991,
+            "neighbors": [
+                "Cuba"
+            ]
+        },
+        {
+            "name": "Japan",
+            "population": 125000000,
+            "population_growth": -0.003,
+            "economy": 4230000000000,
+            "military_strength": 247150,
+            "territory": 377930,
+            "neighbors": [
+                "China",
+                "North Korea",
+                "Russia",
+                "South Korea"
+            ]
+        },
+        {
+            "name": "Jordan",
+            "population": 10000000,
+            "population_growth": 0.015,
+            "economy": 50000000000,
+            "military_strength": 101000,
+            "territory": 89342,
+            "neighbors": [
+                "Egypt",
+                "Iraq",
+                "Israel",
+                "Saudi Arabia",
+                "Syria"
+            ]
+        },
+        {
+            "name": "Kazakhstan",
+            "population": 19000000,
+            "population_growth": 0.012,
+            "economy": 220000000000,
+            "military_strength": 74000,
+            "territory": 2724900,
+            "neighbors": [
+                "China",
+                "Kyrgyzstan",
+                "Russia",
+                "Turkmenistan",
+                "Uzbekistan"
+            ]
+        },
+        {
+            "name": "Kenya",
+            "population": 55000000,
+            "population_growth": 0.022,
+            "economy": 116000000000,
+            "military_strength": 29750,
+            "territory": 580367,
+            "neighbors": [
+                "Ethiopia",
+                "Somalia",
+                "South Sudan",
+                "Tanzania",
+                "Uganda"
+            ]
+        },
+        {
+            "name": "Kiribati",
+            "population": 120000,
+            "population_growth": 0.018,
+            "economy": 200000000,
+            "military_strength": 0,
+            "territory": 811,
+            "neighbors": [
+                "Marshall Islands",
+                "Micronesia",
+                "Nauru",
+                "Tuvalu"
+            ]
+        },
+        {
+            "name": "Kosovo",
+            "population": 1800000,
+            "population_growth": 0.005,
+            "economy": 10000000000,
+            "military_strength": 5000,
+            "territory": 10887,
+            "neighbors": [
+                "Albania",
+                "Montenegro",
+                "North Macedonia",
+                "Serbia"
+            ]
+        },
+        {
+            "name": "Kuwait",
+            "population": 4000000,
+            "population_growth": 0.013,
+            "economy": 184000000000,
+            "military_strength": 17500,
+            "territory": 17818,
+            "neighbors": [
+                "Iraq",
+                "Saudi Arabia"
+            ]
+        },
+        {
+            "name": "Kyrgyzstan",
+            "population": 7000000,
+            "population_growth": 0.018,
+            "economy": 9000000000,
+            "military_strength": 12500,
+            "territory": 199951,
+            "neighbors": [
+                "China",
+                "Kazakhstan",
+                "Tajikistan",
+                "Uzbekistan"
+            ]
+        },
+        {
+            "name": "Laos",
+            "population": 7000000,
+            "population_growth": 0.014,
+            "economy": 19000000000,
+            "military_strength": 29100,
+            "territory": 236800,
+            "neighbors": [
+                "Cambodia",
+                "China",
+                "Myanmar",
+                "Thailand",
+                "Vietnam"
+            ]
+        },
+        {
+            "name": "Latvia",
+            "population": 2000000,
+            "population_growth": -0.008,
+            "economy": 40000000000,
+            "military_strength": 6500,
+            "territory": 64589,
+            "neighbors": [
+                "Belarus",
+                "Estonia",
+                "Lithuania",
+                "Russia"
+            ]
+        },
+        {
+            "name": "Lebanon",
+            "population": 5000000,
+            "population_growth": 0.006,
+            "economy": 23000000000,
+            "military_strength": 80000,
+            "territory": 10452,
+            "neighbors": [
+                "Cyprus",
+                "Israel",
+                "Syria"
+            ]
+        },
+        {
+            "name": "Lesotho",
+            "population": 2000000,
+            "population_growth": 0.012,
+            "economy": 3000000000,
+            "military_strength": 2000,
+            "territory": 30355,
+            "neighbors": [
+                "South Africa"
+            ]
+        },
+        {
+            "name": "Liberia",
+            "population": 5000000,
+            "population_growth": 0.025,
+            "economy": 4000000000,
+            "military_strength": 2000,
+            "territory": 111369,
+            "neighbors": [
+                "Guinea",
+                "Ivory Coast",
+                "Sierra Leone"
+            ]
+        },
+        {
+            "name": "Libya",
+            "population": 7000000,
+            "population_growth": 0.012,
+            "economy": 50000000000,
+            "military_strength": 76000,
+            "territory": 1759541,
+            "neighbors": [
+                "Algeria",
+                "Chad",
+                "Egypt",
+                "Niger",
+                "Sudan",
+                "Tunisia"
+            ]
+        },
+        {
+            "name": "Liechtenstein",
+            "population": 38000,
+            "population_growth": 0.007,
+            "economy": 7000000000,
+            "military_strength": 0,
+            "territory": 160,
+            "neighbors": [
+                "Austria",
+                "Switzerland"
+            ]
+        },
+        {
+            "name": "Lithuania",
+            "population": 3000000,
+            "population_growth": -0.005,
+            "economy": 67000000000,
+            "military_strength": 19000,
+            "territory": 65300,
+            "neighbors": [
+                "Belarus",
+                "Latvia",
+                "Poland",
+                "Russia"
+            ]
+        },
+        {
+            "name": "Luxembourg",
+            "population": 650000,
+            "population_growth": 0.017,
+            "economy": 86000000000,
+            "military_strength": 900,
+            "territory": 2586,
+            "neighbors": [
+                "Belgium",
+                "France",
+                "Germany"
+            ]
+        },
+        {
+            "name": "Malawi",
+            "population": 19000000,
+            "population_growth": 0.027,
+            "economy": 12000000000,
+            "military_strength": 10000,
+            "territory": 118484,
+            "neighbors": [
+                "Mozambique",
+                "Tanzania",
+                "Zambia"
+            ]
+        },
+        {
+            "name": "Malaysia",
+            "population": 33000000,
+            "population_growth": 0.012,
+            "economy": 439000000000,
+            "military_strength": 113000,
+            "territory": 329847,
+            "neighbors": [
+                "Brunei",
+                "Indonesia",
+                "Thailand"
+            ]
+        },
+        {
+            "name": "Maldives",
+            "population": 500000,
+            "population_growth": 0.012,
+            "economy": 6000000000,
+            "military_strength": 300,
+            "territory": 298,
+            "neighbors": [
+                "India",
+                "Sri Lanka"
+            ]
+        },
+        {
+            "name": "Mali",
+            "population": 22000000,
+            "population_growth": 0.03,
+            "economy": 19000000000,
+            "military_strength": 21000,
+            "territory": 1240192,
+            "neighbors": [
+                "Algeria",
+                "Burkina Faso",
+                "Guinea",
+                "Ivory Coast",
+                "Mauritania",
+                "Niger",
+                "Senegal"
+            ]
+        },
+        {
+            "name": "Malta",
+            "population": 520000,
+            "population_growth": 0.008,
+            "economy": 18000000000,
+            "military_strength": 2000,
+            "territory": 316,
+            "neighbors": [
+                "Libya"
+            ]
+        },
+        {
+            "name": "Marshall Islands",
+            "population": 42000,
+            "population_growth": 0.005,
+            "economy": 200000000,
+            "military_strength": 0,
+            "territory": 181,
+            "neighbors": [
+                "Kiribati",
+                "Micronesia",
+                "Nauru"
+            ]
+        },
+        {
+            "name": "Mauritania",
+            "population": 4000000,
+            "population_growth": 0.024,
+            "economy": 9000000000,
+            "military_strength": 20870,
+            "territory": 1030700,
+            "neighbors": [
+                "Algeria",
+                "Mali",
+                "Morocco",
+                "Senegal"
+            ]
+        },
+        {
+            "name": "Mauritius",
+            "population": 1000000,
+            "population_growth": 0.004,
+            "economy": 14000000000,
+            "military_strength": 2000,
+            "territory": 2040,
+            "neighbors": [
+                "Mozambique"
+            ]
+        },
+        {
+            "name": "Mexico",
+            "population": 130000000,
+            "population_growth": 0.008,
+            "economy": 1320000000000,
+            "military_strength": 277150,
+            "territory": 1964375,
+            "neighbors": [
+                "Belize",
+                "Guatemala",
+                "United States"
+            ]
+        },
+        {
+            "name": "Micronesia",
+            "population": 115000,
+            "population_growth": 0.01,
+            "economy": 400000000,
+            "military_strength": 0,
+            "territory": 702,
+            "neighbors": [
+                "Marshall Islands",
+                "Nauru",
+                "Palau"
+            ]
+        },
+        {
+            "name": "Moldova",
+            "population": 3000000,
+            "population_growth": -0.004,
+            "economy": 14000000000,
+            "military_strength": 7000,
+            "territory": 33846,
+            "neighbors": [
+                "Romania",
+                "Ukraine"
+            ]
+        },
+        {
+            "name": "Monaco",
+            "population": 36000,
+            "population_growth": 0.005,
+            "economy": 7000000000,
+            "military_strength": 0,
+            "territory": 2,
+            "neighbors": [
+                "France"
+            ]
+        },
+        {
+            "name": "Mongolia",
+            "population": 3000000,
+            "population_growth": 0.018,
+            "economy": 17000000000,
+            "military_strength": 10000,
+            "territory": 1564116,
+            "neighbors": [
+                "China",
+                "Russia"
+            ]
+        },
+        {
+            "name": "Montenegro",
+            "population": 620000,
+            "population_growth": 0.002,
+            "economy": 6000000000,
+            "military_strength": 2000,
+            "territory": 13812,
+            "neighbors": [
+                "Albania",
+                "Bosnia",
+                "Croatia",
+                "Kosovo",
+                "Serbia"
+            ]
+        },
+        {
+            "name": "Morocco",
+            "population": 37000000,
+            "population_growth": 0.012,
+            "economy": 142000000000,
+            "military_strength": 196000,
+            "territory": 710850,
+            "neighbors": [
+                "Algeria",
+                "Mauritania",
+                "Spain"
+            ]
+        },
+        {
+            "name": "Mozambique",
+            "population": 32000000,
+            "population_growth": 0.029,
+            "economy": 18000000000,
+            "military_strength": 12000,
+            "territory": 801590,
+            "neighbors": [
+                "Eswatini",
+                "Malawi",
+                "South Africa",
+                "Tanzania",
+                "Zambia",
+                "Zimbabwe"
+            ]
+        },
+        {
+            "name": "Myanmar",
+            "population": 55000000,
+            "population_growth": 0.007,
+            "economy": 65000000000,
+            "military_strength": 406000,
+            "territory": 676578,
+            "neighbors": [
+                "Bangladesh",
+                "China",
+                "India",
+                "Laos",
+                "Thailand"
+            ]
+        },
+        {
+            "name": "Namibia",
+            "population": 3000000,
+            "population_growth": 0.02,
+            "economy": 12000000000,
+            "military_strength": 9200,
+            "territory": 824292,
+            "neighbors": [
+                "Angola",
+                "Botswana",
+                "South Africa",
+                "Zambia"
+            ]
+        },
+        {
+            "name": "Nauru",
+            "population": 10000,
+            "population_growth": 0.005,
+            "economy": 100000000,
+            "military_strength": 0,
+            "territory": 21,
+            "neighbors": [
+                "Kiribati",
+                "Marshall Islands",
+                "Micronesia"
+            ]
+        },
+        {
+            "name": "Nepal",
+            "population": 30000000,
+            "population_growth": 0.013,
+            "economy": 40000000000,
+            "military_strength": 96000,
+            "territory": 147181,
+            "neighbors": [
+                "China",
+                "India"
+            ]
+        },
+        {
+            "name": "Netherlands",
+            "population": 17000000,
+            "population_growth": 0.003,
+            "economy": 1010000000000,
+            "military_strength": 41000,
+            "territory": 41543,
+            "neighbors": [
+                "Belgium",
+                "Germany"
+            ]
+        },
+        {
+            "name": "New Zealand",
+            "population": 5000000,
+            "population_growth": 0.009,
+            "economy": 249000000000,
+            "military_strength": 9500,
+            "territory": 268838,
+            "neighbors": [
+                "Australia",
+                "Fiji",
+                "Samoa",
+                "Tonga"
+            ]
+        },
+        {
+            "name": "Nicaragua",
+            "population": 7000000,
+            "population_growth": 0.01,
+            "economy": 15000000000,
+            "military_strength": 12000,
+            "territory": 130373,
+            "neighbors": [
+                "Costa Rica",
+                "Honduras"
+            ]
+        },
+        {
+            "name": "Niger",
+            "population": 25000000,
+            "population_growth": 0.038,
+            "economy": 14000000000,
+            "military_strength": 10000,
+            "territory": 1267000,
+            "neighbors": [
+                "Algeria",
+                "Benin",
+                "Burkina Faso",
+                "Chad",
+                "Libya",
+                "Mali",
+                "Nigeria"
+            ]
+        },
+        {
+            "name": "Nigeria",
+            "population": 218000000,
+            "population_growth": 0.025,
+            "economy": 477000000000,
+            "military_strength": 223000,
+            "territory": 923768,
+            "neighbors": [
+                "Benin",
+                "Cameroon",
+                "Chad",
+                "Niger"
+            ]
+        },
+        {
+            "name": "North Korea",
+            "population": 26000000,
+            "population_growth": 0.004,
+            "economy": 28000000000,
+            "military_strength": 1280000,
+            "territory": 120538,
+            "neighbors": [
+                "China",
+                "Japan",
+                "Russia",
+                "South Korea"
+            ]
+        },
+        {
+            "name": "North Macedonia",
+            "population": 2000000,
+            "population_growth": 0.001,
+            "economy": 14000000000,
+            "military_strength": 8000,
+            "territory": 25713,
+            "neighbors": [
+                "Albania",
+                "Greece",
+                "Kosovo",
+                "Serbia"
+            ]
+        },
+        {
+            "name": "Norway",
+            "population": 5000000,
+            "population_growth": 0.007,
+            "economy": 579000000000,
+            "military_strength": 23000,
+            "territory": 385207,
+            "neighbors": [
+                "Denmark",
+                "Finland",
+                "Russia",
+                "Sweden"
+            ]
+        },
+        {
+            "name": "Oman",
+            "population": 4000000,
+            "population_growth": 0.02,
+            "economy": 104000000000,
+            "military_strength": 43000,
+            "territory": 309500,
+            "neighbors": [
+                "Saudi Arabia",
+                "UAE",
+                "Yemen"
+            ]
+        },
+        {
+            "name": "Pakistan",
+            "population": 231000000,
+            "population_growth": 0.019,
+            "economy": 376000000000,
+            "military_strength": 654000,
+            "territory": 881913,
+            "neighbors": [
+                "Afghanistan",
+                "China",
+                "India",
+                "Iran"
+            ]
+        },
+        {
+            "name": "Palau",
+            "population": 18000,
+            "population_growth": 0.005,
+            "economy": 300000000,
+            "military_strength": 0,
+            "territory": 459,
+            "neighbors": [
+                "Indonesia",
+                "Micronesia",
+                "Philippines"
+            ]
+        },
+        {
+            "name": "Panama",
+            "population": 4000000,
+            "population_growth": 0.015,
+            "economy": 73000000000,
+            "military_strength": 0,
+            "territory": 75417,
+            "neighbors": [
+                "Colombia",
+                "Costa Rica"
+            ]
+        },
+        {
+            "name": "Papua New Guinea",
+            "population": 10000000,
+            "population_growth": 0.023,
+            "economy": 30000000000,
+            "military_strength": 3000,
+            "territory": 462840,
+            "neighbors": [
+                "Australia",
+                "Indonesia",
+                "Solomon Islands"
+            ]
+        },
+        {
+            "name": "Paraguay",
+            "population": 7000000,
+            "population_growth": 0.015,
+            "economy": 40000000000,
+            "military_strength": 16000,
+            "territory": 406752,
+            "neighbors": [
+                "Argentina",
+                "Bolivia",
+                "Brazil"
+            ]
+        },
+        {
+            "name": "Peru",
+            "population": 33000000,
+            "population_growth": 0.01,
+            "economy": 242000000000,
+            "military_strength": 120000,
+            "territory": 1285216,
+            "neighbors": [
+                "Bolivia",
+                "Brazil",
+                "Chile",
+                "Colombia",
+                "Ecuador"
+            ]
+        },
+        {
+            "name": "Philippines",
+            "population": 114000000,
+            "population_growth": 0.015,
+            "economy": 404000000000,
+            "military_strength": 125000,
+            "territory": 300000,
+            "neighbors": [
+                "Indonesia",
+                "Malaysia",
+                "Palau",
+                "Taiwan"
+            ]
+        },
+        {
+            "name": "Poland",
+            "population": 38000000,
+            "population_growth": -0.001,
+            "economy": 688000000000,
+            "military_strength": 185000,
+            "territory": 312696,
+            "neighbors": [
+                "Belarus",
+                "Czech Republic",
+                "Germany",
+                "Lithuania",
+                "Russia",
+                "Slovakia",
+                "Ukraine"
+            ]
+        },
+        {
+            "name": "Portugal",
+            "population": 10000000,
+            "population_growth": -0.002,
+            "economy": 254000000000,
+            "military_strength": 26700,
+            "territory": 92212,
+            "neighbors": [
+                "Spain"
+            ]
+        },
+        {
+            "name": "Qatar",
+            "population": 3000000,
+            "population_growth": 0.025,
+            "economy": 237000000000,
+            "military_strength": 16000,
+            "territory": 11586,
+            "neighbors": [
+                "Bahrain",
+                "Saudi Arabia",
+                "UAE"
+            ]
+        },
+        {
+            "name": "Romania",
+            "population": 19000000,
+            "population_growth": -0.005,
+            "economy": 301000000000,
+            "military_strength": 70000,
+            "territory": 238397,
+            "neighbors": [
+                "Hungary",
+                "Moldova",
+                "Serbia",
+                "Ukraine"
+            ]
+        },
+        {
+            "name": "Russia",
+            "population": 144000000,
+            "population_growth": -0.002,
+            "economy": 2240000000000,
+            "military_strength": 1330000,
+            "territory": 17098242,
+            "neighbors": [
+                "Azerbaijan",
+                "Belarus",
+                "China",
+                "Estonia",
+                "Finland",
+                "Georgia",
+                "Japan",
+                "Kazakhstan",
+                "Latvia",
+                "Lithuania",
+                "Mongolia",
+                "North Korea",
+                "Norway",
+                "Poland",
+                "Ukraine"
+            ]
+        },
+        {
+            "name": "Rwanda",
+            "population": 13000000,
+            "population_growth": 0.025,
+            "economy": 13000000000,
+            "military_strength": 33000,
+            "territory": 26338,
+            "neighbors": [
+                "Burundi",
+                "DR Congo",
+                "Tanzania",
+                "Uganda"
+            ]
+        },
+        {
+            "name": "Samoa",
+            "population": 200000,
+            "population_growth": 0.008,
+            "economy": 900000000,
+            "military_strength": 200,
+            "territory": 2842,
+            "neighbors": [
+                "Fiji",
+                "New Zealand",
+                "Tonga"
+            ]
+        },
+        {
+            "name": "San Marino",
+            "population": 34000,
+            "population_growth": 0.003,
+            "economy": 2000000000,
+            "military_strength": 0,
+            "territory": 61,
+            "neighbors": []
+        },
+        {
+            "name": "Sao Tome and Principe",
+            "population": 200000,
+            "population_growth": 0.02,
+            "economy": 500000000,
+            "military_strength": 300,
+            "territory": 964,
+            "neighbors": [
+                "Cameroon",
+                "Equatorial Guinea",
+                "Gabon"
+            ]
+        },
+        {
+            "name": "Saudi Arabia",
+            "population": 35000000,
+            "population_growth": 0.016,
+            "economy": 1109000000000,
+            "military_strength": 257000,
+            "territory": 2149690,
+            "neighbors": [
+                "Iraq",
+                "Jordan",
+                "Kuwait",
+                "Oman",
+                "Qatar",
+                "UAE",
+                "Yemen"
+            ]
+        },
+        {
+            "name": "Senegal",
+            "population": 17000000,
+            "population_growth": 0.027,
+            "economy": 28000000000,
+            "military_strength": 19000,
+            "territory": 196722,
+            "neighbors": [
+                "Gambia",
+                "Guinea",
+                "Guinea-Bissau",
+                "Mali",
+                "Mauritania"
+            ]
+        },
+        {
+            "name": "Serbia",
+            "population": 7000000,
+            "population_growth": -0.004,
+            "economy": 63000000000,
+            "military_strength": 28000,
+            "territory": 77474,
+            "neighbors": [
+                "Bosnia",
+                "Croatia",
+                "Hungary",
+                "Kosovo",
+                "Montenegro",
+                "North Macedonia",
+                "Romania"
+            ]
+        },
+        {
+            "name": "Seychelles",
+            "population": 100000,
+            "population_growth": 0.008,
+            "economy": 2000000000,
+            "military_strength": 200,
+            "territory": 459,
+            "neighbors": [
+                "Mauritius",
+                "Mozambique"
+            ]
+        },
+        {
+            "name": "Sierra Leone",
+            "population": 8000000,
+            "population_growth": 0.022,
+            "economy": 4000000000,
+            "military_strength": 9000,
+            "territory": 71740,
+            "neighbors": [
+                "Guinea",
+                "Liberia"
+            ]
+        },
+        {
+            "name": "Singapore",
+            "population": 6000000,
+            "population_growth": 0.008,
+            "economy": 467000000000,
+            "military_strength": 72000,
+            "territory": 728,
+            "neighbors": [
+                "Indonesia",
+                "Malaysia"
+            ]
+        },
+        {
+            "name": "Slovakia",
+            "population": 5000000,
+            "population_growth": 0.0,
+            "economy": 116000000000,
+            "military_strength": 16000,
+            "territory": 49035,
+            "neighbors": [
+                "Austria",
+                "Czech Republic",
+                "Hungary",
+                "Poland",
+                "Ukraine"
+            ]
+        },
+        {
+            "name": "Slovenia",
+            "population": 2000000,
+            "population_growth": 0.001,
+            "economy": 62000000000,
+            "military_strength": 7000,
+            "territory": 20273,
+            "neighbors": [
+                "Austria",
+                "Croatia",
+                "Hungary"
+            ]
+        },
+        {
+            "name": "Solomon Islands",
+            "population": 700000,
+            "population_growth": 0.022,
+            "economy": 2000000000,
+            "military_strength": 500,
+            "territory": 28896,
+            "neighbors": [
+                "Papua New Guinea",
+                "Vanuatu"
+            ]
+        },
+        {
+            "name": "Somalia",
+            "population": 17000000,
+            "population_growth": 0.028,
+            "economy": 10000000000,
+            "military_strength": 20000,
+            "territory": 637657,
+            "neighbors": [
+                "Djibouti",
+                "Ethiopia",
+                "Kenya"
+            ]
+        },
+        {
+            "name": "South Africa",
+            "population": 60000000,
+            "population_growth": 0.013,
+            "economy": 419000000000,
+            "military_strength": 78050,
+            "territory": 1219090,
+            "neighbors": [
+                "Botswana",
+                "Eswatini",
+                "Lesotho",
+                "Mozambique",
+                "Namibia",
+                "Zimbabwe"
+            ]
+        },
+        {
+            "name": "South Korea",
+            "population": 52000000,
+            "population_growth": -0.001,
+            "economy": 1800000000000,
+            "military_strength": 599000,
+            "territory": 100210,
+            "neighbors": [
+                "China",
+                "Japan",
+                "North Korea"
+            ]
+        },
+        {
+            "name": "South Sudan",
+            "population": 11000000,
+            "population_growth": 0.025,
+            "economy": 8000000000,
+            "military_strength": 185000,
+            "territory": 619745,
+            "neighbors": [
+                "Central African Republic",
+                "DR Congo",
+                "Ethiopia",
+                "Kenya",
+                "Sudan",
+                "Uganda"
+            ]
+        },
+        {
+            "name": "Spain",
+            "population": 47000000,
+            "population_growth": 0.001,
+            "economy": 1450000000000,
+            "military_strength": 120000,
+            "territory": 505990,
+            "neighbors": [
+                "Andorra",
+                "France",
+                "Morocco",
+                "Portugal"
+            ]
+        },
+        {
+            "name": "Sri Lanka",
+            "population": 22000000,
+            "population_growth": 0.005,
+            "economy": 74000000000,
+            "military_strength": 255000,
+            "territory": 65610,
+            "neighbors": [
+                "India",
+                "Maldives"
+            ]
+        },
+        {
+            "name": "Sudan",
+            "population": 45000000,
+            "population_growth": 0.024,
+            "economy": 34000000000,
+            "military_strength": 104500,
+            "territory": 1886068,
+            "neighbors": [
+                "Central African Republic",
+                "Chad",
+                "Egypt",
+                "Eritrea",
+                "Ethiopia",
+                "Libya",
+                "South Sudan"
+            ]
+        },
+        {
+            "name": "Suriname",
+            "population": 600000,
+            "population_growth": 0.01,
+            "economy": 4000000000,
+            "military_strength": 2000,
+            "territory": 163820,
+            "neighbors": [
+                "Brazil",
+                "Guyana"
+            ]
+        },
+        {
+            "name": "Sweden",
+            "population": 10000000,
+            "population_growth": 0.006,
+            "economy": 585000000000,
+            "military_strength": 25000,
+            "territory": 450295,
+            "neighbors": [
+                "Denmark",
+                "Finland",
+                "Norway"
+            ]
+        },
+        {
+            "name": "Switzerland",
+            "population": 9000000,
+            "population_growth": 0.007,
+            "economy": 807000000000,
+            "military_strength": 21000,
+            "territory": 41285,
+            "neighbors": [
+                "Austria",
+                "France",
+                "Germany",
+                "Liechtenstein"
+            ]
+        },
+        {
+            "name": "Syria",
+            "population": 22000000,
+            "population_growth": 0.008,
+            "economy": 60000000000,
+            "military_strength": 170000,
+            "territory": 185180,
+            "neighbors": [
+                "Cyprus",
+                "Iraq",
+                "Israel",
+                "Jordan",
+                "Lebanon",
+                "Turkey"
+            ]
+        },
+        {
+            "name": "Taiwan",
+            "population": 23000000,
+            "population_growth": -0.001,
+            "economy": 790000000000,
+            "military_strength": 169000,
+            "territory": 36193,
+            "neighbors": [
+                "China",
+                "Japan",
+                "Philippines"
+            ]
+        },
+        {
+            "name": "Tajikistan",
+            "population": 10000000,
+            "population_growth": 0.022,
+            "economy": 10000000000,
+            "military_strength": 9500,
+            "territory": 143100,
+            "neighbors": [
+                "Afghanistan",
+                "China",
+                "Kyrgyzstan",
+                "Uzbekistan"
+            ]
+        },
+        {
+            "name": "Tanzania",
+            "population": 63000000,
+            "population_growth": 0.029,
+            "economy": 75000000000,
+            "military_strength": 27000,
+            "territory": 945087,
+            "neighbors": [
+                "Burundi",
+                "DR Congo",
+                "Kenya",
+                "Malawi",
+                "Mozambique",
+                "Rwanda",
+                "Uganda",
+                "Zambia"
+            ]
+        },
+        {
+            "name": "Thailand",
+            "population": 72000000,
+            "population_growth": 0.003,
+            "economy": 544000000000,
+            "military_strength": 360850,
+            "territory": 513120,
+            "neighbors": [
+                "Cambodia",
+                "Laos",
+                "Malaysia",
+                "Myanmar"
+            ]
+        },
+        {
+            "name": "Timor-Leste",
+            "population": 1000000,
+            "population_growth": 0.02,
+            "economy": 2000000000,
+            "military_strength": 2000,
+            "territory": 14874,
+            "neighbors": [
+                "Australia",
+                "Indonesia"
+            ]
+        },
+        {
+            "name": "Togo",
+            "population": 8000000,
+            "population_growth": 0.025,
+            "economy": 9000000000,
+            "military_strength": 9000,
+            "territory": 56785,
+            "neighbors": [
+                "Benin",
+                "Burkina Faso",
+                "Ghana"
+            ]
+        },
+        {
+            "name": "Tonga",
+            "population": 100000,
+            "population_growth": 0.008,
+            "economy": 500000000,
+            "military_strength": 500,
+            "territory": 747,
+            "neighbors": [
+                "Fiji",
+                "New Zealand",
+                "Samoa"
+            ]
+        },
+        {
+            "name": "Trinidad and Tobago",
+            "population": 1400000,
+            "population_growth": 0.003,
+            "economy": 24000000000,
+            "military_strength": 4000,
+            "territory": 5130,
+            "neighbors": [
+                "Barbados",
+                "Venezuela"
+            ]
+        },
+        {
+            "name": "Tunisia",
+            "population": 12000000,
+            "population_growth": 0.01,
+            "economy": 46000000000,
+            "military_strength": 35800,
+            "territory": 163610,
+            "neighbors": [
+                "Algeria",
+                "Libya"
+            ]
+        },
+        {
+            "name": "Turkey",
+            "population": 85000000,
+            "population_growth": 0.01,
+            "economy": 906000000000,
+            "military_strength": 355200,
+            "territory": 783562,
+            "neighbors": [
+                "Armenia",
+                "Azerbaijan",
+                "Cyprus",
+                "Georgia",
+                "Greece",
+                "Iran",
+                "Iraq",
+                "Syria"
+            ]
+        },
+        {
+            "name": "Turkmenistan",
+            "population": 6000000,
+            "population_growth": 0.014,
+            "economy": 59000000000,
+            "military_strength": 36000,
+            "territory": 488100,
+            "neighbors": [
+                "Afghanistan",
+                "Iran",
+                "Kazakhstan",
+                "Uzbekistan"
+            ]
+        },
+        {
+            "name": "Tuvalu",
+            "population": 11000,
+            "population_growth": 0.008,
+            "economy": 50000000,
+            "military_strength": 0,
+            "territory": 26,
+            "neighbors": [
+                "Kiribati",
+                "Samoa"
+            ]
+        },
+        {
+            "name": "UAE",
+            "population": 10000000,
+            "population_growth": 0.015,
+            "economy": 507000000000,
+            "military_strength": 63000,
+            "territory": 83600,
+            "neighbors": [
+                "Oman",
+                "Qatar",
+                "Saudi Arabia"
+            ]
+        },
+        {
+            "name": "Uganda",
+            "population": 47000000,
+            "population_growth": 0.032,
+            "economy": 45000000000,
+            "military_strength": 45000,
+            "territory": 241038,
+            "neighbors": [
+                "DR Congo",
+                "Kenya",
+                "Rwanda",
+                "South Sudan",
+                "Tanzania"
+            ]
+        },
+        {
+            "name": "Ukraine",
+            "population": 37000000,
+            "population_growth": -0.006,
+            "economy": 160000000000,
+            "military_strength": 500000,
+            "territory": 603550,
+            "neighbors": [
+                "Belarus",
+                "Hungary",
+                "Moldova",
+                "Poland",
+                "Romania",
+                "Russia",
+                "Slovakia"
+            ]
+        },
+        {
+            "name": "United Kingdom",
+            "population": 67000000,
+            "population_growth": 0.004,
+            "economy": 3070000000000,
+            "military_strength": 148500,
+            "territory": 243610,
+            "neighbors": [
+                "Iceland",
+                "Ireland"
+            ]
+        },
+        {
+            "name": "United States",
+            "population": 335000000,
+            "population_growth": 0.004,
+            "economy": 25460000000000,
+            "military_strength": 1395350,
+            "territory": 9833517,
+            "neighbors": [
+                "Canada",
+                "Cuba",
+                "Mexico"
+            ]
+        },
+        {
+            "name": "Uruguay",
+            "population": 3000000,
+            "population_growth": 0.005,
+            "economy": 77000000000,
+            "military_strength": 22000,
+            "territory": 176215,
+            "neighbors": [
+                "Argentina",
+                "Brazil"
+            ]
+        },
+        {
+            "name": "Uzbekistan",
+            "population": 35000000,
+            "population_growth": 0.016,
+            "economy": 80000000000,
+            "military_strength": 65000,
+            "territory": 448978,
+            "neighbors": [
+                "Afghanistan",
+                "Kazakhstan",
+                "Kyrgyzstan",
+                "Tajikistan",
+                "Turkmenistan"
+            ]
+        },
+        {
+            "name": "Vanuatu",
+            "population": 300000,
+            "population_growth": 0.022,
+            "economy": 1000000000,
+            "military_strength": 300,
+            "territory": 12189,
+            "neighbors": [
+                "Fiji",
+                "Solomon Islands"
+            ]
+        },
+        {
+            "name": "Vatican",
+            "population": 800,
+            "population_growth": 0.0,
+            "economy": 500000000,
+            "military_strength": 135,
+            "territory": 0,
+            "neighbors": []
+        },
+        {
+            "name": "Venezuela",
+            "population": 29000000,
+            "population_growth": 0.01,
+            "economy": 97000000000,
+            "military_strength": 115000,
+            "territory": 916445,
+            "neighbors": [
+                "Brazil",
+                "Colombia",
+                "Guyana",
+                "Trinidad and Tobago"
+            ]
+        },
+        {
+            "name": "Venezuela",
+            "population": 29000000,
+            "population_growth": 0.01,
+            "economy": 97000000000,
+            "military_strength": 115000,
+            "territory": 916445,
+            "neighbors": [
+                "Brazil",
+                "Colombia",
+                "Guyana",
+                "Trinidad and Tobago"
+            ]
+        },
+        {
+            "name": "Vietnam",
+            "population": 97000000,
+            "population_growth": 0.009,
+            "economy": 409000000000,
+            "military_strength": 469000,
+            "territory": 331212,
+            "neighbors": [
+                "Cambodia",
+                "China",
+                "Laos"
+            ]
+        },
+        {
+            "name": "Yemen",
+            "population": 33000000,
+            "population_growth": 0.022,
+            "economy": 21000000000,
+            "military_strength": 66700,
+            "territory": 527968,
+            "neighbors": [
+                "Oman",
+                "Saudi Arabia"
+            ]
+        },
+        {
+            "name": "Zambia",
+            "population": 19000000,
+            "population_growth": 0.029,
+            "economy": 28000000000,
+            "military_strength": 17000,
+            "territory": 752618,
+            "neighbors": [
+                "Angola",
+                "Botswana",
+                "DR Congo",
+                "Malawi",
+                "Mozambique",
+                "Namibia",
+                "Tanzania",
+                "Zimbabwe"
+            ]
+        },
+        {
+            "name": "Zimbabwe",
+            "population": 15000000,
+            "population_growth": 0.02,
+            "economy": 26000000000,
+            "military_strength": 29000,
+            "territory": 390757,
+            "neighbors": [
+                "Botswana",
+                "Mozambique",
+                "South Africa",
+                "Zambia"
+            ]
+        }
+    ]
+}
