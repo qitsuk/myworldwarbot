@@ -1,1 +1,4 @@
-/venvlogs/
+venv/
+logs/
+__pycache__/y
+

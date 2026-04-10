@@ -19,7 +19,7 @@ NOTIFY_EVENTS = {
     'peace':    True,   # [PEACE] deals, mergers, surrenders
     'union':    True,   # [UNION] nation mergers
     'world':    True,   # [WORLD] tension milestones, stalemate breaks
-    'alliance': False,  # [ALLIANCE] formations and defections
+    'alliance': True,   # [ALLIANCE] formations and defections
     'gameover': True,   # simulation over
 }
 
@@ -64,6 +64,10 @@ def _build_payload(event_type: str, message: str) -> bytes:
             'title':       _TITLES[event_type],
             'description': clean,
             'color':       _COLOURS[event_type],
+	    'url':	   'https://worldwarbot.qitsuk.dk',
+	    'footer': {
+		'text': 'Visit https://warbot.yourdomain.com to see the full, current world map'
+	    }
         }]
     }
     return json.dumps(payload).encode()
