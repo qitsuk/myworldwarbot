@@ -11,7 +11,7 @@ from logger import log
 VOWELS = set('aeiouAEIOU')
 
 TIMESCALE_TEST = 0.5
-TIMESCALE_PROD = 3 * 60 * 60  # 3 hours per month
+TIMESCALE_PROD = 1 * 60 * 60  # 1 hours per month
 
 INVASION_THRESHOLD = 10.0
 ALLIANCE_CHANCE       = 0.002  # chance per month an unaligned country seeks an alliance
