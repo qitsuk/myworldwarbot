@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import json; data=json.load\\(open\\('D:/Code Space/myworldwarbot/countries.json'\\)\\); names=[c['name'] for c in data['countries']]; print\\('\\\\n'.join\\(sorted\\(names\\)\\)\\)\")",
+      "Bash(cd \"D:/Code Space/myworldwarbot\" && python -c \"\nimport main\nimport server\nprint\\('All imports OK'\\)\n\" 2>&1)",
+      "Bash(cd \"D:/Code Space/myworldwarbot\" && pip install flask flask-socketio eventlet -q && python -c \"import main; import server; print\\('All imports OK'\\)\" 2>&1)",
+      "Bash(cd \"D:/Code Space/myworldwarbot\" && timeout 5 python -c \"\nfrom data_loader import load_countries, load_events\nfrom world import World\nimport main as sim\n\ncountries = load_countries\\(\\)\nevents = load_events\\(\\)\nworld = World\\(stability=1.0, risk=0.15, countries=countries\\)\n\nfor _ in range\\(3\\):\n    world.current_day += 1\n    sim.simulate_day\\(world, events\\)\n\nstate = sim.get_world_state\\(world\\)\nprint\\(f'Day {state[\\\\\"day\\\\\"]} | Countries: {state[\\\\\"total_countries\\\\\"]} | Conflicts: {len\\(state[\\\\\"conflicts\\\\\"]\\)} | Alliances: {len\\(state[\\\\\"alliances\\\\\"]\\)}'\\)\nprint\\(f'Top power: {state[\\\\\"top5\\\\\"][0][\\\\\"name\\\\\"]} \\({state[\\\\\"top5\\\\\"][0][\\\\\"military\\\\\"]:,} troops\\)'\\)\n\" 2>&1)",
+      "Bash(python -c \"\nVOWELS = set\\('aeiouAEIOU'\\)\n\ndef blend\\(a, b\\):\n    cut_a = max\\(2, len\\(a\\) // 3\\)\n    for i in range\\(cut_a, min\\(len\\(a\\) - 1, cut_a + 3\\)\\):\n        if a[i] in VOWELS:\n            cut_a = i + 1\n            break\n    cut_b = max\\(1, len\\(b\\) // 3\\)\n    for i in range\\(cut_b, min\\(len\\(b\\) - 1, cut_b + 3\\)\\):\n        if b[i] not in VOWELS:\n            cut_b = i\n            break\n    pa, pb = a[:cut_a], b[cut_b:]\n    if pa and pb and pa[-1].lower\\(\\) == pb[0].lower\\(\\) and pa[-1].lower\\(\\) not in VOWELS:\n        pb = pb[1:]\n    return \\(pa + pb\\).capitalize\\(\\)\n\npairs = [\n    \\('Pakistan', 'Afghanistan'\\),\n    \\('France', 'Germany'\\),\n    \\('China', 'India'\\),\n    \\('Brazil', 'Argentina'\\),\n    \\('Russia', 'Ukraine'\\),\n    \\('Sweden', 'Norway'\\),\n    \\('Pahanistan', 'India'\\),   # triple merge test\n]\nfor a, b in pairs:\n    print\\(f'{a} + {b} = {blend\\(a, b\\)}'\\)\n\")"
+    ]
+  }
+}

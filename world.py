@@ -1,3 +1,5 @@
+import random
+
 class World:
     def __init__(self, stability, risk, countries=None, current_day=0):
         self.countries = countries if countries is not None else []
@@ -5,3 +7,6 @@ class World:
         self.risk = risk
         self.current_day = current_day
         self.active_conflicts = []
+        self.alliances = []
+        # When surviving nations drop to this count, nuclear trigger chance surges
+        self.endgame_nuke_threshold = random.randint(2, 8)

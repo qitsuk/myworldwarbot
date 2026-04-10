@@ -11,7 +11,9 @@
                 "Banks collapse as markets spiral out of control.",
                 "The currency crashes overnight, devastating the economy.",
                 "Unemployment skyrockets as industries collapse.",
-                "A financial scandal shakes investor confidence to its core."
+                "A financial scandal shakes investor confidence to its core.",
+                "The central bank prints money desperately as debts mount.",
+                "Supply chains snap as the economy enters freefall."
             ]
         },
         {
@@ -25,7 +27,9 @@
                 "Crop failures leave millions starving.",
                 "Food shortages spread across the nation.",
                 "A devastating famine grips the country as supplies run dry.",
-                "Hunger spreads as food distribution networks collapse."
+                "Hunger spreads as food distribution networks collapse.",
+                "Aid convoys are ambushed as desperation turns violent.",
+                "The harvest fails for the third year running."
             ]
         },
         {
@@ -39,7 +43,9 @@
                 "Rebel factions seize control of key cities.",
                 "The government struggles to maintain order as civil war erupts.",
                 "Armed militias tear the country apart from within.",
-                "Brother fights brother as the nation descends into chaos."
+                "Brother fights brother as the nation descends into chaos.",
+                "The capital burns as factions fight street by street.",
+                "A unified nation fractures along ancient fault lines."
             ]
         },
         {
@@ -53,7 +59,9 @@
                 "A deadly disease spreads rapidly through the population.",
                 "Hospitals overflow as an epidemic tears through the nation.",
                 "A mysterious illness decimates entire communities.",
-                "Quarantine zones are established as the outbreak spirals."
+                "Quarantine zones are established as the outbreak spirals.",
+                "Field hospitals spring up as the health system buckles.",
+                "The disease jumps borders faster than any response can follow."
             ]
         },
         {
@@ -67,7 +75,9 @@
                 "Rivers run dry as a historic drought grips the nation.",
                 "Crops wither under a relentless sun.",
                 "Water rationing is introduced as reservoirs hit record lows.",
-                "Years of drought leave farmland barren and unproductive."
+                "Years of drought leave farmland barren and unproductive.",
+                "Wells dry up across the countryside as the crisis deepens.",
+                "The government declares a national emergency as water runs out."
             ]
         },
         {
@@ -81,7 +91,9 @@
                 "Military generals seize power in a sudden coup.",
                 "The government is overthrown in a violent power grab.",
                 "A shadowy faction takes control of the capital overnight.",
-                "The president is deposed as tanks roll through the streets."
+                "The president is deposed as tanks roll through the streets.",
+                "State television goes dark before the announcement is made.",
+                "The coup is swift — the old guard never saw it coming."
             ]
         },
         {
@@ -95,7 +107,9 @@
                 "International sanctions cripple the nation's trade.",
                 "Exports grind to a halt as sanctions bite hard.",
                 "Foreign assets are frozen as sanctions are imposed.",
-                "The economy reels under the weight of international pressure."
+                "The economy reels under the weight of international pressure.",
+                "Shelves empty as imported goods become impossible to source.",
+                "Sanctions cut off access to critical technology and finance."
             ]
         },
         {
@@ -109,7 +123,9 @@
                 "A massive earthquake levels entire cities.",
                 "Catastrophic flooding displaces millions.",
                 "A powerful hurricane devastates the coastline.",
-                "A volcanic eruption forces mass evacuations."
+                "A volcanic eruption forces mass evacuations.",
+                "Mudslides bury entire villages as the disaster unfolds.",
+                "The scale of destruction overwhelms emergency services."
             ]
         },
         {
@@ -123,7 +139,9 @@
                 "Thousands of soldiers abandon their posts overnight.",
                 "Morale collapses as desertion spreads through the ranks.",
                 "Entire battalions lay down their arms and walk away.",
-                "The army crumbles as soldiers flee en masse."
+                "The army crumbles as soldiers flee en masse.",
+                "Officers bribe their way out as the military falls apart.",
+                "Conscripts vanish into the night, unwilling to fight."
             ]
         },
         {
@@ -137,7 +155,9 @@
                 "A booming economy lifts millions out of poverty.",
                 "Record growth transforms the nation into a regional powerhouse.",
                 "Foreign investment floods in as the economy takes off.",
-                "A golden era of prosperity reshapes the country."
+                "A golden era of prosperity reshapes the country.",
+                "GDP growth figures shock even the most optimistic economists.",
+                "New industries emerge almost overnight as capital flows freely."
             ]
         },
         {
@@ -151,7 +171,9 @@
                 "A baby boom swells the population to record numbers.",
                 "Immigration surges as the nation attracts workers from abroad.",
                 "Birth rates soar as living conditions improve dramatically.",
-                "A demographic explosion reshapes the nation's future."
+                "A demographic explosion reshapes the nation's future.",
+                "Cities expand rapidly as the population grows beyond projections.",
+                "A generation of new citizens reinvigorates the workforce."
             ]
         },
         {
@@ -165,7 +187,9 @@
                 "A massive military buildup doubles the size of the armed forces.",
                 "Conscription drives swell the ranks of the army.",
                 "New weapons programs transform the nation's military might.",
-                "Defence spending soars as the military expands rapidly."
+                "Defence spending soars as the military expands rapidly.",
+                "The armed forces absorb a third of the national budget.",
+                "Recruitment offices run overtime as the army swells."
             ]
         },
         {
@@ -179,7 +203,9 @@
                 "A breakthrough in weapons technology reshapes the battlefield.",
                 "Scientists unlock new technologies that transform the economy.",
                 "A technological revolution puts the nation decades ahead.",
-                "Innovation drives explosive growth in both industry and defence."
+                "Innovation drives explosive growth in both industry and defence.",
+                "A single invention ripples outward, changing everything.",
+                "Rivals scramble to catch up as the tech gap widens rapidly."
             ]
         },
         {
@@ -193,7 +219,9 @@
                 "A golden age of prosperity and power dawns.",
                 "History will remember this era as the nation's finest hour.",
                 "Art, science and military might flourish in equal measure.",
-                "The nation enters an unprecedented period of dominance."
+                "The nation enters an unprecedented period of dominance.",
+                "Future generations will speak of this time with reverence.",
+                "A perfect alignment of leadership, resources and opportunity."
             ]
         },
         {
@@ -207,7 +235,9 @@
                 "Vast oil reserves are discovered, transforming the economy overnight.",
                 "Black gold flows as a massive oil field is struck.",
                 "An oil boom sends the economy into overdrive.",
-                "The discovery of oil reserves catapults the nation to wealth."
+                "The discovery of oil reserves catapults the nation to wealth.",
+                "Rigs appear on the horizon as petroleum wealth pours in.",
+                "A single drilling team's discovery reshapes the nation's fortunes."
             ]
         },
         {
@@ -221,7 +251,9 @@
                 "A powerful alliance bolsters the nation's military strength.",
                 "Foreign troops arrive to reinforce the armed forces.",
                 "A new military pact brings weapons and training from abroad.",
-                "Allied support transforms the nation's defensive capabilities."
+                "Allied support transforms the nation's defensive capabilities.",
+                "Equipment and advisors pour in under the new security agreement.",
+                "The partnership signals a new era of coordinated defence."
             ]
         },
         {
@@ -235,7 +267,9 @@
                 "New farming techniques triple crop yields overnight.",
                 "An agricultural revolution ends food insecurity for millions.",
                 "Fertile lands are unlocked as irrigation transforms the countryside.",
-                "Advances in agriculture fuel both population and economic growth."
+                "Advances in agriculture fuel both population and economic growth.",
+                "Genetically enhanced crops turn barren land into breadbaskets.",
+                "The countryside blooms as modern farming takes hold."
             ]
         },
         {
@@ -249,7 +283,9 @@
                 "New trade routes open up, flooding the economy with wealth.",
                 "Exports surge as demand for the nation's goods skyrockets.",
                 "A trade agreement unlocks vast new markets abroad.",
-                "Merchants grow rich as commerce booms across the nation."
+                "Merchants grow rich as commerce booms across the nation.",
+                "Container ships queue at the ports as trade explodes.",
+                "The trade surplus hits a record high for the third month running."
             ]
         },
         {
@@ -263,8 +299,595 @@
                 "A new generation of weapons gives the army a decisive edge.",
                 "Military doctrine is revolutionised by a tactical breakthrough.",
                 "Advanced armaments pour off the production lines.",
-                "A military genius reshapes the nation's armed forces."
+                "A military genius reshapes the nation's armed forces.",
+                "The new battle system renders enemy defences obsolete.",
+                "Field commanders adopt radical new tactics with stunning results."
             ]
+        },
+        {
+            "type": "hyperinflation",
+            "name": "Hyperinflation",
+            "probability": 0.02,
+            "economy_impact": -0.45,
+            "military_impact": -0.1,
+            "population_impact": -0.05,
+            "flavor": [
+                "Prices double every week as hyperinflation devours the economy.",
+                "Wheelbarrows of cash cannot buy a loaf of bread.",
+                "The currency becomes worthless as the printing presses run non-stop.",
+                "Savings accumulated over lifetimes vanish overnight.",
+                "Barter replaces money as faith in the currency collapses entirely.",
+                "Soldiers desert when their pay can no longer buy food."
+            ]
+        },
+        {
+            "type": "state_bankruptcy",
+            "name": "State Bankruptcy",
+            "probability": 0.01,
+            "economy_impact": -0.4,
+            "military_impact": -0.2,
+            "population_impact": -0.05,
+            "flavor": [
+                "The government declares bankruptcy as debts become unpayable.",
+                "Creditors seize state assets as the nation defaults on its loans.",
+                "Public services collapse as the treasury runs dry.",
+                "The IMF arrives with conditions that gut public spending.",
+                "A generation of borrowing ends in national humiliation.",
+                "Soldiers go unpaid for months as the state crumbles financially."
+            ]
+        },
+        {
+            "type": "debt_crisis",
+            "name": "Debt Crisis",
+            "probability": 0.02,
+            "economy_impact": -0.25,
+            "military_impact": -0.1,
+            "population_impact": 0.0,
+            "flavor": [
+                "Sovereign debt spirals beyond any hope of repayment.",
+                "Interest payments consume the entire defence budget.",
+                "Foreign creditors demand austerity in exchange for relief.",
+                "The debt burden chokes every government department.",
+                "Bond markets slam shut as confidence evaporates.",
+                "A decade of borrowing catches up all at once."
+            ]
+        },
+        {
+            "type": "revolution",
+            "name": "Revolution",
+            "probability": 0.015,
+            "economy_impact": -0.2,
+            "military_impact": -0.3,
+            "population_impact": -0.05,
+            "flavor": [
+                "The people rise up and topple the existing order.",
+                "Revolutionaries storm government buildings across the capital.",
+                "Years of oppression explode into open revolt.",
+                "The old regime burns as a new order fights to be born.",
+                "The revolution devours its own as factions turn on each other.",
+                "Statues topple and flags change as power changes hands violently."
+            ]
+        },
+        {
+            "type": "political_scandal",
+            "name": "Political Scandal",
+            "probability": 0.03,
+            "economy_impact": -0.1,
+            "military_impact": -0.1,
+            "population_impact": 0.0,
+            "flavor": [
+                "Leaked documents expose corruption at the highest levels.",
+                "The defence minister resigns amid allegations of embezzlement.",
+                "A massive bribery scandal implicates the entire cabinet.",
+                "Wiretaps reveal the government has been selling state secrets.",
+                "The scandal paralyses government for months.",
+                "Public trust collapses as the corruption runs deeper than anyone imagined."
+            ]
+        },
+        {
+            "type": "separatist_movement",
+            "name": "Separatist Movement",
+            "probability": 0.02,
+            "economy_impact": -0.1,
+            "military_impact": -0.2,
+            "population_impact": -0.05,
+            "flavor": [
+                "A powerful separatist movement demands independence.",
+                "Ethnic tensions boil over into open armed resistance.",
+                "A border region declares unilateral independence.",
+                "Insurgents in the north refuse to recognise central authority.",
+                "The army is stretched thin fighting separatists on multiple fronts.",
+                "A centuries-old grievance finally erupts into open conflict."
+            ]
+        },
+        {
+            "type": "arms_embargo",
+            "name": "Arms Embargo",
+            "probability": 0.02,
+            "economy_impact": 0.0,
+            "military_impact": -0.2,
+            "population_impact": 0.0,
+            "flavor": [
+                "An international arms embargo cuts off weapons supplies.",
+                "Spare parts for military equipment become impossible to source.",
+                "The air force is grounded as embargoed components run out.",
+                "The navy rusts in port as sanctions block vital repairs.",
+                "Ammunition stockpiles dwindle with no resupply in sight.",
+                "Military readiness crumbles as the embargo tightens its grip."
+            ]
+        },
+        {
+            "type": "military_purge",
+            "name": "Military Purge",
+            "probability": 0.02,
+            "economy_impact": 0.0,
+            "military_impact": -0.25,
+            "population_impact": 0.0,
+            "flavor": [
+                "The leader purges the officer corps after a suspected conspiracy.",
+                "Hundreds of generals are arrested in a single night.",
+                "Experienced commanders are replaced by loyal but incompetent officers.",
+                "Paranoia grips the military as purges hollow out leadership.",
+                "The army's best minds are imprisoned or executed.",
+                "Tactical expertise evaporates as the purge consumes the high command."
+            ]
+        },
+        {
+            "type": "drone_revolution",
+            "name": "Drone Revolution",
+            "probability": 0.02,
+            "economy_impact": -0.05,
+            "military_impact": 0.25,
+            "population_impact": 0.0,
+            "flavor": [
+                "Swarms of autonomous drones transform the battlefield overnight.",
+                "Cheap, mass-produced drones replace entire armoured divisions.",
+                "Enemy armour burns as drone strikes prove devastating.",
+                "The air force is reinvented around unmanned combat platforms.",
+                "A drone factory works around the clock, churning out thousands.",
+                "Traditional defences crumble against the relentless drone swarms."
+            ]
+        },
+        {
+            "type": "mercenary_surge",
+            "name": "Mercenary Surge",
+            "probability": 0.02,
+            "economy_impact": -0.1,
+            "military_impact": 0.2,
+            "population_impact": 0.0,
+            "flavor": [
+                "Mercenary contractors flood in, bolstering the armed forces.",
+                "Private military companies arrive with heavy weapons and experience.",
+                "Hired guns fill gaps left by overstretched regular forces.",
+                "The treasury bleeds cash but the army's strength soars.",
+                "Foreign fighters motivated purely by money prove brutally effective.",
+                "Mercenary units spearhead an offensive with ruthless efficiency."
+            ]
+        },
+        {
+            "type": "pandemic_resurgence",
+            "name": "Pandemic Resurgence",
+            "probability": 0.02,
+            "economy_impact": -0.2,
+            "military_impact": -0.15,
+            "population_impact": -0.15,
+            "flavor": [
+                "A new viral strain tears through the unvaccinated population.",
+                "Field hospitals collapse under the weight of a renewed pandemic.",
+                "Entire military units are quarantined as the disease spreads.",
+                "Supply chains shatter again as workers fall ill by the millions.",
+                "The virus mutates faster than any vaccine can follow.",
+                "Lockdowns return as the death toll climbs past anything before."
+            ]
+        },
+        {
+            "type": "nuclear_accident",
+            "name": "Nuclear Accident",
+            "probability": 0.01,
+            "economy_impact": -0.3,
+            "military_impact": -0.1,
+            "population_impact": -0.15,
+            "flavor": [
+                "A reactor meltdown contaminates vast swathes of territory.",
+                "The exclusion zone swallows entire cities as radiation spreads.",
+                "A nuclear accident poisons the water supply for a generation.",
+                "Evacuation orders cover half the nation as fallout drifts inland.",
+                "The clean-up will take centuries — the damage is done in minutes.",
+                "Scientists warn the full death toll may never be known."
+            ]
+        },
+        {
+            "type": "volcanic_winter",
+            "name": "Volcanic Winter",
+            "probability": 0.01,
+            "economy_impact": -0.2,
+            "military_impact": -0.05,
+            "population_impact": -0.1,
+            "flavor": [
+                "A supervolcano erupts, blotting out the sun for months.",
+                "Ash clouds plunge the region into a freezing artificial winter.",
+                "Harvests fail across the continent as temperatures plummet.",
+                "The sky turns grey and stays that way for over a year.",
+                "Crop failures cascade globally as the volcanic winter bites.",
+                "Nations scramble for food reserves as sunlight disappears."
+            ]
+        },
+        {
+            "type": "locust_plague",
+            "name": "Locust Plague",
+            "probability": 0.02,
+            "economy_impact": -0.15,
+            "military_impact": 0.0,
+            "population_impact": -0.08,
+            "flavor": [
+                "Billion-strong locust swarms devour every crop in their path.",
+                "The sky darkens as a locust plague of historic scale descends.",
+                "Fields that fed millions are stripped bare within hours.",
+                "Pesticides prove useless against the sheer scale of the infestation.",
+                "The plague spreads faster than any government response can manage.",
+                "A biblical swarm leaves nothing but scorched earth behind."
+            ]
+        },
+        {
+            "type": "earthquake",
+            "name": "Major Earthquake",
+            "probability": 0.02,
+            "economy_impact": -0.15,
+            "military_impact": -0.05,
+            "population_impact": -0.08,
+            "flavor": [
+                "A magnitude-8 earthquake levels the industrial heartland.",
+                "The capital lies in ruins after a catastrophic seismic event.",
+                "Thousands of aftershocks prevent rescue teams from working.",
+                "Infrastructure collapses as the ground tears itself apart.",
+                "A city that took decades to build is destroyed in ninety seconds.",
+                "The earthquake triggers landslides that bury entire valleys."
+            ]
+        },
+        {
+            "type": "tsunami",
+            "name": "Tsunami",
+            "probability": 0.015,
+            "economy_impact": -0.2,
+            "military_impact": -0.05,
+            "population_impact": -0.1,
+            "flavor": [
+                "A wall of water destroys the entire coastline in minutes.",
+                "Coastal cities vanish beneath the waves of a massive tsunami.",
+                "The tsunami strikes with no warning, catching millions off guard.",
+                "Naval bases and port facilities are obliterated by the surge.",
+                "The sea recedes ominously before the wave arrives.",
+                "Survivors cling to debris as entire neighbourhoods are swept away."
+            ]
+        },
+        {
+            "type": "wildfire_season",
+            "name": "Wildfire Season",
+            "probability": 0.03,
+            "economy_impact": -0.1,
+            "military_impact": 0.0,
+            "population_impact": -0.03,
+            "flavor": [
+                "Uncontrollable wildfires rage across millions of hectares.",
+                "Entire forests burn as fire crews are overwhelmed.",
+                "Smoke blankets major cities as the fire season turns catastrophic.",
+                "Military units are diverted to fight fires instead of enemies.",
+                "The fires jump firebreaks and devour everything in their path.",
+                "A summer of record heat turns the countryside into a tinderbox."
+            ]
+        },
+        {
+            "type": "water_crisis",
+            "name": "Water Crisis",
+            "probability": 0.02,
+            "economy_impact": -0.1,
+            "military_impact": -0.05,
+            "population_impact": -0.1,
+            "flavor": [
+                "Aquifers run dry as the water crisis reaches catastrophic levels.",
+                "Riots break out over access to clean drinking water.",
+                "Industry grinds to a halt as water shortages bite.",
+                "The military is deployed to guard the last functioning reservoirs.",
+                "Cities compete desperately for dwindling river flows.",
+                "A generation of mismanagement finally drains the nation dry."
+            ]
+        },
+        {
+            "type": "brain_drain",
+            "name": "Brain Drain",
+            "probability": 0.02,
+            "economy_impact": -0.15,
+            "military_impact": -0.05,
+            "population_impact": -0.1,
+            "flavor": [
+                "The nation's best minds flee abroad in a devastating brain drain.",
+                "Scientists, engineers and doctors emigrate in their thousands.",
+                "Universities empty as graduates seek opportunities elsewhere.",
+                "Critical expertise drains away as the skilled leave and don't return.",
+                "The brain drain accelerates as conditions deteriorate further.",
+                "A generation of talent is lost to richer and more stable nations."
+            ]
+        },
+        {
+            "type": "immigration_wave",
+            "name": "Immigration Wave",
+            "probability": 0.02,
+            "economy_impact": 0.1,
+            "military_impact": 0.05,
+            "population_impact": 0.15,
+            "flavor": [
+                "A massive wave of immigrants swells the workforce.",
+                "Skilled workers arrive from across the world, energising the economy.",
+                "The population surges as refugees and migrants are integrated.",
+                "New arrivals fill gaps in the military and labour market.",
+                "A generation of immigrants reshapes the nation's culture and economy.",
+                "The country becomes a destination for the world's displaced and ambitious."
+            ]
+        },
+        {
+            "type": "social_unrest",
+            "name": "Social Unrest",
+            "probability": 0.03,
+            "economy_impact": -0.1,
+            "military_impact": -0.1,
+            "population_impact": -0.03,
+            "flavor": [
+                "Mass protests cripple the capital as social unrest explodes.",
+                "Strikes spread across every major industry simultaneously.",
+                "Riot police struggle to contain the growing wave of unrest.",
+                "A general strike shuts down the economy for weeks.",
+                "The government declares a state of emergency as protests turn violent.",
+                "Decades of inequality detonate in a summer of rage."
+            ]
+        },
+        {
+            "type": "cybersecurity_breach",
+            "name": "Cyber Attack",
+            "probability": 0.02,
+            "economy_impact": -0.2,
+            "military_impact": -0.15,
+            "population_impact": 0.0,
+            "flavor": [
+                "A devastating cyber attack cripples military command systems.",
+                "Hackers penetrate every layer of national defence infrastructure.",
+                "Power grids go dark as a coordinated cyber offensive strikes.",
+                "State secrets are stolen in a breach of unprecedented scale.",
+                "Weapons systems malfunction as hostile code does its work.",
+                "The digital battlefield proves as decisive as any physical front."
+            ]
+        },
+        {
+            "type": "rare_earth_discovery",
+            "name": "Rare Earth Discovery",
+            "probability": 0.015,
+            "economy_impact": 0.3,
+            "military_impact": 0.15,
+            "population_impact": 0.0,
+            "flavor": [
+                "Vast rare earth deposits are discovered, unlocking new industrial power.",
+                "The minerals that build modern weapons are found in abundance.",
+                "Mining the rare earth find transforms the defence industry overnight.",
+                "Nations scramble to forge deals as the discovery reshapes geopolitics.",
+                "The find puts the nation at the centre of global supply chains.",
+                "A geological survey reveals reserves worth trillions."
+            ]
+        },
+        {
+            "type": "mining_boom",
+            "name": "Mining Boom",
+            "probability": 0.02,
+            "economy_impact": 0.2,
+            "military_impact": 0.05,
+            "population_impact": 0.05,
+            "flavor": [
+                "New mineral strikes fuel a massive economic boom.",
+                "Mining towns spring up overnight as extraction surges.",
+                "Metal exports transform the trade balance in a single quarter.",
+                "The ground beneath the nation proves worth more than imagined.",
+                "A gold rush mentality grips the population as wealth pours out.",
+                "Investors pour in as mining rights sell for record sums."
+            ]
+        },
+        {
+            "type": "tech_sector_boom",
+            "name": "Tech Sector Boom",
+            "probability": 0.02,
+            "economy_impact": 0.25,
+            "military_impact": 0.1,
+            "population_impact": 0.05,
+            "flavor": [
+                "A technology sector explosion mints millionaires by the thousand.",
+                "Startups disrupt every industry as the tech boom accelerates.",
+                "Foreign talent floods in as the tech hub reputation spreads globally.",
+                "Military applications of new tech give the armed forces a sharp edge.",
+                "The nation becomes a magnet for innovation and capital.",
+                "A cluster of breakthrough companies puts the nation on the map."
+            ]
+        },
+        {
+            "type": "ai_revolution",
+            "name": "AI Revolution",
+            "probability": 0.015,
+            "economy_impact": 0.3,
+            "military_impact": 0.2,
+            "population_impact": 0.0,
+            "flavor": [
+                "Artificial intelligence transforms every aspect of the economy and military.",
+                "AI-driven logistics make the armed forces dramatically more effective.",
+                "Autonomous systems handle tasks that once required thousands of personnel.",
+                "The AI advantage widens the gap between this nation and all rivals.",
+                "Weapons powered by AI prove ruthlessly precise on the battlefield.",
+                "A single breakthrough in machine intelligence changes everything."
+            ]
+        },
+        {
+            "type": "green_energy_revolution",
+            "name": "Green Energy Revolution",
+            "probability": 0.02,
+            "economy_impact": 0.2,
+            "military_impact": 0.05,
+            "population_impact": 0.05,
+            "flavor": [
+                "Cheap renewable energy unleashes a new era of industrial growth.",
+                "Energy independence transforms the nation's strategic position.",
+                "Solar and wind farms replace fossil fuels at stunning speed.",
+                "The energy revolution slashes costs across every sector of the economy.",
+                "Military logistics improve dramatically as fuel dependency drops.",
+                "The green transition turns an energy importer into an exporter."
+            ]
+        },
+        {
+            "type": "medical_breakthrough",
+            "name": "Medical Breakthrough",
+            "probability": 0.02,
+            "economy_impact": 0.05,
+            "military_impact": 0.05,
+            "population_impact": 0.2,
+            "flavor": [
+                "A cure for a widespread disease adds millions to the workforce.",
+                "Life expectancy jumps as a revolutionary treatment rolls out.",
+                "A medical breakthrough reduces battlefield casualties dramatically.",
+                "The population booms as infant mortality plummets.",
+                "Scientists announce a discovery that will save a billion lives.",
+                "Field medicine advances keep soldiers fighting who would once have died."
+            ]
+        },
+        {
+            "type": "space_program",
+            "name": "Space Program",
+            "probability": 0.01,
+            "economy_impact": 0.1,
+            "military_impact": 0.15,
+            "population_impact": 0.05,
+            "flavor": [
+                "A successful space launch demonstrates technological supremacy.",
+                "Military satellites give the armed forces unmatched battlefield awareness.",
+                "The space program drives innovation across every sector of the economy.",
+                "Orbital assets transform communications and weapons guidance systems.",
+                "The launch is watched by billions — a statement of power to the world.",
+                "Space-based weapons put the nation above its rivals, literally."
+            ]
+        },
+        {
+            "type": "refugee_crisis",
+            "name": "Refugee Crisis",
+            "probability": 0.02,
+            "economy_impact": -0.1,
+            "military_impact": 0.0,
+            "population_impact": 0.1,
+            "flavor": [
+                "Millions of refugees flood across the border, straining every resource.",
+                "Refugee camps swell beyond capacity as the crisis deepens.",
+                "The humanitarian burden tests the nation's infrastructure to its limits.",
+                "Border forces are overwhelmed as the flow of displaced people accelerates.",
+                "The refugee influx adds both strain and unexpected workforce growth.",
+                "A tidal wave of humanity reshapes the demographic landscape overnight."
+            ]
+        },
+        {
+            "type": "criminal_syndicate",
+            "name": "Criminal Syndicate",
+            "probability": 0.02,
+            "economy_impact": -0.15,
+            "military_impact": -0.1,
+            "population_impact": -0.05,
+            "flavor": [
+                "A powerful criminal syndicate infiltrates the government and military.",
+                "Organised crime extracts a massive unofficial tax from the economy.",
+                "Drug cartels effectively control entire provinces.",
+                "Corruption spreads as criminal money buys politicians and generals.",
+                "The state loses the monopoly on violence to organised crime.",
+                "Assassinations of officials become a weekly occurrence."
+            ]
+        },
+        {
+            "type": "piracy_surge",
+            "name": "Piracy Surge",
+            "probability": 0.015,
+            "economy_impact": -0.15,
+            "military_impact": -0.05,
+            "population_impact": 0.0,
+            "flavor": [
+                "Pirates seize control of vital trade routes, choking exports.",
+                "Shipping insurance costs soar as piracy makes sea lanes dangerous.",
+                "Naval patrols are insufficient to stop the wave of maritime crime.",
+                "Cargo ships are boarded and ransomed with near impunity.",
+                "Trade collapses as merchants refuse to risk the pirate-infested waters.",
+                "The navy is humiliated as bold piracy attacks go unpunished."
+            ]
+        },
+        {
+            "type": "bioweapon_scare",
+            "name": "Bioweapon Scare",
+            "probability": 0.01,
+            "economy_impact": -0.1,
+            "military_impact": -0.1,
+            "population_impact": -0.1,
+            "flavor": [
+                "A suspected bioweapon release triggers mass panic and quarantine.",
+                "Military units are quarantined after exposure to an unknown pathogen.",
+                "Authorities scramble to contain what may be a biological attack.",
+                "The origin of the outbreak remains disputed — and terrifying.",
+                "Fear spreads faster than the pathogen as rumours fill the void.",
+                "The bioweapon scare paralyses the nation for months."
+            ]
+        },
+        {
+            "type": "religious_conflict",
+            "name": "Religious Conflict",
+            "probability": 0.02,
+            "economy_impact": -0.1,
+            "military_impact": -0.15,
+            "population_impact": -0.05,
+            "flavor": [
+                "Sectarian violence tears apart cities that once lived in peace.",
+                "Religious extremists launch attacks on government and military targets.",
+                "Ancient theological divisions explode into open warfare.",
+                "Militias armed by rival faiths battle for control of sacred sites.",
+                "The army fractures along religious lines as the conflict deepens.",
+                "A single spark of religious outrage ignites nationwide violence."
+            ]
+        },
+        {
+            "type": "diplomatic_breakthrough",
+            "name": "Diplomatic Breakthrough",
+            "probability": 0.02,
+            "economy_impact": 0.15,
+            "military_impact": 0.05,
+            "population_impact": 0.0,
+            "flavor": [
+                "A landmark diplomatic agreement opens new economic opportunities.",
+                "Peace talks succeed where decades of tension had failed.",
+                "A treaty unlocks trade and military cooperation with major partners.",
+                "The historic handshake ends a rivalry that once seemed permanent.",
+                "Diplomatic victory delivers gains no army could have won.",
+                "New embassies open as relations are established with former enemies."
+            ]
+        },
+        {
+            "type": "ceasefire_dividend",
+            "name": "Ceasefire Dividend",
+            "probability": 0.02,
+            "economy_impact": 0.1,
+            "military_impact": 0.1,
+            "population_impact": 0.05,
+            "flavor": [
+                "A ceasefire allows resources to be redirected from war to growth.",
+                "The end of fighting lets industry and agriculture recover.",
+                "Soldiers return home as a fragile peace holds.",
+                "The peace dividend unlocks investment that war had made impossible.",
+                "A generation that knew only conflict begins to rebuild.",
+                "The guns fall silent — for now — and recovery begins."
+            ]
+        },
+        {
+            "type": "invasion",
+            "name": "Invasion",
+            "probability": 0.01,
+            "economy_impact": -0.1,
+            "military_impact": -0.1,
+            "population_impact": -0.05,
+            "flavor": []
         }
     ]
 }

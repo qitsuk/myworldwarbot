@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World War Simulation</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <header id="header">
+      <div id="header-title">
+        <span class="title-icon">&#9876;</span>
+        World War Simulation
+      </div>
+      <div id="header-meta">
+        <span id="sim-date">Connecting...</span>
+        <span id="sim-day"></span>
+      </div>
+    </header>
+
+    <div id="content">
+      <!-- LEFT: MAP -->
+      <div id="map-panel">
+        <svg id="world-map"></svg>
+        <div id="tooltip" class="hidden"></div>
+        <div id="legend">
+          <div class="legend-item"><span class="legend-border" style="border-color:#ff4444"></span>At War</div>
+          <div class="legend-item"><span class="legend-border" style="border-color:#58a6ff"></span>Alliance</div>
+          <div class="legend-item" style="color:#555">Colors are unique per nation</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: SIDEBAR -->
+      <div id="sidebar">
+        <div id="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="s-nations">—</div>
+            <div class="stat-label">Nations</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value war-color" id="s-wars">—</div>
+            <div class="stat-label">Wars</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value alliance-color" id="s-alliances">—</div>
+            <div class="stat-label">Alliances</div>
+          </div>
+        </div>
+
+        <div id="top-panel">
+          <div class="panel-title">&#9733; Top Powers</div>
+          <div id="top-list"></div>
+        </div>
+
+        <div id="log-panel">
+          <div id="log-header">
+            <span class="panel-title">&#9650; Event Log</span>
+            <span id="log-count"></span>
+            <button id="log-download" onclick="downloadLog()" title="Download full log">&#8681; Export</button>
+          </div>
+          <div id="log"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game over overlay -->
+  <div id="gameover-banner">
+    <h2>&#9876; World Conquered</h2>
+    <p><strong id="go-winner"></strong><br>has conquered the world.<br><span id="go-days" style="color:#8b949e"></span></p>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

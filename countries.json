@@ -127,6 +127,7 @@
                 "Czech Republic",
                 "Germany",
                 "Hungary",
+                "Italy",
                 "Liechtenstein",
                 "Slovakia",
                 "Slovenia",
@@ -802,6 +803,7 @@
                 "Andorra",
                 "Belgium",
                 "Germany",
+                "Italy",
                 "Luxembourg",
                 "Monaco",
                 "Spain",
@@ -1101,6 +1103,22 @@
             ]
         },
         {
+            "name": "Italy",
+            "population": 60000000,
+            "population_growth": 0.002,
+            "economy": 2100000000000,
+            "military_strength": 170000,
+            "territory": 301340,
+            "neighbors": [
+                "Austria",
+                "France",
+                "San Marino",
+                "Slovenia",
+                "Switzerland",
+                "Vatican"
+            ]
+        },
+        {
             "name": "Ivory Coast",
             "population": 27000000,
             "population_growth": 0.025,
@@ -1358,6 +1376,18 @@
                 "Belgium",
                 "France",
                 "Germany"
+            ]
+        },
+        {
+            "name": "Madagascar",
+            "population": 28000000,
+            "population_growth": 0.025,
+            "economy": 14000000000,
+            "military_strength": 24000,
+            "territory": 587041,
+            "neighbors": [
+                "Mozambique",
+                "Tanzania"
             ]
         },
         {
@@ -1955,7 +1985,9 @@
             "economy": 2000000000,
             "military_strength": 0,
             "territory": 61,
-            "neighbors": []
+            "neighbors": [
+                "Italy"
+            ]
         },
         {
             "name": "Sao Tome and Principe",
@@ -2080,7 +2112,8 @@
             "neighbors": [
                 "Austria",
                 "Croatia",
-                "Hungary"
+                "Hungary",
+                "Italy"
             ]
         },
         {
@@ -2232,6 +2265,7 @@
                 "Austria",
                 "France",
                 "Germany",
+                "Italy",
                 "Liechtenstein"
             ]
         },
@@ -2532,7 +2566,9 @@
             "economy": 500000000,
             "military_strength": 135,
             "territory": 0,
-            "neighbors": []
+            "neighbors": [
+                "Italy"
+            ]
         },
         {
             "name": "Venezuela",
