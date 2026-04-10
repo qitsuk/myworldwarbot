@@ -12,6 +12,7 @@ class Country:
         self.nukes = nukes            # nuclear warhead count
         self.nuked = False            # True once this nation has launched a nuclear strike
         self.tech_level = tech_level  # military technology multiplier (1.0–3.0)
+        self.war_exhaustion = 0.0     # 0–1 modifier reducing willingness to start new wars
 
     @property
     def military_cap(self):

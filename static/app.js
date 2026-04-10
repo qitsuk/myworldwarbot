@@ -342,9 +342,10 @@ function onMouseLeave() {
 //  Stats
 // ─────────────────────────────────────────────
 function updateStats(state) {
-  document.getElementById('s-nations').textContent   = state.total_countries;
-  document.getElementById('s-wars').textContent      = state.conflicts.length;
-  document.getElementById('s-alliances').textContent = state.alliances.length;
+  document.getElementById('s-nations').textContent      = state.total_countries;
+  document.getElementById('s-wars').textContent         = state.conflicts.length;
+  document.getElementById('s-alliances').textContent    = state.alliances.length;
+  document.getElementById('world-pop-value').textContent = fmt(state.world_population);
   document.getElementById('sim-date').textContent = state.date;
   const yr  = Math.floor((state.day - 1) / 12) + 1;
   const mo  = ((state.day - 1) % 12) + 1;

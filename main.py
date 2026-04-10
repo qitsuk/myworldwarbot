@@ -4,19 +4,32 @@ import random
 from datetime import date, timedelta
 from data_loader import load_countries, load_events
 from world import World
-from conflict import Conflict
+from conflict import Conflict, PYRRHIC_RATIO
 from alliance import Alliance
 from logger import log
 
 VOWELS = set('aeiouAEIOU')
 
 TIMESCALE_TEST = 0.5
-TIMESCALE_PROD = 86400 / 30
+TIMESCALE_PROD = 3 * 60 * 60  # 3 hours per month
 
 INVASION_THRESHOLD = 10.0
-ALLIANCE_CHANCE = 0.002       # chance per country per month to seek an alliance
-MERGE_THRESHOLD = 0.10        # both allies must be at or below 10% of military_cap to merge
+ALLIANCE_CHANCE       = 0.002  # chance per month an unaligned country seeks an alliance
+ALLIANCE_DECAY_CHANCE = 0.008  # chance per member per month to defect
+MAX_ALLIANCE_SIZE     = 6      # hard cap on members per alliance
+
+PEACETIME_ARMY_BASE   = 0.012  # minimum standing army: 1.2% of population
+PEACETIME_ARMY_SCALE  = 0.04   # each point of world.risk adds this × population to the target
+WARTIME_ARMY_TARGET   = 0.40   # nations mobilise toward 40% of military_cap during war
+RECRUITMENT_RATE      = 0.04   # close 4% of the gap to target each month
 DEBUG = True
+
+PEACE_MONTHS      = 42    # no wars for the first 3.5 years
+RAMP_MONTHS       = 24    # risk ramps 0 → BASE_RISK over the following 2 years
+BASE_RISK         = 0.15
+RISK_ESCALATION   = 0.0004  # risk grows by this much per month after the ramp ends
+MAX_RISK          = 0.70    # hard ceiling
+STALEMATE_MONTHS  = 36    # if no new conflict starts in this many months, force one
 
 START_DATE = date(2032, 1, 1)
 
@@ -108,34 +121,122 @@ def get_alliance(country, world):
             return alliance
     return None
 
+GIANT_PERCENTILE = 0.15   # top 15% by military_cap are giants; they cannot ally
+
+def get_giant_threshold(world):
+    caps = sorted(c.military_cap for c in world.countries)
+    idx  = int(len(caps) * (1 - GIANT_PERCENTILE))
+    return caps[max(idx, 0)]
+
 def form_alliances(world):
+    giant_threshold = get_giant_threshold(world)
+    at_war_set = {c.attacker for c in world.active_conflicts} | {c.defender for c in world.active_conflicts}
+
     for country in list(world.countries):
         if get_alliance(country, world):
             continue
-
+        if country.military_cap >= giant_threshold:
+            continue
+        if country in at_war_set:
+            continue
         if random.random() > ALLIANCE_CHANCE:
             continue
 
-        candidates = [
-            c for c in get_valid_neighbors(country, world)
-            if not get_alliance(c, world) and c != country
+        # Existing alliances this country could join (not full, no giants, not at war with any member)
+        joinable = [
+            a for a in world.alliances
+            if len(a.members) < MAX_ALLIANCE_SIZE
+            and all(m.military_cap < giant_threshold for m in a.members)
+            and not any(m in at_war_set for m in a.members)
+            and not any(
+                (c.attacker == country and c.defender in a.members) or
+                (c.attacker in a.members and c.defender == country)
+                for c in world.active_conflicts
+            )
         ]
-        if not candidates:
+
+        # Unaligned non-giant countries this country could partner with
+        unaligned = [
+            c for c in world.countries
+            if not get_alliance(c, world)
+            and c != country
+            and c.military_cap < giant_threshold
+            and c not in at_war_set
+            and not any(
+                (cf.attacker == country and cf.defender == c) or
+                (cf.attacker == c and cf.defender == country)
+                for cf in world.active_conflicts
+            )
+        ]
+
+        if not joinable and not unaligned:
             continue
 
-        partner = random.choice(candidates)
-
-        at_war = any(
-            (c.attacker == country and c.defender == partner) or
-            (c.attacker == partner and c.defender == country)
-            for c in world.active_conflicts
+        # Weight alliances by size × avg member strength (safety in numbers),
+        # weight unaligned candidates by their military_cap
+        options  = joinable + unaligned
+        weights  = (
+            [len(a.members) * (sum(m.military_cap for m in a.members) / len(a.members)) + 1
+             for a in joinable] +
+            [c.military_cap + 1 for c in unaligned]
         )
-        if at_war:
-            continue
+        chosen = random.choices(options, weights=weights, k=1)[0]
 
-        alliance = Alliance([country, partner])
-        world.alliances.append(alliance)
-        log(f"  [ALLIANCE] {country.name} and {partner.name} have formed an alliance!")
+        if isinstance(chosen, Alliance):
+            chosen.members.append(country)
+            log(f"  [ALLIANCE] {country.name} joins the {chosen.name}!")
+        else:
+            world.alliances.append(Alliance([country, chosen]))
+            log(f"  [ALLIANCE] {country.name} and {chosen.name} have formed an alliance!")
+
+def decay_alliances(world):
+    """Each month, members may defect from their alliance."""
+    for alliance in list(world.alliances):
+        # Prune members no longer in the world
+        for member in list(alliance.members):
+            if member not in world.countries:
+                alliance.remove_member(member)
+
+        for member in list(alliance.members):
+            if random.random() > ALLIANCE_DECAY_CHANCE:
+                continue
+            old_name = alliance.name
+            alliance.remove_member(member)
+            log(f"  [ALLIANCE] {member.name} withdraws from {old_name}.")
+
+        if len(alliance.members) < 2 and alliance in world.alliances:
+            world.alliances.remove(alliance)
+
+def check_final_war(world):
+    """If every surviving nation is in an alliance, fracture them and force the final war."""
+    if len(world.countries) <= 1 or world.active_conflicts:
+        return
+    # If any nation is unallied, war can start naturally — nothing to do
+    if any(get_alliance(c, world) is None for c in world.countries):
+        return
+
+    log("  [WORLD] Only allied nations remain. The grand alliance fractures!")
+    world.alliances.clear()
+
+    # Pair nations by military strength and start conflicts
+    remaining = sorted(world.countries, key=lambda c: c.military_strength, reverse=True)
+    paired = set()
+    for i, a in enumerate(remaining):
+        if a in paired:
+            continue
+        for b in remaining[i + 1:]:
+            if b in paired:
+                continue
+            world.active_conflicts.append(Conflict(a, b))
+            log(f"  >> {a.name} turns on former ally {b.name}!")
+            paired.add(a)
+            paired.add(b)
+            break
+    # Any unpaired nation (odd count) attacks the strongest
+    for c in remaining:
+        if c not in paired:
+            world.active_conflicts.append(Conflict(c, remaining[0]))
+            log(f"  >> {c.name} turns on former ally {remaining[0].name}!")
 
 def trigger_alliance_support(attacker, defender, world):
     alliance = get_alliance(defender, world)
@@ -155,6 +256,8 @@ def trigger_alliance_support(attacker, defender, world):
         log(f"  [ALLIANCE] {ally.name} enters the war in defence of {defender.name}!")
 
 def merge_countries(primary, secondary, world):
+    if secondary not in world.countries or primary not in world.countries:
+        return
     old_name = primary.name
     merged_name = blend_country_names(primary.name, secondary.name)
     primary.name = merged_name
@@ -173,31 +276,6 @@ def merge_countries(primary, secondary, world):
     world.countries.remove(secondary)
     log(f"  [UNION] {old_name} and {secondary.name} have unified into {merged_name}!")
 
-def check_merges(world):
-    for alliance in list(world.alliances):
-        members = [c for c in alliance.members if c in world.countries]
-        if len(members) < 2:
-            continue
-
-        all_critical = all(
-            c.military_strength <= c.military_cap * MERGE_THRESHOLD
-            for c in members
-        )
-        if not all_critical:
-            continue
-
-        any_fighting = any(
-            any(c.attacker == m or c.defender == m for c in world.active_conflicts)
-            for m in members
-        )
-        if any_fighting:
-            continue
-
-        primary = max(members, key=lambda c: c.military_strength)
-        for other in [m for m in members if m is not primary]:
-            merge_countries(primary, other, world)
-
-        world.alliances.remove(alliance)
 
 def get_world_state(world):
     at_war_names = set()
@@ -229,6 +307,7 @@ def get_world_state(world):
         'day': world.current_day,
         'date': current_date(world).strftime('%B %d, %Y'),
         'total_countries': len(world.countries),
+        'world_population': sum(c.population for c in world.countries),
         'countries': [
             {
                 'name': c.name,
@@ -291,14 +370,16 @@ def print_status(world):
 def apply_events(world, events):
     non_combat_events = [e for e in events if e.type not in ("invasion", "war")]
     for country in world.countries:
-        if random.random() < 0.1:
+        if random.random() < 0.04:
             event = random.choice(non_combat_events)
 
             # Each event rolls its own severity: 60%–140% of the base impact
             severity = random.uniform(0.6, 1.4)
             econ_hit = event.economy_impact * severity
             mil_hit  = event.military_impact * severity
-            pop_hit  = event.population_impact * severity
+            # Population impacts are dampened — events disrupt growth, not kill millions.
+            # Wars and disasters handle real casualties separately.
+            pop_hit  = event.population_impact * severity * 0.25
 
             country.economy = max(0, int(country.economy * (1 + econ_hit)))
             country.military_strength = max(0, int(country.military_strength * (1 + mil_hit)))
@@ -324,6 +405,33 @@ def apply_events(world, events):
 def simulate_day(world, events):
     apply_events(world, events)
 
+    # War exhaustion decays over time — nations gradually recover their appetite for conflict
+    for country in world.countries:
+        if country.war_exhaustion > 0:
+            country.war_exhaustion = max(0.0, country.war_exhaustion - 0.04)
+
+    # Natural population growth (annual rate applied monthly)
+    # Nations at war skip growth — civilian casualties in Conflict handle their population
+    at_war_countries = {c.attacker for c in world.active_conflicts} | {c.defender for c in world.active_conflicts}
+    for country in world.countries:
+        if country not in at_war_countries:
+            country.population = int(country.population * (1 + country.population_growth / 12))
+
+    # Military recruitment: nations build toward a target force size each month
+    for country in world.countries:
+        if country in at_war_countries:
+            # Wartime mobilisation: draft toward a large fraction of theoretical cap
+            target = int(country.military_cap * WARTIME_ARMY_TARGET)
+        else:
+            # Peacetime: standing army scales with global tension
+            # At risk=0: 1.2% of pop. At risk=0.70: ~4% of pop.
+            tension_target = PEACETIME_ARMY_BASE + world.risk * PEACETIME_ARMY_SCALE
+            target = int(country.population * tension_target)
+        target = min(target, country.military_cap)
+        if country.military_strength < target:
+            recruit = max(1, int((target - country.military_strength) * RECRUITMENT_RATE))
+            country.military_strength = min(country.military_strength + recruit, country.military_cap)
+
     # Tech growth: each month, nations edge toward their GDP-per-capita tech target.
     # Logarithmic and uncapped — a wealthy empire keeps advancing indefinitely.
     # Tech only ever improves; annexing poorer nations never regresses your R&D.
@@ -337,7 +445,35 @@ def simulate_day(world, events):
         conflict.simulate_day(len(world.countries), world.endgame_nuke_threshold)
         if conflict.is_over:
             world.active_conflicts.remove(conflict)
-            annexe(conflict.winner, conflict.loser, world)
+            winner, loser = conflict.winner, conflict.loser
+
+            # War exhaustion: both sides become less likely to start new conflicts.
+            # Scales with duration — longer wars leave nations more drained.
+            exhaustion = min(0.75, 0.10 + conflict.duration_days * 0.008)
+            if winner:
+                winner.war_exhaustion = min(1.0, winner.war_exhaustion + exhaustion * 0.6)
+            if loser:
+                loser.war_exhaustion  = min(1.0, loser.war_exhaustion  + exhaustion)
+
+            if conflict.peace_deal == 'merger':
+                # Negotiated union — both names blend, full resource transfer
+                alliance = get_alliance(winner, world)
+                merge_countries(winner, loser, world)
+                if alliance and alliance in world.alliances:
+                    world.alliances.remove(alliance)
+
+            elif conflict.peace_deal == 'annexation':
+                # Unconditional surrender — winner's name survives, full resources
+                annexe(winner, loser, world)
+
+            else:
+                # Military defeat — if winner refused a peace offer, pyrrhic penalty applies
+                if conflict.pyrrhic:
+                    loser.economy    = int(loser.economy    * PYRRHIC_RATIO)
+                    loser.population = max(1, int(loser.population * PYRRHIC_RATIO))
+                    loser.nukes      = int(loser.nukes      * PYRRHIC_RATIO)
+                    log(f"  [PEACE] A pyrrhic victory — {winner.name} inherits the ruins of {loser.name}.")
+                annexe(winner, loser, world)
 
     for country in list(world.countries):
         targets = get_targets(country, world)
@@ -359,12 +495,24 @@ def simulate_day(world, events):
 
         # Nuclear deterrence: each warhead tier halves willingness to attack
         nuclear_deterrence = 1.0 / (1.0 + 0.5 * (target.nukes / 100) ** 0.5) if target.nukes > 0 else 1.0
-        attack_chance = base_probability * strength_ratio * world.risk * nuclear_deterrence
+        attack_chance = base_probability * strength_ratio * world.risk * nuclear_deterrence * (1.0 - country.war_exhaustion)
 
         if random.random() < attack_chance:
             if strength_ratio >= INVASION_THRESHOLD:
-                log(f"  >> {country.name} invades {target.name} and conquers them instantly!")
-                annexe(country, target, world)
+                # The underdog gets a chance to resist based on their tech advantage
+                tech_factor   = target.tech_level / max(country.tech_level, 0.1)
+                resist_chance = min(0.80, 0.35 * tech_factor)
+                if random.random() < resist_chance:
+                    if tech_factor > 1.1:
+                        log(f"  >> {target.name} refuses to surrender — their superior technology gives them courage!")
+                    else:
+                        log(f"  >> {target.name} refuses to surrender despite overwhelming odds!")
+                    conflict = Conflict(country, target)
+                    world.active_conflicts.append(conflict)
+                    trigger_alliance_support(country, target, world)
+                else:
+                    log(f"  >> {country.name} invades {target.name} and conquers them instantly!")
+                    annexe(country, target, world)
             else:
                 conflict = Conflict(country, target)
                 world.active_conflicts.append(conflict)
@@ -379,8 +527,19 @@ def simulate_day(world, events):
                 country.nukes = random.randint(1, 5)
                 log(f"  [NUCLEAR] \u2622 {country.name} has secretly developed nuclear weapons!")
 
-    check_merges(world)
+    decay_alliances(world)
     form_alliances(world)
+    check_final_war(world)
+
+def _update_risk(current_day, current_risk):
+    if current_day <= PEACE_MONTHS:
+        return 0.0
+    if current_day <= PEACE_MONTHS + RAMP_MONTHS:
+        t = (current_day - PEACE_MONTHS) / RAMP_MONTHS
+        return round(BASE_RISK * t, 4)
+    # Post-ramp: risk creeps up slowly, representing mounting global tension
+    extra = (current_day - PEACE_MONTHS - RAMP_MONTHS) * RISK_ESCALATION
+    return min(MAX_RISK, round(BASE_RISK + extra, 4))
 
 def main():
     log("Loading world data...")
@@ -389,7 +548,7 @@ def main():
 
     world = World(
         stability=1.0,
-        risk=0.15,
+        risk=0.0,
         countries=countries
     )
 
@@ -397,12 +556,37 @@ def main():
     log(f"Simulation start date: {START_DATE.strftime('%B %d, %Y')}")
     log("Starting simulation...\n")
 
+    last_conflict_month = PEACE_MONTHS  # tracks when a conflict last broke out
+
     running = True
     while running:
         world.current_day += 1
         date_str = current_date(world).strftime("%B %d, %Y")
 
+        world.risk = _update_risk(world.current_day, world.risk)
+
+        if world.current_day == PEACE_MONTHS + 1:
+            log(f"  [WORLD] The peace is over. Nations begin to mobilise.")
+        elif world.current_day == PEACE_MONTHS + RAMP_MONTHS + 1:
+            log(f"  [WORLD] Global tensions have reached a breaking point.")
+
+        conflicts_before = len(world.active_conflicts)
         simulate_day(world, events)
+        if len(world.active_conflicts) > conflicts_before:
+            last_conflict_month = world.current_day
+
+        # Stalemate breaker: if no new war has started in world.stalemate_months, force one
+        if (world.risk >= BASE_RISK
+                and not world.active_conflicts
+                and len(world.countries) > 1
+                and world.current_day - last_conflict_month >= world.stalemate_months):
+            candidates = sorted(world.countries, key=lambda c: c.military_strength, reverse=True)
+            aggressor = candidates[0]
+            target    = random.choice(candidates[1:])
+            log(f"  [WORLD] A long peace breeds ambition. {aggressor.name} grows restless and strikes {target.name}!")
+            world.active_conflicts.append(Conflict(aggressor, target))
+            trigger_alliance_support(aggressor, target, world)
+            last_conflict_month = world.current_day
 
         log(f"{date_str} - {len(world.countries)} countries remaining")
         print_status(world)

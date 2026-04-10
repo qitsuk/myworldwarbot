@@ -3,6 +3,7 @@ Development:  python server.py
 Production:   pip install eventlet
               gunicorn --worker-class eventlet -w 1 server:app
 """
+import random
 import threading
 import logger
 import main as sim
@@ -49,18 +50,44 @@ def _run_simulation():
 
     countries = load_countries()
     events = load_events()
-    world = World(stability=1.0, risk=0.15, countries=countries)
+    world = World(stability=1.0, risk=0.0, countries=countries)
 
     logger.log(f'World initialized with {len(world.countries)} countries.')
     logger.log(f'Simulation start: {sim.START_DATE.strftime("%B %d, %Y")}')
     logger.log('Starting simulation...')
+
+    last_conflict_month = sim.PEACE_MONTHS
 
     while len(world.countries) > 1:
         world.current_day += 1
         date_str = sim.current_date(world).strftime('%B %d, %Y')
         logger.log(f'--- {date_str} ---')
 
+        world.risk = sim._update_risk(world.current_day, world.risk)
+
+        if world.current_day == sim.PEACE_MONTHS + 1:
+            logger.log('  [WORLD] The peace is over. Nations begin to mobilise.')
+        elif world.current_day == sim.PEACE_MONTHS + sim.RAMP_MONTHS + 1:
+            logger.log('  [WORLD] Global tensions have reached a breaking point.')
+
+        conflicts_before = len(world.active_conflicts)
         sim.simulate_day(world, events)
+        if len(world.active_conflicts) > conflicts_before:
+            last_conflict_month = world.current_day
+
+        # Stalemate breaker
+        if (world.risk >= sim.BASE_RISK
+                and not world.active_conflicts
+                and len(world.countries) > 1
+                and world.current_day - last_conflict_month >= world.stalemate_months):
+            from conflict import Conflict
+            candidates = sorted(world.countries, key=lambda c: c.military_strength, reverse=True)
+            aggressor  = candidates[0]
+            target     = random.choice(candidates[1:])
+            logger.log(f'  [WORLD] A long peace breeds ambition. {aggressor.name} grows restless and strikes {target.name}!')
+            world.active_conflicts.append(Conflict(aggressor, target))
+            sim.trigger_alliance_support(aggressor, target, world)
+            last_conflict_month = world.current_day
 
         state = sim.get_world_state(world)
         with _state_lock:

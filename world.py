@@ -10,3 +10,5 @@ class World:
         self.alliances = []
         # When surviving nations drop to this count, nuclear trigger chance surges
         self.endgame_nuke_threshold = random.randint(2, 8)
+        # How long with no new conflict before the stalemate breaker forces one (varies per run)
+        self.stalemate_months = random.randint(18, 48)
