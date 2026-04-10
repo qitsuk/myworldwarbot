@@ -10,7 +10,7 @@ import threading
 import urllib.request
 import urllib.error
 
-WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', '')
+WEBHOOK_URL = "https://discord.com/api/webhooks/1492186523561492580/PFV6UTH_tf60SX51Y5qXh5wk1J_Tnud8IQn2KztqpJzYTNsL6tIixTMXtcC-FgkV4jwP"
 
 # Toggle which event types get posted to Discord
 NOTIFY_EVENTS = {
