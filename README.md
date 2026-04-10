@@ -127,6 +127,48 @@ Caddy v2 handles WebSocket upgrades automatically — no extra configuration nee
 
 ---
 
+## Discord Notifications
+
+### 1. Create a webhook
+
+In your Discord server: **Channel Settings → Integrations → Webhooks → New Webhook**.
+Copy the webhook URL.
+
+### 2. Set the environment variable
+
+Add it to the service file so it's available at runtime. Edit `~/.config/systemd/user/worldwarbot.service` and add under `[Service]`:
+
+```ini
+Environment="DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN"
+```
+
+Then reload:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user restart worldwarbot
+```
+
+### 3. Configure which events get posted
+
+In `discord_notifier.py`, toggle the `NOTIFY_EVENTS` dict:
+
+```python
+NOTIFY_EVENTS = {
+    'war':      True,   # ⚔️  war declarations and conquests
+    'nuclear':  True,   # ☢️  nuclear strikes
+    'peace':    True,   # 🕊️  peace deals, mergers, surrenders
+    'union':    True,   # 🤝  nation mergers
+    'world':    True,   # 🌍  tension milestones, stalemate breaks
+    'alliance': False,  # 🛡️  alliance formations and defections (chatty)
+    'gameover': True,   # 🏆  simulation over
+}
+```
+
+No webhook URL set = Discord silently disabled, simulation unaffected.
+
+---
+
 ## Managing the Simulation
 
 ```bash
