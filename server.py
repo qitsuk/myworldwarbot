@@ -6,6 +6,7 @@ Production:   pip install eventlet
 import os
 import random
 import threading
+from collections import deque
 import logger
 import main as sim
 from pathlib import Path
@@ -38,6 +39,7 @@ _sim_lock = threading.Lock()
 _state_lock = threading.Lock()
 _sim_started = False
 _last_state = None
+_log_buffer = deque(maxlen=200)  # rolling history replayed to new clients
 
 
 @app.route('/')
@@ -51,6 +53,8 @@ def on_connect():
     with _state_lock:
         if _last_state:
             emit('state', _last_state)
+        for msg in _log_buffer:
+            emit('log', {'message': msg})
     with _sim_lock:
         if not _sim_started:
             _sim_started = True
@@ -62,6 +66,8 @@ def _run_simulation():
     import time
 
     def emit_log(msg):
+        with _state_lock:
+            _log_buffer.append(msg)
         socketio.emit('log', {'message': msg})
 
     logger.set_emit(emit_log)
