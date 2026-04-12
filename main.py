@@ -10,6 +10,7 @@ from world import World
 from conflict import Conflict, PYRRHIC_RATIO, _PEACE_PYRRHIC_FLAVORS
 from alliance import Alliance
 from logger import log
+from data_loader import DATA_YEAR
 
 load_dotenv(Path(__file__).parent / '.env')
 
@@ -36,7 +37,8 @@ RISK_ESCALATION   = 0.0004  # risk grows by this much per month after the ramp e
 MAX_RISK          = 0.70    # hard ceiling
 STALEMATE_MONTHS  = 36    # if no new conflict starts in this many months, force one
 
-START_DATE = date(2032, 1, 1)
+START_YEAR = random.randint(2027, 2150)
+START_DATE = date(START_YEAR, 1, 1)
 
 _default_timescale = TIMESCALE_TEST if DEBUG else TIMESCALE_PROD
 sleep_time = float(os.getenv('TIMESCALE', _default_timescale))
@@ -819,7 +821,7 @@ def _update_risk(current_day, current_risk):
 
 def main():
     log("Loading world data...")
-    countries = load_countries()
+    countries = load_countries(start_year=START_YEAR)
     events = load_events()
 
     world = World(

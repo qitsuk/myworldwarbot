@@ -13,7 +13,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
-from data_loader import load_countries, load_events
+from data_loader import load_countries, load_events, DATA_YEAR
 from world import World
 
 load_dotenv(Path(__file__).parent / '.env')
@@ -85,14 +85,15 @@ def _run_simulation():
 
     logger.set_emit(emit_log)
 
-    countries = load_countries()
+    countries = load_countries(start_year=sim.START_YEAR)
     events = load_events()
     world = World(stability=1.0, risk=0.0, countries=countries)
 
+    years_extrapolated = sim.START_YEAR - DATA_YEAR
     logger.log(f'World initialized with {len(world.countries)} countries.')
-    logger.log(f'Simulation start: {sim.START_DATE.strftime("%B %d, %Y")}')
+    logger.log(f'Simulation start: {sim.START_DATE.strftime("%B %d, %Y")} ({years_extrapolated} years extrapolated from {DATA_YEAR})')
     logger.log('Starting simulation...')
-    logger.log(f'[STARTUP] A new simulation is starting! {len(world.countries)} nations, beginning {sim.START_DATE.strftime("%B %Y")}. Timescale: {_fmt_timescale(sim.sleep_time)}.')
+    logger.log(f'[STARTUP] A new simulation is starting! {len(world.countries)} nations in {sim.START_YEAR}, extrapolated {years_extrapolated} years from {DATA_YEAR}. Timescale: {_fmt_timescale(sim.sleep_time)}.')
 
     last_conflict_month = sim.PEACE_MONTHS
     _tension_thresholds = {
