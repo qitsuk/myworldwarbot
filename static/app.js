@@ -67,7 +67,7 @@ let worldState    = null;
 let byName        = new Map();
 let territoryInfo = {};   // original sim name → {c, o, w, a}
 let mapReady      = false;
-let svgEl, pathFn, countrySel, borderSel, nukeSel;
+let svgEl, mapGroup, zoom, pathFn, countrySel, borderSel, conflictSel, nukeSel;
 let topoWorld     = null;   // kept for dynamic border mesh
 
 // ─────────────────────────────────────────────
@@ -175,6 +175,81 @@ function updateNukeBadges() {
       .text('☢');
 }
 
+// Returns the SVG centroid of the largest feature belonging to ownerName
+function findOwnerCentroid(ownerName) {
+  let bestPos = null, bestArea = -1;
+  for (const feature of countrySel.data()) {
+    const simName = featureSimName(feature);
+    if (!simName) continue;
+    const info = territoryInfo[simName];
+    if (!info || info.o !== ownerName) continue;
+    const centroid = pathFn.centroid(feature);
+    if (isNaN(centroid[0]) || isNaN(centroid[1])) continue;
+    const [[x0, y0], [x1, y1]] = pathFn.bounds(feature);
+    const area = (x1 - x0) * (y1 - y0);
+    if (area > bestArea) { bestArea = area; bestPos = centroid; }
+  }
+  return bestPos;
+}
+
+// Quadratic bezier arc — returns { path, ctrl } so callers can place dots along the curve
+function buildArc(a, d) {
+  const [ax, ay] = a, [dx, dy] = d;
+  const ddx = dx - ax, ddy = dy - ay;
+  const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+  if (dist < 1) return { path: `M${ax},${ay}L${dx},${dy}`, ctrl: [(ax+dx)/2, (ay+dy)/2] };
+  const curvature = Math.min(dist * 0.25, 80);
+  const px = -ddy / dist, py = ddx / dist;
+  const ctrl = [(ax + dx) / 2 + px * curvature, (ay + dy) / 2 + py * curvature];
+  return { path: `M${ax},${ay} Q${ctrl[0]},${ctrl[1]} ${dx},${dy}`, ctrl };
+}
+
+// Evaluate a quadratic bezier at parameter t ∈ [0,1]
+function bezierAt(a, ctrl, d, t) {
+  const it = 1 - t;
+  return [
+    it*it*a[0] + 2*it*t*ctrl[0] + t*t*d[0],
+    it*it*a[1] + 2*it*t*ctrl[1] + t*t*d[1],
+  ];
+}
+
+function updateConflictArcs() {
+  if (!mapReady || !conflictSel) return;
+
+  const arcs = (worldState ? worldState.conflicts : []).map(c => {
+    const a = findOwnerCentroid(c.attacker);
+    const d = findOwnerCentroid(c.defender);
+    if (!a || !d) return null;
+
+    const { path, ctrl } = buildArc(a, d);
+
+    // Front position: t=0 → attacker's side, t=1 → defender's side.
+    // The front shifts toward whoever is losing proportionally more troops.
+    const aLost = 1 - c.attacker_str / Math.max(c.attacker_start, 1);
+    const dLost = 1 - c.defender_str / Math.max(c.defender_start, 1);
+    const t = dLost / Math.max(aLost + dLost, 0.001);
+    const front = bezierAt(a, ctrl, d, t);
+    const status = t > 0.58 ? 'winning' : t < 0.42 ? 'losing' : 'even';
+
+    return { key: `${c.attacker}|${c.defender}`, path, front, status };
+  }).filter(Boolean);
+
+  conflictSel.selectAll('.conflict-arc')
+    .data(arcs, d => d.key)
+    .join('path')
+      .attr('class', 'conflict-arc')
+      .attr('d', d => d.path);
+
+  conflictSel.selectAll('.conflict-front')
+    .data(arcs, d => d.key)
+    .join('circle')
+      .attr('class', d => `conflict-front conflict-front-${d.status}`)
+      .attr('cx', d => d.front[0])
+      .attr('cy', d => d.front[1])
+      .attr('r', 4)
+      .attr('pointer-events', 'none');
+}
+
 function updateMap() {
   if (!mapReady) return;
   countrySel
@@ -182,6 +257,7 @@ function updateMap() {
     .attr('stroke', countryStroke)
     .attr('stroke-width', countryStrokeWidth);
   updateBorders();
+  updateConflictArcs();
   updateNukeBadges();
 }
 
@@ -197,10 +273,13 @@ async function initMap() {
     .attr('width', W)
     .attr('height', H);
 
-  // Ocean
+  // Ocean background — fixed, never transformed
   svgEl.append('rect')
     .attr('width', W).attr('height', H)
     .attr('fill', '#070d1a');
+
+  // All zoomable content lives inside mapGroup
+  mapGroup = svgEl.append('g').attr('class', 'map-group');
 
   const projection = d3.geoNaturalEarth1()
     .scale(W / 6.2)
@@ -214,7 +293,7 @@ async function initMap() {
   topoWorld = world;
   const countries = topojson.feature(world, world.objects.countries);
 
-  countrySel = svgEl.selectAll('.country')
+  countrySel = mapGroup.selectAll('.country')
     .data(countries.features)
     .enter().append('path')
     .attr('class', 'country')
@@ -223,15 +302,31 @@ async function initMap() {
     .on('mousemove', onMouseMove)
     .on('mouseleave', onMouseLeave);
 
-  // Dynamic border mesh — drawn on top, updated every state tick
-  borderSel = svgEl.append('path')
+  // Dynamic border mesh
+  borderSel = mapGroup.append('path')
     .attr('class', 'border-mesh')
     .attr('fill', 'none')
     .attr('stroke', '#1c2333')
     .attr('stroke-width', 0.4);
 
+  // Conflict arc layer — above borders, below nuke badges
+  conflictSel = mapGroup.append('g').attr('class', 'conflict-arcs');
+
   // Nuclear badge layer — sits above everything else
-  nukeSel = svgEl.append('g').attr('class', 'nuke-badges');
+  nukeSel = mapGroup.append('g').attr('class', 'nuke-badges');
+
+  // Zoom behaviour — scroll to zoom, drag to pan
+  zoom = d3.zoom()
+    .scaleExtent([0.8, 12])
+    .on('zoom', (event) => mapGroup.attr('transform', event.transform));
+
+  svgEl.call(zoom);
+  svgEl.on('dblclick.zoom', null); // disable double-click zoom (accidental)
+
+  // Wire zoom control buttons
+  d3.select('#zoom-in').on('click',    () => svgEl.transition().duration(300).call(zoom.scaleBy, 1.6));
+  d3.select('#zoom-out').on('click',   () => svgEl.transition().duration(300).call(zoom.scaleBy, 1 / 1.6));
+  d3.select('#zoom-reset').on('click', () => svgEl.transition().duration(400).call(zoom.transform, d3.zoomIdentity));
 
   mapReady = true;
   if (worldState) updateMap(); else updateBorders();

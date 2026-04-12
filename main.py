@@ -599,9 +599,13 @@ def get_world_state(world):
         ],
         'conflicts': [
             {
-                'attacker': c.attacker.name,
-                'defender': c.defender.name,
-                'day': c.duration_days,
+                'attacker':       c.attacker.name,
+                'defender':       c.defender.name,
+                'day':            c.duration_days,
+                'attacker_str':   int(c.attacker.military_strength),
+                'defender_str':   int(c.defender.military_strength),
+                'attacker_start': int(c._attacker_start),
+                'defender_start': int(c._defender_start),
             }
             for c in world.active_conflicts
         ],
