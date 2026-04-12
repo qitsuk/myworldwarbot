@@ -622,6 +622,19 @@ function showLogTip(e, cls) {
 
 function hideLogTip() { logTip.classList.add('hidden'); }
 
+function showStrikeLogTip(e, launcher, target) {
+  logTip.innerHTML = `
+    <div class="lt-title">&#9762; Nuclear Strike</div>
+    <div class="lt-row"><span>${launcher}</span> <em>&#8594;</em> <span>${target}</span></div>
+    <div class="lt-row" style="color:#555;font-size:10px;margin-top:4px">Hover to replay</div>
+  `;
+  logTip.classList.remove('hidden');
+  const x = e.clientX - logTip.offsetWidth - 14;
+  const y = Math.max(4, Math.min(e.clientY - 10, window.innerHeight - logTip.offsetHeight - 4));
+  logTip.style.left = Math.max(4, x) + 'px';
+  logTip.style.top  = y + 'px';
+}
+
 // ─────────────────────────────────────────────
 //  Log
 // ─────────────────────────────────────────────
@@ -653,6 +666,18 @@ function appendLog(msg) {
   const div = document.createElement('div');
   div.className = 'log-entry ' + classifyMessage(text);
   div.textContent = text;
+
+  // Hover: nuclear strike entries replay the animation; others show context tooltip
+  div.addEventListener('mouseenter', e => {
+    if (div.dataset.launcher && div.dataset.target) {
+      showStrikeLogTip(e, div.dataset.launcher, div.dataset.target);
+      animateNuclearStrike(div.dataset.launcher, div.dataset.target);
+    } else {
+      showLogTip(e, div.className);
+    }
+  });
+  div.addEventListener('mouseleave', hideLogTip);
+
   logEl.insertBefore(div, logEl.firstChild);
 
   while (logEl.children.length > MAX_DOM_LOG) {
@@ -699,6 +724,20 @@ socket.on('log', (data) => {
 
 socket.on('nuclear_strike', (data) => {
   animateNuclearStrike(data.launcher, data.target);
+
+  // Tag the matching log entry so hovering over it replays the animation.
+  // The launch log message always contains both the launcher and target names.
+  // It arrives just before the nuclear_strike event in the same tick.
+  const entries = logEl.querySelectorAll('.log-nuclear:not([data-launcher])');
+  for (const entry of entries) {
+    const text = entry.textContent;
+    if (text.includes(data.launcher) && text.includes(data.target)) {
+      entry.dataset.launcher = data.launcher;
+      entry.dataset.target   = data.target;
+      entry.classList.add('log-nuclear-strike');
+      break;
+    }
+  }
 });
 
 socket.on('gameover', (data) => {

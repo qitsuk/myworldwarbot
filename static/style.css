@@ -329,6 +329,8 @@ body {
 .log-event    { color: #d29922; }
 .log-union    { color: #bc8cff; }
 .log-nuclear  { color: #f0a500; font-weight: bold; }
+.log-nuclear-strike { cursor: crosshair; }
+.log-nuclear-strike:hover { text-decoration: underline dotted #f0a500; }
 .log-date     { color: #30363d; font-size: 10px; }
 .log-system   { color: #3fb950; }
 .log-default  { color: #8b949e; }
