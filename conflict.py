@@ -97,8 +97,9 @@ _PEACE_PYRRHIC_FLAVORS = [
     "Pride before profit: {winner} wins the war but loses the peace.",
 ]
 
-NUCLEAR_TRIGGER_THRESHOLD = 0.25   # launch when below 25% of strength at conflict start
-NUCLEAR_TRIGGER_CHANCE    = 0.06   # 6% per month once desperate
+NUCLEAR_TRIGGER_THRESHOLD = 0.25   # start rolling for launch below 25% of starting strength
+NUCLEAR_TRIGGER_CHANCE    = 0.08   # 8% per month at the trigger threshold
+NUCLEAR_PANIC_CHANCE      = 0.45   # 45% per month when nearly eliminated (≤ 5% of starting strength)
 
 PEACE_THRESHOLD           = 0.35   # loser below 35% of start strength → peace can be offered
 PEACE_OFFER_CHANCE        = 0.15   # 15% per tick the winning side proposes terms
@@ -122,6 +123,9 @@ class Conflict:
         self.duration_days = 0
         self._attacker_start = max(attacker.military_strength, 1)
         self._defender_start = max(defender.military_strength, 1)
+
+        # Nuclear strikes that fired this tick — drained into world.pending_strikes by simulate_day()
+        self.pending_strikes = []
 
         # Peace negotiation outcome
         # 'annexation' | 'merger' | None (military defeat)
@@ -229,21 +233,35 @@ class Conflict:
             self._peace_loser  = losing
 
     def _check_nuclear_escalation(self, nation_count=999, endgame_threshold=2):
-        """A desperate nuclear power may launch a last-resort strike."""
-        endgame = nation_count <= endgame_threshold
-        chance  = min(0.60, NUCLEAR_TRIGGER_CHANCE * 25) if endgame else NUCLEAR_TRIGGER_CHANCE
+        """A desperate nuclear power may launch a last-resort strike.
+
+        Chance scales smoothly from NUCLEAR_TRIGGER_CHANCE at the trigger threshold
+        up to NUCLEAR_PANIC_CHANCE as the launcher nears total elimination.
+        Endgame (≤2 nations left) forces the panic rate unconditionally.
+        """
+        endgame   = nation_count <= endgame_threshold
         start_map = {self.attacker: self._attacker_start, self.defender: self._defender_start}
         for launcher, target in [(self.attacker, self.defender), (self.defender, self.attacker)]:
             if launcher.nukes <= 0:
                 continue
-            if not endgame and launcher.military_strength > start_map[launcher] * NUCLEAR_TRIGGER_THRESHOLD:
+            start = max(start_map[launcher], 1)
+            strength_ratio = launcher.military_strength / start
+            if not endgame and strength_ratio > NUCLEAR_TRIGGER_THRESHOLD:
                 continue
+            if endgame:
+                chance = NUCLEAR_PANIC_CHANCE
+            else:
+                # Linear gradient: NUCLEAR_TRIGGER_CHANCE at threshold → NUCLEAR_PANIC_CHANCE at 0
+                t      = 1.0 - (strength_ratio / NUCLEAR_TRIGGER_THRESHOLD)  # 0 at threshold, 1 at zero
+                chance = NUCLEAR_TRIGGER_CHANCE + t * (NUCLEAR_PANIC_CHANCE - NUCLEAR_TRIGGER_CHANCE)
             if random.random() > chance:
                 continue
 
             used = min(launcher.nukes, max(1, launcher.nukes // 5))
             launcher.nukes -= used
-            launcher.nuked = True
+            launcher.nuked  = True
+            target.was_nuked = True
+            self.pending_strikes.append((launcher.name, target.name))
 
             flavor = random.choice(_NUCLEAR_LAUNCH_FLAVORS).format(launcher=launcher.name, used=used, target=target.name)
             log(f"  [NUCLEAR] \u2622 {flavor}")

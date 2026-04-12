@@ -358,6 +358,20 @@ body {
 .lt-row span { color: #c9d1d9; }
 .lt-row em   { color: #555; font-style: normal; }
 
+/* ── NUCLEAR STRIKE ARC ── */
+.nuke-arc {
+  stroke: #f0a500;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(240, 165, 0, 0.9));
+}
+
+.nuke-shockwave {
+  stroke: #f0a500;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 4px rgba(240, 165, 0, 0.7));
+}
+
 /* ── CONFLICT ARCS ── */
 .conflict-arc {
   fill: none;

@@ -13,6 +13,8 @@ class Country:
         self.nuked = False            # True once this nation has launched a nuclear strike
         self.tech_level = tech_level  # military technology multiplier (1.0–3.0)
         self.war_exhaustion = 0.0     # 0–1 modifier reducing willingness to start new wars
+        self.uranium = 0.0            # enriched uranium stockpile (units; URANIUM_PER_NUKE → 1 warhead)
+        self.was_nuked = False        # True once this nation has received a nuclear strike
 
     @property
     def military_cap(self):

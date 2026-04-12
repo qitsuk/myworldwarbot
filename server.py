@@ -123,6 +123,9 @@ def _run_simulation():
 
         conflicts_before = len(world.active_conflicts)
         sim.simulate_day(world, events)
+        for launcher_name, target_name in world.pending_strikes:
+            socketio.emit('nuclear_strike', {'launcher': launcher_name, 'target': target_name})
+        world.pending_strikes.clear()
         if len(world.active_conflicts) > conflicts_before:
             last_conflict_month = world.current_day
 

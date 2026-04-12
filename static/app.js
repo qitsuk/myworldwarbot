@@ -130,40 +130,47 @@ function updateBorders() {
 function updateNukeBadges() {
   if (!mapReady || !nukeSel) return;
 
-  // Only countries that have actually launched a nuclear strike get a badge
-  const nukedOwners = new Set();
+  // Build sets for launchers (☢) and strike targets (☣)
+  const launcherOwners = new Set();
+  const bombedOwners   = new Set();
   if (worldState) {
     for (const c of worldState.countries) {
-      if (c.nuked) nukedOwners.add(c.name);
+      if (c.nuked)      launcherOwners.add(c.name);
+      if (c.was_nuked)  bombedOwners.add(c.name);
     }
   }
 
-  // For each nation that has struck, find the centroid of their largest map feature
-  const ownerPos  = new Map();
-  const ownerArea = new Map();
-  for (const feature of countrySel.data()) {
-    const simName = featureSimName(feature);
-    if (!simName) continue;
-    const info = territoryInfo[simName];
-    if (!info || !nukedOwners.has(info.o)) continue;
-    const centroid = pathFn.centroid(feature);
-    if (isNaN(centroid[0]) || isNaN(centroid[1])) continue;
-    const [[x0, y0], [x1, y1]] = pathFn.bounds(feature);
-    const area = (x1 - x0) * (y1 - y0);
-    if (!ownerArea.has(info.o) || area > ownerArea.get(info.o)) {
-      ownerArea.set(info.o, area);
-      ownerPos.set(info.o, centroid);
+  // Compute centroid of largest feature per relevant owner
+  function buildPosMap(ownerSet) {
+    const pos  = new Map();
+    const area = new Map();
+    for (const feature of countrySel.data()) {
+      const simName = featureSimName(feature);
+      if (!simName) continue;
+      const info = territoryInfo[simName];
+      if (!info || !ownerSet.has(info.o)) continue;
+      const centroid = pathFn.centroid(feature);
+      if (isNaN(centroid[0]) || isNaN(centroid[1])) continue;
+      const [[x0, y0], [x1, y1]] = pathFn.bounds(feature);
+      const a = (x1 - x0) * (y1 - y0);
+      if (!area.has(info.o) || a > area.get(info.o)) {
+        area.set(info.o, a);
+        pos.set(info.o, centroid);
+      }
     }
+    return pos;
   }
 
-  const badgeData = [...ownerPos.entries()].map(([name, pos]) => ({ name, pos }));
+  const launcherPos = buildPosMap(launcherOwners);
+  const bombedPos   = buildPosMap(bombedOwners);
 
+  // ☢ badge — launcher (offset slightly up so it doesn't overlap with ☣)
   nukeSel.selectAll('.nuke-badge')
-    .data(badgeData, d => d.name)
+    .data([...launcherPos.entries()].map(([name, pos]) => ({ name, pos })), d => d.name)
     .join('text')
       .attr('class', 'nuke-badge')
       .attr('x', d => d.pos[0])
-      .attr('y', d => d.pos[1])
+      .attr('y', d => d.pos[1] - 8)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .attr('font-size', '12px')
@@ -173,6 +180,74 @@ function updateNukeBadges() {
       .attr('paint-order', 'stroke')
       .attr('pointer-events', 'none')
       .text('☢');
+
+  // ☣ badge — bombed target (offset slightly down)
+  nukeSel.selectAll('.bombed-badge')
+    .data([...bombedPos.entries()].map(([name, pos]) => ({ name, pos })), d => d.name)
+    .join('text')
+      .attr('class', 'bombed-badge')
+      .attr('x', d => d.pos[0])
+      .attr('y', d => d.pos[1] + 8)
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .attr('font-size', '12px')
+      .attr('fill', '#ff4444')
+      .attr('stroke', '#0d1117')
+      .attr('stroke-width', '2px')
+      .attr('paint-order', 'stroke')
+      .attr('pointer-events', 'none')
+      .text('☣');
+}
+
+// Animate a nuclear missile arc from launcher to target, then shockwave rings
+function animateNuclearStrike(launcherName, targetName) {
+  if (!mapReady) return;
+  const a = findOwnerCentroid(launcherName);
+  const d = findOwnerCentroid(targetName);
+  if (!a || !d) return;
+
+  const { path } = buildArc(a, d);
+
+  // Missile arc — draws itself over 1.5 s via stroke-dashoffset
+  const arcEl = nukeSel.append('path')
+    .attr('class', 'nuke-arc')
+    .attr('d', path)
+    .attr('fill', 'none')
+    .attr('pointer-events', 'none')
+    .node();
+
+  const len = arcEl.getTotalLength();
+  const arc = d3.select(arcEl)
+    .attr('stroke-dasharray', len)
+    .attr('stroke-dashoffset', len)
+    .attr('opacity', 1);
+
+  arc.transition()
+    .duration(1500)
+    .ease(d3.easeLinear)
+    .attr('stroke-dashoffset', 0)
+    .on('end', () => {
+      // Three expanding shockwave rings staggered by 200 ms
+      for (let i = 0; i < 3; i++) {
+        nukeSel.append('circle')
+          .attr('class', 'nuke-shockwave')
+          .attr('cx', d[0])
+          .attr('cy', d[1])
+          .attr('r', 3)
+          .attr('fill', 'none')
+          .attr('pointer-events', 'none')
+          .attr('opacity', 0.9)
+          .transition()
+          .delay(i * 220)
+          .duration(1100)
+          .ease(d3.easeCubicOut)
+          .attr('r', 36)
+          .attr('opacity', 0)
+          .remove();
+      }
+      // Fade and remove the arc after a short pause
+      arc.transition().delay(600).duration(800).attr('opacity', 0).remove();
+    });
 }
 
 // Returns the SVG centroid of the largest feature belonging to ownerName
@@ -620,6 +695,10 @@ socket.on('state', (state) => {
 
 socket.on('log', (data) => {
   appendLog(data.message);
+});
+
+socket.on('nuclear_strike', (data) => {
+  animateNuclearStrike(data.launcher, data.target);
 });
 
 socket.on('gameover', (data) => {

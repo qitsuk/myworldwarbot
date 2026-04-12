@@ -37,6 +37,15 @@ RISK_ESCALATION   = 0.0004  # risk grows by this much per month after the ramp e
 MAX_RISK          = 0.70    # hard ceiling
 STALEMATE_MONTHS  = 36    # if no new conflict starts in this many months, force one
 
+# Nuclear proliferation thresholds
+NUKE_TECH_THRESHOLD  = 2.8   # minimum tech_level to begin enrichment
+NUKE_RISK_THRESHOLD  = 0.25  # world.risk must exceed this before any enrichment starts
+NUKE_MAX_STOCKPILE   = 4999  # cap to exclude Russia/USA-tier arsenals (>= 5000)
+URANIUM_PER_NUKE     = 12.0  # enrichment units needed to build one warhead
+URANIUM_RATE_BASE    = 0.04  # base units accumulated per month when enriching
+# enrichment rate scales with tech: base × (tech / NUKE_TECH_THRESHOLD) up to ×2
+URANIUM_RATE_MAX_MULT = 2.0
+
 START_YEAR = random.randint(2027, 2150)
 START_DATE = date(START_YEAR, 1, 1)
 
@@ -75,8 +84,10 @@ def annexe(winner, loser, world):
     winner.neighbors = list(set(winner.neighbors + loser.neighbors) - {winner.name})
     winner.military_strength = min(winner.military_strength, winner.military_cap)
     winner.absorbed_names.extend(loser.absorbed_names)
-    winner.nukes += loser.nukes
-    winner.nuked = winner.nuked or loser.nuked
+    winner.nukes     += loser.nukes
+    winner.uranium   += loser.uranium
+    winner.nuked      = winner.nuked     or loser.nuked
+    winner.was_nuked  = winner.was_nuked or loser.was_nuked
     world.countries.remove(loser)
     flavor = random.choice(_WAR_ANNEXATION_FLAVORS).format(winner=winner.name, loser=loser.name)
     log(f"  >> {flavor}")
@@ -288,6 +299,19 @@ _WAR_BETRAYAL_FLAVORS = [
     "The alliance dissolves in bloodshed as {attacker} betrays {defender}.",
 ]
 
+_NUCLEAR_ENRICHMENT_FLAVORS = [
+    "Satellites detect unusual heat signatures near {country}'s remote facilities.",
+    "{country} quietly begins enriching uranium — the world watches nervously.",
+    "Intelligence analysts flag suspicious centrifuge activity in {country}.",
+    "Under the guise of civilian energy, {country} accelerates its enrichment programme.",
+    "{country}'s engineers work in shifts around the clock at an undisclosed facility.",
+    "Diplomatic cables warn that {country} is on the path to the bomb.",
+    "Inspectors are turned away at the border as {country} ramps up enrichment.",
+    "{country} withdraws from non-proliferation discussions without explanation.",
+    "Trace isotopes in {country}'s atmosphere suggest an active weapons programme.",
+    "World powers demand answers — {country} stays silent and keeps enriching.",
+]
+
 _NUCLEAR_PROLIFERATION_FLAVORS = [
     "{country} joins the nuclear club — the world grows more dangerous.",
     "Intelligence sources confirm: {country} has the bomb.",
@@ -299,6 +323,14 @@ _NUCLEAR_PROLIFERATION_FLAVORS = [
     "A new nuclear power emerges from the shadows: {country}.",
     "{country}'s nuclear programme, long suspected, has borne fruit.",
     "The unthinkable becomes reality: {country} has developed nuclear weapons.",
+]
+
+_NUCLEAR_MILESTONE_FLAVORS = [
+    "{country}'s nuclear arsenal quietly crosses {n} warheads.",
+    "Arms control experts warn: {country} now fields {n} nuclear weapons.",
+    "{country} reaches {n} warheads — a regional deterrent is now a global one.",
+    "With {n} warheads, {country} cements itself as a nuclear middle power.",
+    "The proliferation crisis deepens as {country} surpasses {n} warheads.",
 ]
 
 _UNION_FLAVORS = [
@@ -541,7 +573,9 @@ def merge_countries(primary, secondary, world):
         primary.military_cap
     )
     primary.absorbed_names.extend(secondary.absorbed_names)
-    primary.nukes += secondary.nukes
+    primary.nukes     += secondary.nukes
+    primary.uranium   += secondary.uranium
+    primary.was_nuked  = primary.was_nuked or secondary.was_nuked
     primary.nuked = primary.nuked or secondary.nuked
     primary.tech_level = round(max(primary.tech_level, secondary.tech_level), 2)
     world.countries.remove(secondary)
@@ -593,6 +627,7 @@ def get_world_state(world):
                 'absorbed_names': c.absorbed_names,
                 'nukes': c.nukes,
                 'nuked': c.nuked,
+                'was_nuked': c.was_nuked,
                 'tech_level': round(c.tech_level, 2),
             }
             for c in world.countries
@@ -720,6 +755,9 @@ def simulate_day(world, events):
 
     for conflict in list(world.active_conflicts):
         conflict.simulate_day(len(world.countries), world.endgame_nuke_threshold)
+        # Drain any nuclear strikes that fired this tick into the world queue
+        world.pending_strikes.extend(conflict.pending_strikes)
+        conflict.pending_strikes.clear()
         if conflict.is_over:
             world.active_conflicts.remove(conflict)
             winner, loser = conflict.winner, conflict.loser
@@ -800,14 +838,32 @@ def simulate_day(world, events):
                 log(f"  >> {flavor}")
                 trigger_alliance_support(country, target, world)
 
-    # Nuclear proliferation: wealthy non-nuclear nations may secretly develop nukes
-    for country in list(world.countries):
-        if country.nukes == 0 and country.economy >= 500_000_000_000:
-            proliferation_chance = (country.economy / 1e13) * 0.0001
-            if random.random() < proliferation_chance:
-                country.nukes = random.randint(1, 5)
-                flavor = random.choice(_NUCLEAR_PROLIFERATION_FLAVORS).format(country=country.name)
+    # Nuclear proliferation: gradual uranium enrichment gated on tech + world tension
+    if world.risk >= NUKE_RISK_THRESHOLD:
+        for country in list(world.countries):
+            # Skip superpowers with existing massive arsenals (Russia/USA tier)
+            if country.nukes >= NUKE_MAX_STOCKPILE:
+                continue
+            if country.tech_level < NUKE_TECH_THRESHOLD:
+                continue
+            # Accumulate enriched uranium; rate scales with tech level
+            rate_mult = min(URANIUM_RATE_MAX_MULT, country.tech_level / NUKE_TECH_THRESHOLD)
+            prev_uranium = country.uranium
+            country.uranium += URANIUM_RATE_BASE * rate_mult
+            # Log when enrichment first starts (only for non-nuclear nations, transition from 0)
+            if prev_uranium == 0.0 and country.nukes == 0:
+                flavor = random.choice(_NUCLEAR_ENRICHMENT_FLAVORS).format(country=country.name)
                 log(f"  [NUCLEAR] \u2622 {flavor}")
+            # Convert accumulated uranium into warheads
+            while country.uranium >= URANIUM_PER_NUKE:
+                country.uranium -= URANIUM_PER_NUKE
+                country.nukes += 1
+                if country.nukes == 1:
+                    flavor = random.choice(_NUCLEAR_PROLIFERATION_FLAVORS).format(country=country.name)
+                    log(f"  [NUCLEAR] \u2622 {flavor}")
+                elif country.nukes in (10, 25, 50, 100, 250, 500, 1000, 2000):
+                    flavor = random.choice(_NUCLEAR_MILESTONE_FLAVORS).format(country=country.name, n=country.nukes)
+                    log(f"  [NUCLEAR] \u2622 {flavor}")
 
     decay_alliances(world)
     form_alliances(world)
