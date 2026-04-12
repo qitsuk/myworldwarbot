@@ -67,7 +67,7 @@ let worldState    = null;
 let byName        = new Map();
 let territoryInfo = {};   // original sim name → {c, o, w, a}
 let mapReady      = false;
-let svgEl, mapGroup, zoom, pathFn, countrySel, borderSel, conflictSel, nukeSel;
+let svgEl, mapGroup, zoom, pathFn, countrySel, borderDefaultSel, borderWarSel, borderAllySel, conflictSel, nukeSel;
 let topoWorld     = null;   // kept for dynamic border mesh
 
 // ─────────────────────────────────────────────
@@ -117,14 +117,43 @@ function getFeatureOwner(feature) {
 }
 
 function updateBorders() {
-  if (!topoWorld || !borderSel) return;
-  // Redraw mesh: only draw arcs between features with DIFFERENT owners (or coastlines)
-  const mesh = topojson.mesh(
-    topoWorld,
-    topoWorld.objects.countries,
-    (a, b) => a === b || getFeatureOwner(a) !== getFeatureOwner(b)
-  );
-  borderSel.attr('d', pathFn(mesh));
+  if (!topoWorld || !borderDefaultSel) return;
+  const co = topoWorld.objects.countries;
+
+  // Build owner-state lookup from current world state
+  const atWarOwners  = new Set();
+  const allyOwners   = new Set();
+  if (worldState) {
+    for (const c of worldState.countries) {
+      if (c.at_war)             atWarOwners.add(c.name);
+      if (c.alliance_id != null) allyOwners.add(c.name);
+    }
+  }
+
+  // Helper: is an arc an internal border of a single-owner territory?
+  // Returns true if it should be suppressed (a !== b and same owner on both sides).
+  function internal(a, b) {
+    return a !== b && getFeatureOwner(a) === getFeatureOwner(b);
+  }
+
+  // 1. Default gray borders — draw wherever owners differ (or coastline); suppress internals
+  borderDefaultSel.attr('d', pathFn(topojson.mesh(topoWorld, co,
+    (a, b) => !internal(a, b) && (a === b || getFeatureOwner(a) !== getFeatureOwner(b))
+  )));
+
+  // 2. Alliance blue borders — outer edge of allied nations; suppress internals
+  borderAllySel.attr('d', pathFn(topojson.mesh(topoWorld, co, (a, b) => {
+    if (internal(a, b)) return false;
+    const oa = getFeatureOwner(a), ob = getFeatureOwner(b);
+    return allyOwners.has(oa) || allyOwners.has(ob);
+  })));
+
+  // 3. War red borders — outer edge of nations at war; drawn on top of alliance
+  borderWarSel.attr('d', pathFn(topojson.mesh(topoWorld, co, (a, b) => {
+    if (internal(a, b)) return false;
+    const oa = getFeatureOwner(a), ob = getFeatureOwner(b);
+    return atWarOwners.has(oa) || atWarOwners.has(ob);
+  })));
 }
 
 function updateNukeBadges() {
@@ -327,10 +356,7 @@ function updateConflictArcs() {
 
 function updateMap() {
   if (!mapReady) return;
-  countrySel
-    .attr('fill', countryFill)
-    .attr('stroke', countryStroke)
-    .attr('stroke-width', countryStrokeWidth);
+  countrySel.attr('fill', countryFill);
   updateBorders();
   updateConflictArcs();
   updateNukeBadges();
@@ -377,12 +403,16 @@ async function initMap() {
     .on('mousemove', onMouseMove)
     .on('mouseleave', onMouseLeave);
 
-  // Dynamic border mesh
-  borderSel = mapGroup.append('path')
-    .attr('class', 'border-mesh')
-    .attr('fill', 'none')
-    .attr('stroke', '#1c2333')
-    .attr('stroke-width', 0.4);
+  // Border mesh layers — drawn in order so war appears on top of alliance
+  borderDefaultSel = mapGroup.append('path')
+    .attr('class', 'border-mesh border-default')
+    .attr('fill', 'none');
+  borderAllySel = mapGroup.append('path')
+    .attr('class', 'border-mesh border-ally')
+    .attr('fill', 'none');
+  borderWarSel = mapGroup.append('path')
+    .attr('class', 'border-mesh border-war')
+    .attr('fill', 'none');
 
   // Conflict arc layer — above borders, below nuke badges
   conflictSel = mapGroup.append('g').attr('class', 'conflict-arcs');

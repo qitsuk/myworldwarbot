@@ -67,14 +67,18 @@ body {
   height: 100%;
 }
 
-/* Country paths */
+/* Country paths — no individual stroke; all borders handled by mesh layers */
 .country {
-  stroke: #1c2333;
-  stroke-width: 0.4px;
+  stroke: none;
   transition: fill 0.4s ease;
   cursor: pointer;
 }
 .country:hover { stroke: #58a6ff; stroke-width: 1px; }
+
+/* Border mesh layers */
+.border-default { stroke: #1c2333; stroke-width: 0.4px; }
+.border-ally     { stroke: #58a6ff; stroke-width: 1.4px; }
+.border-war      { stroke: #ff4444; stroke-width: 1.4px; }
 
 /* ── TOOLTIP ── */
 #tooltip {
