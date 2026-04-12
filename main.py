@@ -15,7 +15,7 @@ load_dotenv()
 VOWELS = set('aeiouAEIOU')
 
 TIMESCALE_TEST = 0.5
-TIMESCALE_PROD = 1 * 60 * 60  # 1 hours per month
+TIMESCALE_PROD = 1 * 60 * 60  # 1 hour per month
 
 INVASION_THRESHOLD = 10.0
 ALLIANCE_CHANCE       = 0.002  # chance per month an unaligned country seeks an alliance
@@ -37,7 +37,8 @@ STALEMATE_MONTHS  = 36    # if no new conflict starts in this many months, force
 
 START_DATE = date(2032, 1, 1)
 
-sleep_time = TIMESCALE_TEST if DEBUG else TIMESCALE_PROD
+_default_timescale = TIMESCALE_TEST if DEBUG else TIMESCALE_PROD
+sleep_time = float(os.getenv('TIMESCALE', _default_timescale))
 
 def current_date(world):
     """Each simulation tick = 1 month. Returns the 1st of the corresponding month."""

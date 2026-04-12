@@ -17,34 +17,37 @@ WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL', '')
 
 # Toggle which event types get posted to Discord
 NOTIFY_EVENTS = {
-    'war':      True,   # >> war declarations and instant conquests
-    'nuclear':  True,   # [NUCLEAR] strikes
-    'peace':    True,   # [PEACE] deals, mergers, surrenders
-    'union':    True,   # [UNION] nation mergers
-    'world':    True,   # [WORLD] tension milestones, stalemate breaks
-    'alliance': True,   # [ALLIANCE] formations and defections
-    'gameover': True,   # simulation over
+    'war':        True,   # >> war declarations and instant conquests
+    'nuclear':    True,   # [NUCLEAR] strikes
+    'peace':      True,   # [PEACE] deals, mergers, surrenders
+    'union':      True,   # [UNION] nation mergers
+    'world':      True,   # [WORLD] tension milestones, stalemate breaks
+    'alliance':   True,   # [ALLIANCE] formations
+    'defection':  True,   # [ALLIANCE] member withdrawals / fractures
+    'gameover':   True,   # simulation over
 }
 
 # Embed colours (decimal)
 _COLOURS = {
-    'war':      0xE05252,   # red
-    'nuclear':  0xFF6600,   # orange
-    'peace':    0x57C757,   # green
-    'union':    0x58A6FF,   # blue
-    'world':    0xA371F7,   # purple
-    'alliance': 0x8B949E,   # grey
-    'gameover': 0xFFD700,   # gold
+    'war':        0xE05252,   # red
+    'nuclear':    0xFF6600,   # orange
+    'peace':      0x57C757,   # green
+    'union':      0x58A6FF,   # blue
+    'world':      0xA371F7,   # purple
+    'alliance':   0x8B949E,   # grey
+    'defection':  0xE07B39,   # amber
+    'gameover':   0xFFD700,   # gold
 }
 
 _TITLES = {
-    'war':      '⚔️ War',
-    'nuclear':  '☢️ Nuclear Strike',
-    'peace':    '🕊️ Peace',
-    'union':    '🤝 Union',
-    'world':    '🌍 World Event',
-    'alliance': '🛡️ Alliance',
-    'gameover': '🏆 Simulation Over',
+    'war':        '⚔️ War',
+    'nuclear':    '☢️ Nuclear Strike',
+    'peace':      '🕊️ Peace',
+    'union':      '🤝 Union',
+    'world':      '🌍 World Event',
+    'alliance':   '🛡️ Alliance Formed',
+    'defection':  '🏳️ Alliance Broken',
+    'gameover':   '🏆 Simulation Over',
 }
 
 
@@ -54,7 +57,7 @@ def _classify(message: str) -> str | None:
     if '[WORLD]'    in m: return 'world'
     if '[UNION]'    in m: return 'union'
     if '[PEACE]'    in m: return 'peace'
-    if '[ALLIANCE]' in m: return 'alliance'
+    if '[ALLIANCE]' in m: return 'defection' if 'withdraws' in m else 'alliance'
     if m.startswith('>>'):  return 'war'
     if 'SIMULATION OVER' in m.upper(): return 'gameover'
     return None
@@ -65,7 +68,7 @@ def _build_payload(event_type: str, message: str) -> bytes:
     payload = {
         'embeds': [{
             'title':       _TITLES[event_type],
-            'description': clean,
+            'description': f"{clean}\n\n[🗺️ View the live map](https://worldwarbot.qitsuk.dk)",
             'color':       _COLOURS[event_type],
 	    'url':	   'https://worldwarbot.qitsuk.dk',
 	    'footer': {
