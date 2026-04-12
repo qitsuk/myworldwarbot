@@ -22,7 +22,7 @@ const COUNTRY_IDS = {
   "300":"Greece","304":"Denmark","320":"Guatemala","324":"Guinea","624":"Guinea-Bissau","328":"Guyana",
   "332":"Haiti","340":"Honduras","344":"Hong Kong","348":"Hungary","352":"Iceland",
   "356":"India","360":"Indonesia","364":"Iran","368":"Iraq","372":"Ireland",
-  "376":"Israel","384":"Ivory Coast","388":"Jamaica","392":"Japan","400":"Jordan",
+  "376":"Israel","380":"Italy","384":"Ivory Coast","388":"Jamaica","392":"Japan","400":"Jordan",
   "398":"Kazakhstan","404":"Kenya","296":"Kiribati","414":"Kuwait","417":"Kyrgyzstan",
   "418":"Laos","428":"Latvia","422":"Lebanon","426":"Lesotho","430":"Liberia",
   "434":"Libya","438":"Liechtenstein","440":"Lithuania","442":"Luxembourg",
