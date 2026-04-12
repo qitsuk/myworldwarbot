@@ -8,13 +8,14 @@ import random
 import threading
 import logger
 import main as sim
+from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from data_loader import load_countries, load_events
 from world import World
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / '.env')
 
 
 def _fmt_timescale(seconds: float) -> str:

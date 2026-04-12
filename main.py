@@ -3,6 +3,7 @@ import os
 import time
 import random
 from datetime import date, timedelta
+from pathlib import Path
 from dotenv import load_dotenv
 from data_loader import load_countries, load_events
 from world import World
@@ -10,7 +11,7 @@ from conflict import Conflict, PYRRHIC_RATIO
 from alliance import Alliance
 from logger import log
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / '.env')
 
 VOWELS = set('aeiouAEIOU')
 

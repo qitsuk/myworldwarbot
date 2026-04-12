@@ -9,9 +9,10 @@ import os
 import threading
 import urllib.request
 import urllib.error
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / '.env')
 
 WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL', '')
 
