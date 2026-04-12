@@ -9,8 +9,11 @@ import os
 import threading
 import urllib.request
 import urllib.error
+from dotenv import load_dotenv
 
-WEBHOOK_URL = "https://discord.com/api/webhooks/1492198099643404359/Y3RnfzA5MB7PiPqVgywnN2xAU5-LKuXnkOdjp4aNe7QVEy9jtK4XWgrIciS2M3iYnYvn"
+load_dotenv()
+
+WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL', '')
 
 # Toggle which event types get posted to Discord
 NOTIFY_EVENTS = {

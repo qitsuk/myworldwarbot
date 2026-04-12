@@ -1,12 +1,16 @@
 import math
+import os
 import time
 import random
 from datetime import date, timedelta
+from dotenv import load_dotenv
 from data_loader import load_countries, load_events
 from world import World
 from conflict import Conflict, PYRRHIC_RATIO
 from alliance import Alliance
 from logger import log
+
+load_dotenv()
 
 VOWELS = set('aeiouAEIOU')
 
@@ -22,7 +26,7 @@ PEACETIME_ARMY_BASE   = 0.012  # minimum standing army: 1.2% of population
 PEACETIME_ARMY_SCALE  = 0.04   # each point of world.risk adds this × population to the target
 WARTIME_ARMY_TARGET   = 0.40   # nations mobilise toward 40% of military_cap during war
 RECRUITMENT_RATE      = 0.04   # close 4% of the gap to target each month
-DEBUG = False
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
 PEACE_MONTHS      = 42    # no wars for the first 3.5 years
 RAMP_MONTHS       = 24    # risk ramps 0 → BASE_RISK over the following 2 years

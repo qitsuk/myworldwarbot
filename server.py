@@ -3,17 +3,21 @@ Development:  python server.py
 Production:   pip install eventlet
               gunicorn --worker-class eventlet -w 1 server:app
 """
+import os
 import random
 import threading
 import logger
 import main as sim
+from dotenv import load_dotenv
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from data_loader import load_countries, load_events
 from world import World
 
+load_dotenv()
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'ww-sim-2032'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'ww-sim-2032')
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='threading')
 
 _sim_lock = threading.Lock()
@@ -108,4 +112,5 @@ def _run_simulation():
 
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    debug = os.getenv('DEBUG', 'false').lower() == 'true'
+    socketio.run(app, host='0.0.0.0', port=5000, debug=debug)
