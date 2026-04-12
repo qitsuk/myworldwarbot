@@ -18,6 +18,19 @@ from world import World
 
 load_dotenv(Path(__file__).parent / '.env')
 
+_GAMEOVER_FLAVORS = [
+    "After {years} years of struggle, {winner} stands alone — master of the world.",
+    "{winner} has done the impossible: conquered the entire world in {years} years.",
+    "The last flag standing belongs to {winner}. The world falls silent.",
+    "History ends and begins again — {winner} reigns supreme after {years} years of war.",
+    "From the ashes of a hundred nations, {winner} emerges victorious.",
+    "The world has known nothing but war for {years} years. Now it knows only {winner}.",
+    "One nation to rule them all: {winner} claims the world after {years} years.",
+    "The struggle is over. {winner} is the last nation on Earth.",
+    "After {years} years and countless wars, {winner} stands as the sole world power.",
+    "The simulation ends as it must — with one. {winner} has conquered the world.",
+]
+
 
 def _fmt_timescale(seconds: float) -> str:
     if seconds < 1:
@@ -82,6 +95,13 @@ def _run_simulation():
     logger.log(f'[STARTUP] A new simulation is starting! {len(world.countries)} nations, beginning {sim.START_DATE.strftime("%B %Y")}. Timescale: {_fmt_timescale(sim.sleep_time)}.')
 
     last_conflict_month = sim.PEACE_MONTHS
+    _tension_thresholds = {
+        0.25: "Tensions are rising across the globe.",
+        0.40: "The world is on edge — conflicts grow more frequent.",
+        0.55: "A global conflict seems inevitable.",
+        0.70: "The world stands on the brink of total war.",
+    }
+    _tension_seen = set()
 
     while len(world.countries) > 1:
         world.current_day += 1
@@ -91,9 +111,14 @@ def _run_simulation():
         world.risk = sim._update_risk(world.current_day, world.risk)
 
         if world.current_day == sim.PEACE_MONTHS + 1:
-            logger.log('  [WORLD] The peace is over. Nations begin to mobilise.')
+            logger.log(f'  [WORLD] {random.choice(sim._WORLD_PEACE_ENDS_FLAVORS)}')
         elif world.current_day == sim.PEACE_MONTHS + sim.RAMP_MONTHS + 1:
-            logger.log('  [WORLD] Global tensions have reached a breaking point.')
+            logger.log(f'  [WORLD] {random.choice(sim._WORLD_TENSIONS_PEAK_FLAVORS)}')
+
+        for threshold, msg in _tension_thresholds.items():
+            if world.risk >= threshold and threshold not in _tension_seen:
+                _tension_seen.add(threshold)
+                logger.log(f'  [TENSION] {msg}')
 
         conflicts_before = len(world.active_conflicts)
         sim.simulate_day(world, events)
@@ -109,7 +134,8 @@ def _run_simulation():
             candidates = sorted(world.countries, key=lambda c: c.military_strength, reverse=True)
             aggressor  = candidates[0]
             target     = random.choice(candidates[1:])
-            logger.log(f'  [WORLD] A long peace breeds ambition. {aggressor.name} grows restless and strikes {target.name}!')
+            flavor = random.choice(sim._STALEMATE_FLAVORS).format(aggressor=aggressor.name, target=target.name)
+            logger.log(f'  [WORLD] {flavor}')
             world.active_conflicts.append(Conflict(aggressor, target))
             sim.trigger_alliance_support(aggressor, target, world)
             last_conflict_month = world.current_day
@@ -124,7 +150,8 @@ def _run_simulation():
     if world.countries:
         winner = world.countries[0].name
         months = world.current_day
-        logger.log(f'SIMULATION OVER — {winner} has conquered the world in {months // 12} years, {months % 12} months!')
+        flavor = random.choice(_GAMEOVER_FLAVORS).format(winner=winner, years=months // 12)
+        logger.log(f'SIMULATION OVER — {flavor}')
         socketio.emit('gameover', {
             'winner': winner,
             'months': months,

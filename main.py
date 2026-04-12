@@ -7,7 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from data_loader import load_countries, load_events
 from world import World
-from conflict import Conflict, PYRRHIC_RATIO
+from conflict import Conflict, PYRRHIC_RATIO, _PEACE_PYRRHIC_FLAVORS
 from alliance import Alliance
 from logger import log
 
@@ -76,7 +76,8 @@ def annexe(winner, loser, world):
     winner.nukes += loser.nukes
     winner.nuked = winner.nuked or loser.nuked
     world.countries.remove(loser)
-    log(f"  >> {winner.name} has annexed {loser.name}!")
+    flavor = random.choice(_WAR_ANNEXATION_FLAVORS).format(winner=winner.name, loser=loser.name)
+    log(f"  >> {flavor}")
 
     # Clean loser out of any alliance
     for alliance in list(world.alliances):
@@ -128,6 +129,262 @@ def get_alliance(country, world):
     return None
 
 GIANT_PERCENTILE = 0.15   # top 15% by military_cap are giants; they cannot ally
+
+_ALLIANCE_FORM_FLAVORS = [
+    "{a} and {b} sign a mutual defence pact.",
+    "Diplomats in {a} and {b} seal a historic agreement.",
+    "{a} and {b} find common cause against a dangerous world.",
+    "A new axis emerges: {a} and {b} pledge their swords together.",
+    "{a} extends an olive branch to {b} — and {b} accepts.",
+    "Bound by shared fears, {a} and {b} unite.",
+    "The flags of {a} and {b} fly side by side for the first time.",
+    "Pragmatism wins out: {a} and {b} agree to stand together.",
+    "In a surprise move, {a} and {b} announce a formal alliance.",
+    "Quiet negotiations between {a} and {b} produce a landmark treaty.",
+    "What began as rivalry ends in partnership: {a} and {b} ally.",
+    "Strategic interests align as {a} and {b} forge a new pact.",
+    "The world watches as {a} and {b} declare themselves allies.",
+    "{a} reaches across the border to {b}, finding a willing partner.",
+    "A bloc is born: {a} and {b} commit to mutual protection.",
+    "Faced with rising dangers, {a} and {b} choose cooperation.",
+    "{a} and {b} ink a non-aggression and mutual aid treaty.",
+    "Old tensions dissolve as {a} and {b} formally align.",
+    "Hardened by instability, {a} and {b} turn to one another.",
+    "A pact in troubled times: {a} and {b} join forces.",
+    "Diplomacy triumphs as {a} and {b} agree to defend each other.",
+    "Neither alone nor afraid — {a} and {b} stand together.",
+    "{a} and {b} choose solidarity over isolation.",
+    "United by necessity, {a} and {b} forge an unlikely alliance.",
+    "The ink is barely dry: {a} and {b} have allied.",
+]
+
+_ALLIANCE_BREAK_FLAVORS = [
+    "{country} withdraws from {alliance}, citing irreconcilable differences.",
+    "The {alliance} fractures as {country} walks away.",
+    "{country} quietly exits {alliance}, ending its commitment.",
+    "Citing shifting priorities, {country} leaves {alliance}.",
+    "The pact strains and breaks: {country} parts ways with {alliance}.",
+    "{country} tears up its treaty with {alliance}.",
+    "Disillusioned, {country} abandons {alliance}.",
+    "{country} declares it will no longer be bound by {alliance}.",
+    "A blow to solidarity: {country} defects from {alliance}.",
+    "Diplomatic ties fray as {country} exits {alliance}.",
+    "{country} concludes that {alliance} no longer serves its interests.",
+    "The {alliance} loses a member as {country} steps back.",
+    "{country} goes it alone, withdrawing from {alliance}.",
+    "Once allies, now strangers: {country} breaks from {alliance}.",
+    "Internal tensions boil over as {country} quits {alliance}.",
+    "{country} pulls its forces from {alliance} without explanation.",
+    "Amid growing mistrust, {country} leaves {alliance}.",
+    "The bloc weakens: {country} has abandoned {alliance}.",
+    "{country} signals a new direction, departing from {alliance}.",
+    "Self-interest wins out — {country} withdraws from {alliance}.",
+    "The ink on the {alliance} treaty fades as {country} exits.",
+    "{country} no longer stands with {alliance}.",
+    "A quiet but damaging blow: {country} defects from {alliance}.",
+    "Pragmatism turns to betrayal as {country} leaves {alliance}.",
+    "{country} charts its own course, abandoning {alliance}.",
+]
+
+_WAR_DECLARATION_FLAVORS = [
+    "{attacker} crosses the border into {defender} — war has begun.",
+    "Without warning, {attacker} launches an offensive against {defender}.",
+    "The drums of war sound as {attacker} mobilises against {defender}.",
+    "{attacker} has had enough — it strikes at {defender}.",
+    "Negotiations have failed. {attacker} moves against {defender}.",
+    "{attacker} opens a new front against {defender}.",
+    "Tensions boil over as {attacker} invades {defender}.",
+    "The order is given: {attacker} attacks {defender}.",
+    "{attacker} seizes the initiative and strikes {defender}.",
+    "A bold gamble: {attacker} goes to war with {defender}.",
+    "{attacker} breaks the peace and declares war on {defender}.",
+    "Citing grievances old and new, {attacker} wages war on {defender}.",
+    "{attacker} sends its forces marching into {defender}.",
+    "Diplomacy is dead. {attacker} declares war on {defender}.",
+    "The conflict was coming — {attacker} simply fires the first shot against {defender}.",
+]
+
+_WAR_INSTANT_FLAVORS = [
+    "Resistance crumbles. {attacker} sweeps through {defender} unopposed.",
+    "{defender} collapses before {attacker}'s overwhelming might.",
+    "{attacker} rolls over {defender} in a matter of days.",
+    "Outgunned and outnumbered, {defender} falls to {attacker} without a fight.",
+    "{defender} never stood a chance. {attacker} seizes it in a single stroke.",
+    "A swift campaign: {attacker} conquers {defender} without breaking a sweat.",
+    "The outcome was never in doubt. {attacker} takes {defender}.",
+    "{attacker}'s forces pour into {defender}, meeting almost no resistance.",
+    "In a lightning strike, {attacker} annexes {defender}.",
+    "The campaign is brief and brutal — {attacker} absorbs {defender}.",
+]
+
+_WAR_TECH_DEFIANCE_FLAVORS = [
+    "{defender}'s advanced arsenal defies {attacker}'s numerical advantage.",
+    "Technology bridges the gap — {defender} refuses to yield to {attacker}.",
+    "{defender} fights on, its superior weapons holding {attacker} at bay.",
+    "{attacker} is larger, but {defender} is smarter. The fight continues.",
+    "Quality over quantity: {defender} stands firm against {attacker}.",
+    "{defender}'s cutting-edge military gives its soldiers renewed resolve.",
+    "Outnumbered but never outmatched, {defender} fights back against {attacker}.",
+    "{attacker}'s numbers mean little against {defender}'s technological edge.",
+    "Armed with advanced weaponry, {defender} refuses to bow to {attacker}.",
+    "Against all odds, {defender} leverages its tech edge to hold off {attacker}.",
+]
+
+_WAR_BRAVE_RESISTANCE_FLAVORS = [
+    "Hopelessly outnumbered, {defender} fights on regardless.",
+    "{defender} refuses to kneel before {attacker}.",
+    "Against overwhelming odds, {defender} stands its ground.",
+    "{attacker} expected a quick surrender. {defender} had other ideas.",
+    "Outgunned but defiant, {defender} will not yield to {attacker}.",
+    "{defender} digs in — it will not be taken without a fight.",
+    "Pride and desperation drive {defender} to resist {attacker}.",
+    "The people of {defender} take up arms, refusing to submit to {attacker}.",
+    "{defender} will fall — but not without costing {attacker} dearly.",
+    "No surrender. {defender} vows to resist {attacker} to the last soldier.",
+]
+
+_WAR_ALLIANCE_ENTRY_FLAVORS = [
+    "{ally} honours its treaty and enters the war against {attacker}.",
+    "True to its word, {ally} rides to {defender}'s defence.",
+    "The war widens: {ally} declares war on {attacker} in solidarity with {defender}.",
+    "{ally} invokes its alliance with {defender} and joins the fight.",
+    "A new front opens as {ally} rushes to the aid of {defender}.",
+    "{ally} will not stand by while {defender} is attacked — it enters the war.",
+    "Bound by treaty, {ally} turns its guns on {attacker}.",
+    "{attacker} now faces a second enemy: {ally} stands with {defender}.",
+    "The conflict escalates as {ally} enters on the side of {defender}.",
+    "{ally} marches to war, unwilling to abandon {defender}.",
+    "{ally} answers the call — {defender} will not fight {attacker} alone.",
+    "Honour demands it: {ally} joins {defender} against {attacker}.",
+]
+
+_WAR_ANNEXATION_FLAVORS = [
+    "{winner} raises its flag over what was once {loser}.",
+    "{loser} ceases to exist — absorbed entirely by {winner}.",
+    "The nation of {loser} is no more. {winner} claims its lands.",
+    "{winner} consolidates its gains, formally annexing {loser}.",
+    "{loser} is erased from the map by {winner}.",
+    "By right of conquest, {winner} absorbs {loser}.",
+    "The borders are redrawn: {loser} becomes part of {winner}.",
+    "{loser}'s sovereignty ends today. {winner} takes all.",
+    "{winner} plants its banner across {loser}. The conquest is complete.",
+    "Defiant to the last, {loser} falls to {winner}.",
+    "A nation disappears: {loser} is folded into {winner}.",
+    "{winner} finishes what it started — {loser} is gone.",
+]
+
+_WAR_BETRAYAL_FLAVORS = [
+    "{attacker} shatters the alliance and turns on {defender}.",
+    "Former friends become enemies: {attacker} attacks {defender}.",
+    "Trust is the first casualty — {attacker} strikes at {defender}.",
+    "{defender} never saw it coming. {attacker} attacks without warning.",
+    "Alliances mean nothing now. {attacker} goes to war with {defender}.",
+    "In the final chapter, even friends become enemies: {attacker} turns on {defender}.",
+    "The grand betrayal: {attacker} turns its weapons on {defender}.",
+    "Honour means nothing at the end of the world. {attacker} attacks {defender}.",
+    "{attacker} decides that cooperation is for the weak, and attacks {defender}.",
+    "The alliance dissolves in bloodshed as {attacker} betrays {defender}.",
+]
+
+_NUCLEAR_PROLIFERATION_FLAVORS = [
+    "{country} joins the nuclear club — the world grows more dangerous.",
+    "Intelligence sources confirm: {country} has the bomb.",
+    "{country} successfully tests its first nuclear device.",
+    "The world's strategic balance shifts as {country} goes nuclear.",
+    "In secret labs, {country} has built what it hopes will guarantee its survival.",
+    "{country} adds the ultimate deterrent to its arsenal.",
+    "Fears of proliferation are realised — {country} now has nuclear weapons.",
+    "A new nuclear power emerges from the shadows: {country}.",
+    "{country}'s nuclear programme, long suspected, has borne fruit.",
+    "The unthinkable becomes reality: {country} has developed nuclear weapons.",
+]
+
+_UNION_FLAVORS = [
+    "{a} and {b} lay down their differences and emerge as {name}.",
+    "A new nation is born from the fires of war: {name}.",
+    "Out of conflict comes unity — {a} and {b} become {name}.",
+    "The borders are redrawn as {a} and {b} merge into {name}.",
+    "{a} and {b} find more in common than in conflict, forming {name}.",
+    "History is written today: {a} and {b} unite as {name}.",
+    "From two, one: {name} rises from the merger of {a} and {b}.",
+    "The war ends not with a victor, but a new nation: {name}.",
+    "In a remarkable turn, {a} and {b} set aside the past and become {name}.",
+    "Neither conquered nor vanquished — {a} and {b} simply become {name}.",
+]
+
+_WORLD_PEACE_ENDS_FLAVORS = [
+    "The long peace is over. Nations begin to mobilise for what comes next.",
+    "The era of tranquility ends — the world shifts uneasily into a new age.",
+    "Militaries stir and borders tense. The peace cannot hold much longer.",
+    "The world held its breath long enough. Armies begin to march.",
+    "Stability gives way to ambition — the quiet years are ending.",
+    "A fragile peace begins to crack as nations look beyond their borders.",
+    "The long calm has bred restlessness. Something is coming.",
+    "After years of peace, the drumbeats of war begin to sound.",
+]
+
+_WORLD_TENSIONS_PEAK_FLAVORS = [
+    "Global tensions have reached a fever pitch. War seems unavoidable.",
+    "The world teeters on the edge — full-scale conflict is only a spark away.",
+    "Diplomacy has failed everywhere. The world braces for the worst.",
+    "Fear and ambition grip every capital. The age of war has truly begun.",
+    "No corner of the globe is safe from the shadow of conflict.",
+    "The world has never been more dangerous. Leaders pray for peace — few believe in it.",
+    "Lines are drawn, armies are massed — the great war approaches.",
+    "The balance of power strains to breaking point. Conflict is imminent.",
+]
+
+_WORLD_FINAL_FRACTURE_FLAVORS = [
+    "Only allied nations remain. The grand alliance fractures — and the final war begins.",
+    "With no enemies left to unite them, the great alliance tears itself apart.",
+    "The last alliance splinters. Former allies raise their swords against each other.",
+    "Peace could not last among the powerful. The grand coalition collapses into civil war.",
+    "Allies become enemies as the final chapter of this world begins.",
+    "The great powers, once united, now turn on each other in a final reckoning.",
+    "The world's last alliance dissolves — only war remains.",
+    "Brotherhood lasts only so long. The alliance fractures and the end begins.",
+]
+
+_STALEMATE_FLAVORS = [
+    "Peace grows stale. {aggressor} breaks the silence and attacks {target}.",
+    "A long calm is shattered as {aggressor} turns aggressive toward {target}.",
+    "Boredom and ambition collide: {aggressor} launches a campaign against {target}.",
+    "The world had almost forgotten war — {aggressor} reminds {target}.",
+    "Restless and hungry, {aggressor} makes its move against {target}.",
+    "Stability breeds complacency. {aggressor} exploits it, striking {target}.",
+    "After months of quiet, {aggressor} tears it all apart, attacking {target}.",
+    "The peace was always fragile. {aggressor} finally shatters it, striking {target}.",
+    "Seeing an opportunity in the calm, {aggressor} strikes {target} without warning.",
+    "Patience runs thin in {aggressor} — it launches an attack on {target}.",
+]
+
+_ALLIANCE_JOIN_FLAVORS = [
+    "{country} seeks shelter under the banner of {alliance}.",
+    "{country} petitions to join {alliance} — and is welcomed.",
+    "The {alliance} grows stronger as {country} joins its ranks.",
+    "{country} pledges its forces to {alliance}.",
+    "Seeking safety in numbers, {country} joins {alliance}.",
+    "{country} throws its lot in with {alliance}.",
+    "A new member swells the ranks of {alliance}: {country}.",
+    "{country} signs on to {alliance}, bringing fresh strength to the bloc.",
+    "Not wishing to stand alone, {country} joins {alliance}.",
+    "{country} finds common cause with the members of {alliance}.",
+    "The {alliance} welcomes {country} as its newest member.",
+    "{country} extends its hand to {alliance} — and is embraced.",
+    "Bolstered by {country}, {alliance} grows ever stronger.",
+    "{country} commits its armies to the {alliance} cause.",
+    "Outnumbered and wary, {country} seeks refuge in {alliance}.",
+    "The pact expands: {country} is now part of {alliance}.",
+    "Mutual interests draw {country} toward {alliance}.",
+    "{alliance} adds {country} to its roster of allies.",
+    "After careful deliberation, {country} casts its fate with {alliance}.",
+    "{country} plants its flag alongside those of {alliance}.",
+    "A quiet ceremony marks {country}'s entry into {alliance}.",
+    "{country} and {alliance} formalise their cooperation.",
+    "The world shifts: {country} has joined {alliance}.",
+    "{country} raises the banner of {alliance}.",
+    "No longer isolated, {country} marches under the {alliance} flag.",
+]
 
 def get_giant_threshold(world):
     caps = sorted(c.military_cap for c in world.countries)
@@ -190,10 +447,12 @@ def form_alliances(world):
 
         if isinstance(chosen, Alliance):
             chosen.members.append(country)
-            log(f"  [ALLIANCE] {country.name} joins the {chosen.name}!")
+            flavor = random.choice(_ALLIANCE_JOIN_FLAVORS).format(country=country.name, alliance=chosen.name)
+            log(f"  [ALLIANCE] {flavor}")
         else:
             world.alliances.append(Alliance([country, chosen]))
-            log(f"  [ALLIANCE] {country.name} and {chosen.name} have formed an alliance!")
+            flavor = random.choice(_ALLIANCE_FORM_FLAVORS).format(a=country.name, b=chosen.name)
+            log(f"  [ALLIANCE] {flavor}")
 
 def decay_alliances(world):
     """Each month, members may defect from their alliance."""
@@ -208,7 +467,8 @@ def decay_alliances(world):
                 continue
             old_name = alliance.name
             alliance.remove_member(member)
-            log(f"  [ALLIANCE] {member.name} withdraws from {old_name}.")
+            flavor = random.choice(_ALLIANCE_BREAK_FLAVORS).format(country=member.name, alliance=old_name)
+            log(f"  [ALLIANCE] {flavor}")
 
         if len(alliance.members) < 2 and alliance in world.alliances:
             world.alliances.remove(alliance)
@@ -221,7 +481,7 @@ def check_final_war(world):
     if any(get_alliance(c, world) is None for c in world.countries):
         return
 
-    log("  [WORLD] Only allied nations remain. The grand alliance fractures!")
+    log(f"  [WORLD] {random.choice(_WORLD_FINAL_FRACTURE_FLAVORS)}")
     world.alliances.clear()
 
     # Pair nations by military strength and start conflicts
@@ -234,7 +494,8 @@ def check_final_war(world):
             if b in paired:
                 continue
             world.active_conflicts.append(Conflict(a, b))
-            log(f"  >> {a.name} turns on former ally {b.name}!")
+            flavor = random.choice(_WAR_BETRAYAL_FLAVORS).format(attacker=a.name, defender=b.name)
+            log(f"  >> {flavor}")
             paired.add(a)
             paired.add(b)
             break
@@ -242,7 +503,8 @@ def check_final_war(world):
     for c in remaining:
         if c not in paired:
             world.active_conflicts.append(Conflict(c, remaining[0]))
-            log(f"  >> {c.name} turns on former ally {remaining[0].name}!")
+            flavor = random.choice(_WAR_BETRAYAL_FLAVORS).format(attacker=c.name, defender=remaining[0].name)
+            log(f"  >> {flavor}")
 
 def trigger_alliance_support(attacker, defender, world):
     alliance = get_alliance(defender, world)
@@ -259,7 +521,8 @@ def trigger_alliance_support(attacker, defender, world):
             continue
         conflict = Conflict(ally, attacker)
         world.active_conflicts.append(conflict)
-        log(f"  [ALLIANCE] {ally.name} enters the war in defence of {defender.name}!")
+        flavor = random.choice(_WAR_ALLIANCE_ENTRY_FLAVORS).format(ally=ally.name, defender=defender.name, attacker=attacker.name)
+        log(f"  >> {flavor}")
 
 def merge_countries(primary, secondary, world):
     if secondary not in world.countries or primary not in world.countries:
@@ -280,7 +543,8 @@ def merge_countries(primary, secondary, world):
     primary.nuked = primary.nuked or secondary.nuked
     primary.tech_level = round(max(primary.tech_level, secondary.tech_level), 2)
     world.countries.remove(secondary)
-    log(f"  [UNION] {old_name} and {secondary.name} have unified into {merged_name}!")
+    flavor = random.choice(_UNION_FLAVORS).format(a=old_name, b=secondary.name, name=merged_name)
+    log(f"  [UNION] {flavor}")
 
 
 def get_world_state(world):
@@ -312,6 +576,7 @@ def get_world_state(world):
     return {
         'day': world.current_day,
         'date': current_date(world).strftime('%B %d, %Y'),
+        'risk': round(world.risk, 4),
         'total_countries': len(world.countries),
         'world_population': sum(c.population for c in world.countries),
         'countries': [
@@ -478,7 +743,8 @@ def simulate_day(world, events):
                     loser.economy    = int(loser.economy    * PYRRHIC_RATIO)
                     loser.population = max(1, int(loser.population * PYRRHIC_RATIO))
                     loser.nukes      = int(loser.nukes      * PYRRHIC_RATIO)
-                    log(f"  [PEACE] A pyrrhic victory — {winner.name} inherits the ruins of {loser.name}.")
+                    flavor = random.choice(_PEACE_PYRRHIC_FLAVORS).format(winner=winner.name, loser=loser.name)
+                    log(f"  [PEACE] {flavor}")
                 annexe(winner, loser, world)
 
     for country in list(world.countries):
@@ -510,19 +776,22 @@ def simulate_day(world, events):
                 resist_chance = min(0.80, 0.35 * tech_factor)
                 if random.random() < resist_chance:
                     if tech_factor > 1.1:
-                        log(f"  >> {target.name} refuses to surrender — their superior technology gives them courage!")
+                        flavor = random.choice(_WAR_TECH_DEFIANCE_FLAVORS).format(defender=target.name, attacker=country.name)
                     else:
-                        log(f"  >> {target.name} refuses to surrender despite overwhelming odds!")
+                        flavor = random.choice(_WAR_BRAVE_RESISTANCE_FLAVORS).format(defender=target.name, attacker=country.name)
+                    log(f"  >> {flavor}")
                     conflict = Conflict(country, target)
                     world.active_conflicts.append(conflict)
                     trigger_alliance_support(country, target, world)
                 else:
-                    log(f"  >> {country.name} invades {target.name} and conquers them instantly!")
+                    flavor = random.choice(_WAR_INSTANT_FLAVORS).format(attacker=country.name, defender=target.name)
+                    log(f"  >> {flavor}")
                     annexe(country, target, world)
             else:
                 conflict = Conflict(country, target)
                 world.active_conflicts.append(conflict)
-                log(f"  >> {country.name} declares war on {target.name}!")
+                flavor = random.choice(_WAR_DECLARATION_FLAVORS).format(attacker=country.name, defender=target.name)
+                log(f"  >> {flavor}")
                 trigger_alliance_support(country, target, world)
 
     # Nuclear proliferation: wealthy non-nuclear nations may secretly develop nukes
@@ -531,7 +800,8 @@ def simulate_day(world, events):
             proliferation_chance = (country.economy / 1e13) * 0.0001
             if random.random() < proliferation_chance:
                 country.nukes = random.randint(1, 5)
-                log(f"  [NUCLEAR] \u2622 {country.name} has secretly developed nuclear weapons!")
+                flavor = random.choice(_NUCLEAR_PROLIFERATION_FLAVORS).format(country=country.name)
+                log(f"  [NUCLEAR] \u2622 {flavor}")
 
     decay_alliances(world)
     form_alliances(world)
@@ -572,9 +842,9 @@ def main():
         world.risk = _update_risk(world.current_day, world.risk)
 
         if world.current_day == PEACE_MONTHS + 1:
-            log(f"  [WORLD] The peace is over. Nations begin to mobilise.")
+            log(f"  [WORLD] {random.choice(_WORLD_PEACE_ENDS_FLAVORS)}")
         elif world.current_day == PEACE_MONTHS + RAMP_MONTHS + 1:
-            log(f"  [WORLD] Global tensions have reached a breaking point.")
+            log(f"  [WORLD] {random.choice(_WORLD_TENSIONS_PEAK_FLAVORS)}")
 
         conflicts_before = len(world.active_conflicts)
         simulate_day(world, events)
@@ -589,7 +859,8 @@ def main():
             candidates = sorted(world.countries, key=lambda c: c.military_strength, reverse=True)
             aggressor = candidates[0]
             target    = random.choice(candidates[1:])
-            log(f"  [WORLD] A long peace breeds ambition. {aggressor.name} grows restless and strikes {target.name}!")
+            flavor = random.choice(_STALEMATE_FLAVORS).format(aggressor=aggressor.name, target=target.name)
+            log(f"  [WORLD] {flavor}")
             world.active_conflicts.append(Conflict(aggressor, target))
             trigger_alliance_support(aggressor, target, world)
             last_conflict_month = world.current_day

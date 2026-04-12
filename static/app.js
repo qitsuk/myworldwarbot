@@ -341,6 +341,8 @@ function onMouseLeave() {
 // ─────────────────────────────────────────────
 //  Stats
 // ─────────────────────────────────────────────
+const MAX_RISK = 0.70;
+
 function updateStats(state) {
   document.getElementById('s-nations').textContent      = state.total_countries;
   document.getElementById('s-wars').textContent         = state.conflicts.length;
@@ -350,6 +352,24 @@ function updateStats(state) {
   const yr  = Math.floor((state.day - 1) / 12) + 1;
   const mo  = ((state.day - 1) % 12) + 1;
   document.getElementById('sim-day').textContent  = `Year ${yr}, Month ${mo}`;
+
+  if (state.risk !== undefined) {
+    const pct = Math.min(100, Math.round(state.risk / MAX_RISK * 100));
+    const color = pct < 25 ? '#3fb950'
+                : pct < 50 ? '#d29922'
+                : pct < 75 ? '#f0a500'
+                : '#f85149';
+    const label = pct < 15 ? 'Peaceful'
+                : pct < 30 ? 'Uneasy'
+                : pct < 50 ? 'Tense'
+                : pct < 75 ? 'Volatile'
+                : 'Critical';
+    document.getElementById('tension-bar').style.width           = pct + '%';
+    document.getElementById('tension-bar').style.backgroundColor = color;
+    document.getElementById('tension-value').textContent         = pct + '%';
+    document.getElementById('tension-value').style.color         = color;
+    document.getElementById('tension-desc').textContent          = label;
+  }
 }
 
 function updateTopPowers(top5) {

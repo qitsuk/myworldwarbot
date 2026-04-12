@@ -27,6 +27,7 @@ NOTIFY_EVENTS = {
     'defection':  True,   # [ALLIANCE] member withdrawals / fractures
     'gameover':   True,   # simulation over
     'startup':    True,   # simulation starting up
+    'tension':    True,   # [TENSION] risk milestone crossed
 }
 
 # Embed colours (decimal)
@@ -40,6 +41,7 @@ _COLOURS = {
     'defection':  0xE07B39,   # amber
     'gameover':   0xFFD700,   # gold
     'startup':    0x3FB950,   # green
+    'tension':    0xE07B39,   # amber
 }
 
 _TITLES = {
@@ -52,6 +54,7 @@ _TITLES = {
     'defection':  '🏳️ Alliance Broken',
     'gameover':   '🏆 Simulation Over',
     'startup':    '🌐 New Simulation Starting',
+    'tension':    '🌡️ World Tension',
 }
 
 
@@ -62,6 +65,7 @@ def _classify(message: str) -> str | None:
     if '[UNION]'    in m: return 'union'
     if '[PEACE]'    in m: return 'peace'
     if '[STARTUP]'  in m: return 'startup'
+    if '[TENSION]'  in m: return 'tension'
     if '[ALLIANCE]' in m: return 'defection' if 'withdraws' in m else 'alliance'
     if m.startswith('>>'):  return 'war'
     if 'SIMULATION OVER' in m.upper(): return 'gameover'

@@ -1,6 +1,102 @@
 import random
 from logger import log
 
+_NUCLEAR_LAUNCH_FLAVORS = [
+    "{launcher} crosses the nuclear threshold, firing {used} warhead(s) at {target}.",
+    "The unthinkable happens: {launcher} launches {used} nuclear weapon(s) at {target}.",
+    "Desperate and cornered, {launcher} fires {used} nuclear weapon(s) at {target}.",
+    "{launcher} unleashes nuclear devastation on {target}.",
+    "The mushroom clouds rise: {launcher} has struck {target} with {used} warhead(s).",
+    "A last resort becomes reality — {launcher} launches nuclear strikes on {target}.",
+    "With its back against the wall, {launcher} deploys {used} nuclear weapon(s) against {target}.",
+    "{launcher} breaks the nuclear taboo, striking {target} with {used} weapon(s).",
+    "Nuclear fire rains down on {target} as {launcher} fires {used} warhead(s).",
+    "The world watches in horror as {launcher} launches {used} nuclear weapon(s) at {target}.",
+]
+
+_PEACE_OFFER_FLAVORS = [
+    "{winner} extends an offer of peace to {loser}.",
+    "Sensing victory, {winner} offers {loser} a way out.",
+    "{winner} reaches out diplomatically — peace terms are on the table for {loser}.",
+    "Rather than annihilate, {winner} chooses to negotiate with {loser}.",
+    "{winner}'s generals send envoys to {loser} with peace terms.",
+    "The war may be ending: {winner} has offered {loser} terms to end the fighting.",
+    "A white flag is waved — {winner} and {loser} begin peace talks.",
+    "Battlefield dominance gives {winner} the leverage to offer peace to {loser}.",
+    "{winner} signals it will accept {loser}'s surrender on favourable terms.",
+    "A ceasefire proposal: {winner} offers {loser} terms to end the fighting.",
+]
+
+_PEACE_REFUSAL_FLAVORS = [
+    "{loser} rejects the offer. The fighting goes on.",
+    "No surrender — {loser} vows to fight to the bitter end.",
+    "Pride wins over pragmatism: {loser} refuses to yield.",
+    "The terms are rejected. {loser} will bleed before it surrenders.",
+    "{loser} sends back the envoys empty-handed.",
+    "No deal. {loser} would sooner burn than accept {winner}'s terms.",
+    "Defiance rules the day — {loser} will not capitulate.",
+    "{loser} chooses honour over survival and rejects the peace offer.",
+    "The war drags on — {loser} refuses {winner}'s terms.",
+    "{loser} spits on {winner}'s peace terms.",
+]
+
+_PEACE_MERGER_DEMAND_FLAVORS = [
+    "{loser} will lay down its arms — but only as an equal partner, not a subject.",
+    "{loser} offers a compromise: union or nothing.",
+    "Rather than be conquered, {loser} demands to be absorbed as a full partner.",
+    "{loser}'s terms are clear — merge or fight to the last.",
+    "Pride and pragmatism clash: {loser} insists on a union, not a surrender.",
+    "{loser} will not be erased. It demands unity with {winner}.",
+    "A nation fights for its identity — {loser} will accept only a merger.",
+    "{loser}'s final offer: become one, or continue the war.",
+]
+
+_PEACE_MERGER_ACCEPT_FLAVORS = [
+    "{winner} agrees. A new nation will rise from the ashes of this war.",
+    "The terms are accepted. Two nations will soon become one.",
+    "{winner} sees wisdom in the offer — a union is forged.",
+    "Peace through union: {winner} accepts {loser}'s terms.",
+    "History is made — {winner} agrees to merge with {loser}.",
+    "A new chapter begins as {winner} embraces unity over conquest.",
+    "The war ends not with conquest, but with cooperation.",
+    "{winner} puts down its sword and extends a hand instead.",
+]
+
+_PEACE_MERGER_REJECT_FLAVORS = [
+    "{winner} refuses. Conquest, not compromise, will settle this.",
+    "The offer is declined. {winner} will not share power.",
+    "{winner} wants territory, not a partnership.",
+    "No union — {winner} intends to absorb {loser} on its own terms.",
+    "Ambition overrules wisdom — {winner} turns down the union offer.",
+    "{winner} demands full surrender, nothing less.",
+    "The war goes on — {winner} won't settle for a merger.",
+    "The pyrrhic road ahead: {winner} rejects the merger and presses on.",
+]
+
+_PEACE_SURRENDER_FLAVORS = [
+    "{loser} lays down its arms and surrenders to {winner}.",
+    "With no options left, {loser} yields unconditionally to {winner}.",
+    "{loser}'s leaders sign the instrument of surrender before {winner}.",
+    "The white flag flies over {loser} — it submits to {winner}.",
+    "Resistance ends as {loser} capitulates to {winner}.",
+    "Crushed and exhausted, {loser} surrenders to {winner}.",
+    "{loser} accepts defeat. {winner} dictates the terms.",
+    "Beaten on all fronts, {loser} offers its unconditional surrender to {winner}.",
+    "{loser} concedes. The war is over, and {winner} has won.",
+    "The fighting stops — {loser} has surrendered to {winner}.",
+]
+
+_PEACE_PYRRHIC_FLAVORS = [
+    "{winner} wins, but at terrible cost — the ruins of {loser} are its prize.",
+    "Victory belongs to {winner}, but the price was ruinous.",
+    "{winner} stands over the wreckage it refused to spare — a hollow triumph.",
+    "The war is won, but {winner} inherits little more than ash from {loser}.",
+    "They won. They lost. {winner} claims the scorched earth that was {loser}.",
+    "{winner} refused peace and paid for it — what remains of {loser} is almost worthless.",
+    "A costly conquest: {winner} absorbs what little survives of {loser}.",
+    "Pride before profit: {winner} wins the war but loses the peace.",
+]
+
 NUCLEAR_TRIGGER_THRESHOLD = 0.25   # launch when below 25% of strength at conflict start
 NUCLEAR_TRIGGER_CHANCE    = 0.06   # 6% per month once desperate
 
@@ -99,29 +195,35 @@ class Conflict:
         if random.random() > PEACE_OFFER_CHANCE:
             return
 
-        log(f"  [PEACE] {winning.name} offers peace terms to {losing.name}.")
+        flavor = random.choice(_PEACE_OFFER_FLAVORS).format(winner=winning.name, loser=losing.name)
+        log(f"  [PEACE] {flavor}")
 
         # Loser's roll — desperation increases acceptance
         desperation  = 1.0 - losing.military_strength / max(losing_start, 1)
         accept_chance = min(0.95, LOSER_ACCEPT_CHANCE + desperation * 0.30)
 
         if random.random() > accept_chance:
-            log(f"  [PEACE] {losing.name} refuses — they will fight to the last!")
+            flavor = random.choice(_PEACE_REFUSAL_FLAVORS).format(loser=losing.name, winner=winning.name)
+            log(f"  [PEACE] {flavor}")
             return
 
         # Loser accepted — do they demand a merger?
         if random.random() < MERGER_DEMAND_CHANCE:
-            log(f"  [PEACE] {losing.name} will surrender — but only as a union, not a conquest.")
+            flavor = random.choice(_PEACE_MERGER_DEMAND_FLAVORS).format(loser=losing.name, winner=winning.name)
+            log(f"  [PEACE] {flavor}")
             if random.random() < WINNER_ACCEPT_MERGER:
-                log(f"  [PEACE] {winning.name} agrees. A new nation will be born from this war.")
+                flavor = random.choice(_PEACE_MERGER_ACCEPT_FLAVORS).format(winner=winning.name, loser=losing.name)
+                log(f"  [PEACE] {flavor}")
                 self.peace_deal   = 'merger'
                 self._peace_winner = winning
                 self._peace_loser  = losing
             else:
-                log(f"  [PEACE] {winning.name} rejects the union. The war continues — but victory will be costly.")
+                flavor = random.choice(_PEACE_MERGER_REJECT_FLAVORS).format(winner=winning.name, loser=losing.name)
+                log(f"  [PEACE] {flavor}")
                 self.pyrrhic = True   # penalty applied on eventual military defeat
         else:
-            log(f"  [PEACE] {losing.name} surrenders unconditionally to {winning.name}.")
+            flavor = random.choice(_PEACE_SURRENDER_FLAVORS).format(loser=losing.name, winner=winning.name)
+            log(f"  [PEACE] {flavor}")
             self.peace_deal   = 'annexation'
             self._peace_winner = winning
             self._peace_loser  = losing
@@ -143,7 +245,8 @@ class Conflict:
             launcher.nukes -= used
             launcher.nuked = True
 
-            log(f"  [NUCLEAR] \u2622 {launcher.name} launches {used} nuclear weapon(s) at {target.name}!")
+            flavor = random.choice(_NUCLEAR_LAUNCH_FLAVORS).format(launcher=launcher.name, used=used, target=target.name)
+            log(f"  [NUCLEAR] \u2622 {flavor}")
 
             launcher.military_strength = max(0, launcher.military_strength * 0.50)
             target.military_strength   = max(0, target.military_strength   * 0.25)
