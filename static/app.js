@@ -686,14 +686,7 @@ function appendLog(msg) {
 }
 
 function downloadLog() {
-  const day    = worldState ? worldState.day : 0;
-  const header = `World War Simulation — Log export\nDay ${day} | ${fullLog.length} entries\n${'─'.repeat(60)}\n`;
-  const blob   = new Blob([header + fullLog.join('\n')], { type: 'text/plain' });
-  const a      = document.createElement('a');
-  a.href       = URL.createObjectURL(blob);
-  a.download   = `ww-sim-day${day}.txt`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  window.location.href = '/download-log';
 }
 
 // ─────────────────────────────────────────────

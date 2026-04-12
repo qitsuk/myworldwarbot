@@ -7,16 +7,19 @@ import os
 import random
 import threading
 from collections import deque
-import logger
-import main as sim
+from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file, jsonify, abort
 from flask_socketio import SocketIO, emit
+import logger
+import main as sim
 from data_loader import load_countries, load_events, DATA_YEAR
 from world import World
 
 load_dotenv(Path(__file__).parent / '.env')
+
+LOGS_DIR = Path(__file__).parent / 'logs'
 
 _GAMEOVER_FLAVORS = [
     "After {years} years of struggle, {winner} stands alone — master of the world.",
@@ -53,12 +56,70 @@ _state_lock = threading.Lock()
 _sim_started = False
 _last_state = None
 _log_buffer = deque(maxlen=200)  # rolling history replayed to new clients
+_current_log_path = None         # Path to the active run's log file
 
+
+# ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
+@app.route('/download-log')
+def download_log():
+    """Download the full log of the currently running (or most recent) simulation."""
+    # Prefer the active run's log
+    if _current_log_path and _current_log_path.exists():
+        return send_file(
+            str(_current_log_path),
+            as_attachment=True,
+            download_name=_current_log_path.name,
+            mimetype='text/plain',
+        )
+    # Fall back to the most recently modified log in the logs directory
+    if LOGS_DIR.exists():
+        logs = sorted(LOGS_DIR.glob('sim_*.log'), key=lambda p: p.stat().st_mtime, reverse=True)
+        if logs:
+            return send_file(
+                str(logs[0]),
+                as_attachment=True,
+                download_name=logs[0].name,
+                mimetype='text/plain',
+            )
+    abort(404)
+
+
+@app.route('/logs')
+def list_logs():
+    """Return a JSON list of all stored simulation logs, newest first."""
+    if not LOGS_DIR.exists():
+        return jsonify([])
+    logs = sorted(LOGS_DIR.glob('sim_*.log'), key=lambda p: p.stat().st_mtime, reverse=True)
+    return jsonify([
+        {
+            'name': p.name,
+            'size_kb': round(p.stat().st_size / 1024, 1),
+            'modified': datetime.fromtimestamp(p.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+            'url': f'/logs/{p.name}',
+        }
+        for p in logs
+    ])
+
+
+@app.route('/logs/<filename>')
+def serve_log(filename):
+    """Download a specific past simulation log by filename."""
+    # Sanitise: only allow simple filenames, no path traversal
+    if '/' in filename or '\\' in filename or not filename.startswith('sim_'):
+        abort(400)
+    path = LOGS_DIR / filename
+    if not path.exists():
+        abort(404)
+    return send_file(str(path), as_attachment=True, download_name=filename, mimetype='text/plain')
+
+
+# ── Socket ────────────────────────────────────────────────────────────────────
 
 @socketio.on('connect')
 def on_connect():
@@ -74,13 +135,23 @@ def on_connect():
             socketio.start_background_task(_run_simulation)
 
 
+# ── Simulation ────────────────────────────────────────────────────────────────
+
 def _run_simulation():
-    global _last_state
+    global _last_state, _current_log_path
     import time
+
+    # Create logs directory and open this run's log file
+    LOGS_DIR.mkdir(exist_ok=True)
+    ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+    _current_log_path = LOGS_DIR / f'sim_{sim.START_YEAR}_{ts}.log'
+    log_file = _current_log_path.open('w', encoding='utf-8')
 
     def emit_log(msg):
         with _state_lock:
             _log_buffer.append(msg)
+        log_file.write(msg + '\n')
+        log_file.flush()
         socketio.emit('log', {'message': msg})
 
     logger.set_emit(emit_log)
@@ -104,63 +175,67 @@ def _run_simulation():
     }
     _tension_seen = set()
 
-    while len(world.countries) > 1:
-        world.current_day += 1
-        date_str = sim.current_date(world).strftime('%B %d, %Y')
-        logger.log(f'--- {date_str} ---')
+    try:
+        while len(world.countries) > 1:
+            world.current_day += 1
+            date_str = sim.current_date(world).strftime('%B %d, %Y')
+            logger.log(f'--- {date_str} ---')
 
-        world.risk = sim._update_risk(world.current_day, world.risk)
+            world.risk = sim._update_risk(world.current_day, world.risk)
 
-        if world.current_day == sim.PEACE_MONTHS + 1:
-            logger.log(f'  [WORLD] {random.choice(sim._WORLD_PEACE_ENDS_FLAVORS)}')
-        elif world.current_day == sim.PEACE_MONTHS + sim.RAMP_MONTHS + 1:
-            logger.log(f'  [WORLD] {random.choice(sim._WORLD_TENSIONS_PEAK_FLAVORS)}')
+            if world.current_day == sim.PEACE_MONTHS + 1:
+                logger.log(f'  [WORLD] {random.choice(sim._WORLD_PEACE_ENDS_FLAVORS)}')
+            elif world.current_day == sim.PEACE_MONTHS + sim.RAMP_MONTHS + 1:
+                logger.log(f'  [WORLD] {random.choice(sim._WORLD_TENSIONS_PEAK_FLAVORS)}')
 
-        for threshold, msg in _tension_thresholds.items():
-            if world.risk >= threshold and threshold not in _tension_seen:
-                _tension_seen.add(threshold)
-                logger.log(f'  [TENSION] {msg}')
+            for threshold, msg in _tension_thresholds.items():
+                if world.risk >= threshold and threshold not in _tension_seen:
+                    _tension_seen.add(threshold)
+                    logger.log(f'  [TENSION] {msg}')
 
-        conflicts_before = len(world.active_conflicts)
-        sim.simulate_day(world, events)
-        for launcher_name, target_name in world.pending_strikes:
-            socketio.emit('nuclear_strike', {'launcher': launcher_name, 'target': target_name})
-        world.pending_strikes.clear()
-        if len(world.active_conflicts) > conflicts_before:
-            last_conflict_month = world.current_day
+            conflicts_before = len(world.active_conflicts)
+            sim.simulate_day(world, events)
+            for launcher_name, target_name in world.pending_strikes:
+                socketio.emit('nuclear_strike', {'launcher': launcher_name, 'target': target_name})
+            world.pending_strikes.clear()
+            if len(world.active_conflicts) > conflicts_before:
+                last_conflict_month = world.current_day
 
-        # Stalemate breaker
-        if (world.risk >= sim.BASE_RISK
-                and not world.active_conflicts
-                and len(world.countries) > 1
-                and world.current_day - last_conflict_month >= world.stalemate_months):
-            from conflict import Conflict
-            candidates = sorted(world.countries, key=lambda c: c.military_strength, reverse=True)
-            aggressor  = candidates[0]
-            target     = random.choice(candidates[1:])
-            flavor = random.choice(sim._STALEMATE_FLAVORS).format(aggressor=aggressor.name, target=target.name)
-            logger.log(f'  [WORLD] {flavor}')
-            world.active_conflicts.append(Conflict(aggressor, target))
-            sim.trigger_alliance_support(aggressor, target, world)
-            last_conflict_month = world.current_day
+            # Stalemate breaker
+            if (world.risk >= sim.BASE_RISK
+                    and not world.active_conflicts
+                    and len(world.countries) > 1
+                    and world.current_day - last_conflict_month >= world.stalemate_months):
+                from conflict import Conflict
+                candidates = sorted(world.countries, key=lambda c: c.military_strength, reverse=True)
+                aggressor  = candidates[0]
+                target     = random.choice(candidates[1:])
+                flavor = random.choice(sim._STALEMATE_FLAVORS).format(aggressor=aggressor.name, target=target.name)
+                logger.log(f'  [WORLD] {flavor}')
+                world.active_conflicts.append(Conflict(aggressor, target))
+                sim.trigger_alliance_support(aggressor, target, world)
+                last_conflict_month = world.current_day
 
-        state = sim.get_world_state(world)
-        with _state_lock:
-            _last_state = state
-        socketio.emit('state', state)
+            state = sim.get_world_state(world)
+            with _state_lock:
+                _last_state = state
+            socketio.emit('state', state)
 
-        time.sleep(sim.sleep_time)
+            time.sleep(sim.sleep_time)
 
-    if world.countries:
-        winner = world.countries[0].name
-        months = world.current_day
-        flavor = random.choice(_GAMEOVER_FLAVORS).format(winner=winner, years=months // 12)
-        logger.log(f'SIMULATION OVER — {flavor}')
-        socketio.emit('gameover', {
-            'winner': winner,
-            'months': months,
-            'years': months // 12,
-        })
+        if world.countries:
+            winner = world.countries[0].name
+            months = world.current_day
+            flavor = random.choice(_GAMEOVER_FLAVORS).format(winner=winner, years=months // 12)
+            logger.log(f'SIMULATION OVER — {flavor}')
+            socketio.emit('gameover', {
+                'winner': winner,
+                'months': months,
+                'years': months // 12,
+            })
+
+    finally:
+        log_file.close()
 
 
 if __name__ == '__main__':
