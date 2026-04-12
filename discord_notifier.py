@@ -10,7 +10,7 @@ import threading
 import urllib.request
 import urllib.error
 
-WEBHOOK_URL = "https://discord.com/api/webhooks/1492186523561492580/PFV6UTH_tf60SX51Y5qXh5wk1J_Tnud8IQn2KztqpJzYTNsL6tIixTMXtcC-FgkV4jwP"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1492198099643404359/Y3RnfzA5MB7PiPqVgywnN2xAU5-LKuXnkOdjp4aNe7QVEy9jtK4XWgrIciS2M3iYnYvn"
 
 # Toggle which event types get posted to Discord
 NOTIFY_EVENTS = {
@@ -66,7 +66,7 @@ def _build_payload(event_type: str, message: str) -> bytes:
             'color':       _COLOURS[event_type],
 	    'url':	   'https://worldwarbot.qitsuk.dk',
 	    'footer': {
-		'text': 'Visit https://warbot.yourdomain.com to see the full, current world map'
+		'text': 'Visit https://worldwarbot.qitsuk.dk to see the full, current world map'
 	    }
         }]
     }
@@ -78,19 +78,22 @@ def _post(event_type: str, message: str) -> None:
         req = urllib.request.Request(
             WEBHOOK_URL,
             data=_build_payload(event_type, message),
-            headers={'Content-Type': 'application/json'},
+            headers={
+		'Content-Type': 'application/json',
+		'User-Agent': 'DiscordBot (https://worldwarbot.qitsuk.dk, 1.0)'
+		},
             method='POST',
         )
         urllib.request.urlopen(req, timeout=10)
     except urllib.error.HTTPError as e:
-        # 429 = rate limited by Discord — silently ignore, never crash the sim
-        pass
-    except Exception:
-        pass
+        print(f"[NOTIFY ERROR] HTTP {e.code}: {e.reason}")
+    except Exception as e:
+        print(f"[NOTIFY ERROR] {e}")
 
 
 def notify(message: str) -> None:
     """Call this for every log line. Filters and dispatches asynchronously."""
+    print(f'[NOTIFY] called with {message[:80]}')
     if not WEBHOOK_URL:
         return
     event_type = _classify(message)
