@@ -16,6 +16,19 @@ from world import World
 
 load_dotenv()
 
+
+def _fmt_timescale(seconds: float) -> str:
+    if seconds < 1:
+        return f"{seconds}s per month (test mode)"
+    if seconds < 60:
+        return f"{int(seconds)} seconds per month"
+    if seconds < 3600:
+        mins = seconds / 60
+        return f"{mins:.0f} minute{'s' if mins != 1 else ''} per month"
+    hours = seconds / 3600
+    return f"{hours:.4g} hour{'s' if hours != 1 else ''} per month"
+
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'ww-sim-2032')
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='threading')
@@ -59,6 +72,7 @@ def _run_simulation():
     logger.log(f'World initialized with {len(world.countries)} countries.')
     logger.log(f'Simulation start: {sim.START_DATE.strftime("%B %d, %Y")}')
     logger.log('Starting simulation...')
+    logger.log(f'[STARTUP] A new simulation is starting! {len(world.countries)} nations, beginning {sim.START_DATE.strftime("%B %Y")}. Timescale: {_fmt_timescale(sim.sleep_time)}.')
 
     last_conflict_month = sim.PEACE_MONTHS
 
