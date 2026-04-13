@@ -345,6 +345,8 @@ class Conflict:
             launcher.nukes -= used
             launcher.nuked  = True
             target.was_nuked = True
+            if world is not None:
+                world.total_nukes_used += used
 
             # Pick target city (weighted by population); fall back to None
             city = pick_target_city(target)

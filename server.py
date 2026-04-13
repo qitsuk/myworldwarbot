@@ -159,7 +159,7 @@ def get_winners():
         for line in reversed(lines):
             line = line.strip()
             if line.startswith('SIMULATION STATS'):
-                for key in ('start_pop', 'end_pop', 'mil_casualties', 'civ_casualties'):
+                for key in ('start_pop', 'end_pop', 'mil_casualties', 'civ_casualties', 'nukes_used'):
                     m = re.search(rf'{key}:(\d+)', line)
                     if m:
                         stats[key] = int(m.group(1))
@@ -184,6 +184,7 @@ def get_winners():
                 'end_pop': stats.get('end_pop'),
                 'mil_casualties': stats.get('mil_casualties'),
                 'civ_casualties': stats.get('civ_casualties'),
+                'nukes_used': stats.get('nukes_used'),
             })
     return jsonify(winners)
 
@@ -330,12 +331,18 @@ def _run_simulation():
                 f'start_pop:{world.start_population} '
                 f'end_pop:{end_population} '
                 f'mil_casualties:{world.total_military_casualties} '
-                f'civ_casualties:{world.total_civilian_casualties}'
+                f'civ_casualties:{world.total_civilian_casualties} '
+                f'nukes_used:{world.total_nukes_used}'
             )
             socketio.emit('gameover', {
                 'winner': winner,
                 'months': months,
                 'years': months // 12,
+                'nukes_used': world.total_nukes_used,
+                'mil_casualties': world.total_military_casualties,
+                'civ_casualties': world.total_civilian_casualties,
+                'start_pop': world.start_population,
+                'end_pop': end_population,
             })
 
     finally:

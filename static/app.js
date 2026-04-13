@@ -878,6 +878,8 @@ function loadHallOfFame() {
           ? `<div class="hof-cas mil">&#9876; ${fmtPop(w.mil_casualties)} mil.</div>` : '';
         const civLine = w.civ_casualties != null
           ? `<div class="hof-cas civ">&#128100; ${fmtPop(w.civ_casualties)} civ.</div>` : '';
+        const nukeLine = w.nukes_used != null && w.nukes_used > 0
+          ? `<div class="hof-cas nuke">&#9762; ${fmtPop(w.nukes_used)} warheads</div>` : '';
         return `<div class="hof-entry">
           <div class="hof-entry-top">
             <span class="hof-rank">${medal}</span>
@@ -885,7 +887,7 @@ function loadHallOfFame() {
             <span class="hof-meta">${meta}</span>
           </div>
           ${popLine}
-          <div class="hof-cas-row">${milLine}${civLine}</div>
+          <div class="hof-cas-row">${milLine}${civLine}${nukeLine}</div>
         </div>`;
       }).join('');
     })
@@ -950,6 +952,18 @@ socket.on('gameover', (data) => {
   const banner = document.getElementById('gameover-banner');
   document.getElementById('go-winner').textContent = data.winner;
   document.getElementById('go-days').textContent   = `${data.years} years · ${data.months % 12} months`;
+
+  const fmtN = n => n == null ? '?' : n >= 1e9 ? (n/1e9).toFixed(2)+'B' : n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n.toLocaleString();
+  const statsEl = document.getElementById('go-stats');
+  if (statsEl) {
+    const rows = [];
+    if (data.start_pop != null) rows.push(`&#128101; Population: ${fmtN(data.start_pop)} &rarr; ${fmtN(data.end_pop)}`);
+    if (data.mil_casualties != null) rows.push(`&#9876; Military casualties: ${fmtN(data.mil_casualties)}`);
+    if (data.civ_casualties != null) rows.push(`&#128100; Civilian casualties: ${fmtN(data.civ_casualties)}`);
+    if (data.nukes_used != null) rows.push(`&#9762; Nuclear warheads used: ${fmtN(data.nukes_used)}`);
+    statsEl.innerHTML = rows.map(r => `<div class="go-stat">${r}</div>`).join('');
+  }
+
   banner.style.display = 'block';
   appendLog(`★ SIMULATION OVER — ${data.winner} has conquered the world!`);
   setTimeout(loadHallOfFame, 2000);  // refresh after log file is flushed
