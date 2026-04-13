@@ -15,3 +15,7 @@ class World:
         self.pending_strikes = []    # [(launcher_name, target_name, city_name, city_lat, city_lon, used)] — cleared by server
         self.nuked_cities    = []    # [{"lat","lon","city","country","warheads","expires"}] — entries removed when expires < current_day
         self.pending_collateral = [] # [(victim_name, attacker_name, city_name, casualties, lat, lon, warheads)] — processed by simulate_day
+        # Cumulative casualty tracking
+        self.start_population        = 0   # snapshotted by server after init
+        self.total_military_casualties = 0
+        self.total_civilian_casualties  = 0

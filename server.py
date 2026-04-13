@@ -153,27 +153,38 @@ def get_winners():
                 lines = f.readlines()
         except Exception:
             continue
+        winner_name = None
+        years = None
+        stats = {}
         for line in reversed(lines):
             line = line.strip()
-            if not line.startswith('SIMULATION OVER'):
-                continue
-            flavor = line[len('SIMULATION OVER — '):]
-            winner_name = None
-            for pat in _WINNER_PATTERNS:
-                m = re.search(pat, flavor)
-                if m:
-                    winner_name = m.group(1)
-                    break
-            years_m = re.search(r'(\d+) years', flavor)
-            years = int(years_m.group(1)) if years_m else None
-            if winner_name:
-                winners.append({
-                    'winner': winner_name,
-                    'years': years,
-                    'start_year': start_year,
-                    'completed': datetime.fromtimestamp(log_path.stat().st_mtime).strftime('%Y-%m-%d'),
-                })
-            break
+            if line.startswith('SIMULATION STATS'):
+                for key in ('start_pop', 'end_pop', 'mil_casualties', 'civ_casualties'):
+                    m = re.search(rf'{key}:(\d+)', line)
+                    if m:
+                        stats[key] = int(m.group(1))
+            elif line.startswith('SIMULATION OVER'):
+                flavor = line[len('SIMULATION OVER — '):]
+                for pat in _WINNER_PATTERNS:
+                    m = re.search(pat, flavor)
+                    if m:
+                        winner_name = m.group(1)
+                        break
+                years_m = re.search(r'(\d+) years', flavor)
+                years = int(years_m.group(1)) if years_m else None
+            if winner_name and ('start_pop' in stats or not stats):
+                break
+        if winner_name:
+            winners.append({
+                'winner': winner_name,
+                'years': years,
+                'start_year': start_year,
+                'completed': datetime.fromtimestamp(log_path.stat().st_mtime).strftime('%Y-%m-%d'),
+                'start_pop': stats.get('start_pop'),
+                'end_pop': stats.get('end_pop'),
+                'mil_casualties': stats.get('mil_casualties'),
+                'civ_casualties': stats.get('civ_casualties'),
+            })
     return jsonify(winners)
 
 
@@ -217,6 +228,7 @@ def _run_simulation():
     countries = load_countries(start_year=sim.START_YEAR)
     events = load_events()
     world = World(stability=1.0, risk=0.0, countries=countries)
+    world.start_population = sum(c.population for c in world.countries)
 
     years_extrapolated = sim.START_YEAR - DATA_YEAR
     logger.log(f'World initialized with {len(world.countries)} countries.')
@@ -310,8 +322,16 @@ def _run_simulation():
         if world.countries:
             winner = world.countries[0].name
             months = world.current_day
+            end_population = sum(c.population for c in world.countries)
             flavor = random.choice(_GAMEOVER_FLAVORS).format(winner=winner, years=months // 12)
             logger.log(f'SIMULATION OVER — {flavor}')
+            logger.log(
+                f'SIMULATION STATS — '
+                f'start_pop:{world.start_population} '
+                f'end_pop:{end_population} '
+                f'mil_casualties:{world.total_military_casualties} '
+                f'civ_casualties:{world.total_civilian_casualties}'
+            )
             socketio.emit('gameover', {
                 'winner': winner,
                 'months': months,

@@ -869,12 +869,23 @@ function loadHallOfFame() {
       }
       el.innerHTML = winners.map((w, i) => {
         const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
-        const meta  = [w.start_year ? `started ${w.start_year}` : null, w.years ? `${w.years} yrs` : null, w.completed]
+        const meta  = [w.start_year ? `${w.start_year}` : null, w.years ? `${w.years} yrs` : null, w.completed]
                         .filter(Boolean).join(' · ');
+        const fmtPop = n => n == null ? '?' : n >= 1e9 ? (n/1e9).toFixed(2)+'B' : n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n.toLocaleString();
+        const popLine = (w.start_pop != null || w.end_pop != null)
+          ? `<div class="hof-pop">&#128101; ${fmtPop(w.start_pop)} &rarr; ${fmtPop(w.end_pop)}</div>` : '';
+        const milLine = w.mil_casualties != null
+          ? `<div class="hof-cas mil">&#9876; ${fmtPop(w.mil_casualties)} mil.</div>` : '';
+        const civLine = w.civ_casualties != null
+          ? `<div class="hof-cas civ">&#128100; ${fmtPop(w.civ_casualties)} civ.</div>` : '';
         return `<div class="hof-entry">
-          <span class="hof-rank">${medal}</span>
-          <span class="hof-name" title="${w.winner}">${w.winner}</span>
-          <span class="hof-meta">${meta}</span>
+          <div class="hof-entry-top">
+            <span class="hof-rank">${medal}</span>
+            <span class="hof-name" title="${w.winner}">${w.winner}</span>
+            <span class="hof-meta">${meta}</span>
+          </div>
+          ${popLine}
+          <div class="hof-cas-row">${milLine}${civLine}</div>
         </div>`;
       }).join('');
     })

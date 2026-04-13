@@ -214,8 +214,10 @@ class Conflict:
         defender_losses = (attacker_effective * 0.08) * defender_roll * 0.8 * tech_ratio
 
         # Apply losses to attacker's total military
+        attacker_mil_before = self.attacker.military_strength
         self.attacker.military_strength = max(0, self.attacker.military_strength - attacker_losses)
         self.attacker.military_strength = min(self.attacker.military_strength, self.attacker.military_cap)
+        attacker_mil_lost = max(0, attacker_mil_before - self.attacker.military_strength)
 
         # Apply losses to the defender's garrison; sync the same loss to their total military
         garrison_before = self._defender_garrison
@@ -223,11 +225,18 @@ class Conflict:
         actual_garrison_loss = garrison_before - self._defender_garrison
         self.defender.military_strength = max(0.0, self.defender.military_strength - actual_garrison_loss)
 
+        if world is not None:
+            world.total_military_casualties += int(attacker_mil_lost + actual_garrison_loss)
+
         # Civilian casualties — base rate plus extra for guerrilla fighters killed in action
+        total_civ_lost = 0
         for side, guerrillas in ((self.attacker, attacker_guerrillas), (self.defender, defender_guerrillas)):
             guerrilla_dead = int(guerrillas * 0.08 * random.uniform(0.7, 1.3))
             pop_loss = int(side.population * CIVILIAN_CASUALTY_RATE) + guerrilla_dead
             side.population = max(1, side.population - pop_loss)
+            total_civ_lost += pop_loss
+        if world is not None:
+            world.total_civilian_casualties += total_civ_lost
 
         self._check_nuclear_escalation(nation_count, endgame_threshold, world)
         if not self.peace_deal:
@@ -381,6 +390,9 @@ class Conflict:
             mil_lost  = int(mil_before  - target.military_strength)
             pop_lost  = pop_before - target.population
             econ_lost = econ_before - target.economy
+            if world is not None:
+                world.total_military_casualties += mil_lost
+                world.total_civilian_casualties  += pop_lost
 
             # Severity label
             if tgt_mil_frac < 0.15:
@@ -416,6 +428,7 @@ class Conflict:
                             continue
                         bystander.population = max(1, bystander.population - casualties)
                         bystander.was_nuked = True
+                        world.total_civilian_casualties += casualties
                         world.pending_collateral.append(
                             (bystander.name, launcher.name, bcity['name'],
                              casualties, bcity['lat'], bcity['lon'], used)
