@@ -110,15 +110,34 @@ body {
   position: absolute;
   top: 12px;
   left: 12px;
-  background: rgba(22,27,34,0.85);
+  background: rgba(22,27,34,0.92);
   border: 1px solid #30363d;
   border-radius: 6px;
-  padding: 5px 10px;
-  font-size: 12px;
-  color: #8b949e;
+  padding: 8px 14px;
   pointer-events: none;
+  text-align: center;
+  min-width: 140px;
 }
-#world-pop span { color: #e6edf3; font-weight: 600; }
+#world-pop-label {
+  font-size: 10px;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+#world-pop-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #e6edf3;
+  line-height: 1.1;
+}
+
+/* ── COUNTRY HIGHLIGHT (log hover) ── */
+.country-highlight {
+  stroke: #ffe566 !important;
+  stroke-width: 2px !important;
+  filter: brightness(1.5);
+}
 
 /* ── ZOOM CONTROLS ── */
 #zoom-controls {

@@ -763,6 +763,37 @@ function showStrikeLogTip(e, launcher, target) {
 }
 
 // ─────────────────────────────────────────────
+//  Country highlight (log hover)
+// ─────────────────────────────────────────────
+function extractCountryNames(text) {
+  // Match against all currently known country names, longest-first to avoid
+  // partial matches (e.g. "New Zealand" before "Zealand").
+  const names = [...byName.keys()].sort((a, b) => b.length - a.length);
+  const found = new Set();
+  for (const name of names) {
+    if (text.includes(name)) found.add(name);
+  }
+  return found;
+}
+
+function applyCountryHighlight(names) {
+  if (!countrySel || !names.size) return;
+  countrySel.each(function(d) {
+    const simName = featureSimName(d);
+    if (!simName) return;
+    const info = territoryInfo[simName];
+    const owner = info ? info.o : simName;
+    if (names.has(simName) || names.has(owner)) {
+      d3.select(this).classed('country-highlight', true);
+    }
+  });
+}
+
+function clearCountryHighlight() {
+  if (countrySel) countrySel.classed('country-highlight', false);
+}
+
+// ─────────────────────────────────────────────
 //  Log
 // ─────────────────────────────────────────────
 const MAX_DOM_LOG = 400;     // entries kept in the DOM (performance cap)
@@ -795,6 +826,7 @@ function appendLog(msg) {
   div.textContent = text;
 
   // Hover: nuclear strike entries replay the animation; others show context tooltip
+  // All entries highlight the countries mentioned in the text.
   div.addEventListener('mouseenter', e => {
     if (div.dataset.launcher && div.dataset.target) {
       showStrikeLogTip(e, div.dataset.launcher, div.dataset.target);
@@ -804,11 +836,13 @@ function appendLog(msg) {
         if (proj) replayCityPos = proj([+div.dataset.lon, +div.dataset.lat]);
       }
       animateNuclearStrike(div.dataset.launcher, div.dataset.target, replayCityPos, +div.dataset.warheads || null);
+      applyCountryHighlight(new Set([div.dataset.launcher, div.dataset.target]));
     } else {
       showLogTip(e, div.className);
+      applyCountryHighlight(extractCountryNames(div.textContent));
     }
   });
-  div.addEventListener('mouseleave', hideLogTip);
+  div.addEventListener('mouseleave', () => { hideLogTip(); clearCountryHighlight(); });
 
   logEl.insertBefore(div, logEl.firstChild);
 
