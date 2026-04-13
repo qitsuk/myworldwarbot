@@ -330,16 +330,42 @@ class Conflict:
             launcher=launcher.name, used=used, target=target.name)
         log(f"  [NUCLEAR] \u2622 {flavor}{city_str}")
 
-        # Warhead density → exponential saturation damage
-        target_pop_M = max(target.population / 1_000_000, 0.01)
-        density = used / target_pop_M
+        # ── Damage model ─────────────────────────────────────────────────
+        # When a specific city is targeted, damage is calculated at city
+        # scale (warheads per million city residents) — so 12 warheads on
+        # Hiroshima devastates the city, not 12÷127M of Japan.
+        # The city-level destruction is then scaled back to national impact
+        # by the city's share of the nation's population, with military and
+        # economy weighted higher (both concentrate in cities).
+        # Without a city target, fall back to national density.
 
-        def sat(cap, scale):
+        def sat(density, cap, scale):
             return cap * (1.0 - math.exp(-density / scale))
 
-        tgt_mil_frac  = sat(0.92, 2.0)
-        tgt_pop_frac  = sat(0.55, 2.5)
-        tgt_econ_frac = sat(0.88, 3.0)
+        if city:
+            city_pop_M      = max(city.get('pop', 0.1), 0.01)   # millions
+            city_density    = used / city_pop_M
+
+            # Destruction of the city itself
+            city_pop_frac   = sat(city_density, 0.90, 1.0)  # up to 90 % of city killed
+            city_mil_frac   = sat(city_density, 0.95, 0.8)  # military installations levelled
+            city_econ_frac  = sat(city_density, 0.95, 0.8)  # infrastructure annihilated
+
+            # City's share of the nation — forces and industry concentrate in cities
+            city_share_pop  = min(1.0, city_pop_M * 1_000_000 / max(target.population, 1))
+            city_share_mil  = min(1.0, city_share_pop * 3.0)   # troops near cities
+            city_share_econ = min(1.0, city_share_pop * 2.5)   # economic hubs
+
+            tgt_pop_frac    = city_pop_frac  * city_share_pop
+            tgt_mil_frac    = city_mil_frac  * city_share_mil
+            tgt_econ_frac   = city_econ_frac * city_share_econ
+        else:
+            # No city data — scattered / area strike, use national density
+            nation_pop_M  = max(target.population / 1_000_000, 0.01)
+            nation_density = used / nation_pop_M
+            tgt_mil_frac  = sat(nation_density, 0.92, 2.0)
+            tgt_pop_frac  = sat(nation_density, 0.55, 2.5)
+            tgt_econ_frac = sat(nation_density, 0.88, 3.0)
 
         mil_before  = target.military_strength
         pop_before  = target.population
@@ -356,13 +382,18 @@ class Conflict:
             world.total_military_casualties += mil_lost
             world.total_civilian_casualties  += pop_lost
 
-        if tgt_mil_frac < 0.15:   severity = "Limited"
-        elif tgt_mil_frac < 0.40: severity = "Significant"
-        elif tgt_mil_frac < 0.65: severity = "Severe"
-        elif tgt_mil_frac < 0.82: severity = "Devastating"
-        else:                     severity = "Apocalyptic"
+        # Severity label: use city-level destruction when available, since a
+        # large nation can absorb a city strike nationally but the city itself
+        # is still obliterated.
+        severity_frac = city_pop_frac if city else tgt_mil_frac
+        if severity_frac < 0.15:   severity = "Limited"
+        elif severity_frac < 0.40: severity = "Significant"
+        elif severity_frac < 0.65: severity = "Severe"
+        elif severity_frac < 0.82: severity = "Devastating"
+        else:                      severity = "Apocalyptic"
 
-        log(f"  [NUCLEAR] \u2622 {severity} strike ({used} warheads) on {target.name} — "
+        city_note = f" — {city_name} obliterated" if city and city_pop_frac > 0.75 else ""
+        log(f"  [NUCLEAR] \u2622 {severity} strike ({used} warheads) on {target.name}{city_note} — "
             f"{mil_lost:,} troops, {pop_lost:,} civilians, \u20ac{econ_lost:,} economy lost.")
 
         if city and world is not None:
