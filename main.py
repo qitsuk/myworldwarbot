@@ -21,9 +21,13 @@ TIMESCALE_TEST = 0.5
 TIMESCALE_PROD = 1 * 60 * 60  # 1 hour per month
 
 INVASION_THRESHOLD = 10.0
-ALLIANCE_CHANCE       = 0.002  # chance per month an unaligned country seeks an alliance
-ALLIANCE_DECAY_CHANCE = 0.008  # chance per member per month to defect
-MAX_ALLIANCE_SIZE     = 6      # hard cap on members per alliance
+ALLIANCE_CHANCE        = 0.002  # chance per month an unaligned country seeks an alliance
+ALLIANCE_DECAY_CHANCE  = 0.008  # chance per member per month to defect
+MAX_ALLIANCE_SIZE      = 6      # hard cap on members per alliance
+
+HEGEMON_RATIO          = 2.5   # top/second military ratio that flags a hegemon
+HEGEMON_ALLIANCE_CHANCE = 0.25  # per non-hegemon country per month when hegemon exists
+MAX_COALITION_SIZE     = 12    # anti-hegemon coalitions can grow much larger
 
 PEACETIME_ARMY_BASE   = 0.012  # minimum standing army: 1.2% of population
 PEACETIME_ARMY_SCALE  = 0.04   # each point of world.risk adds this × population to the target
@@ -421,30 +425,126 @@ _ALLIANCE_JOIN_FLAVORS = [
     "No longer isolated, {country} marches under the {alliance} flag.",
 ]
 
+_HEGEMON_DETECTED_FLAVORS = [
+    "{hegemon} stands unchallenged — a colossus among nations. The world watches in fear.",
+    "The rise of {hegemon} threatens to extinguish all others. Can anyone stand against it?",
+    "No single nation can match {hegemon} alone. Only unity can save the rest.",
+    "{hegemon}'s dominance grows unchecked. The world trembles.",
+    "A shadow falls across the globe: {hegemon} towers over every rival.",
+    "The balance of power shatters. {hegemon} is without equal.",
+    "Every general on Earth studies {hegemon}'s movements. The giant cannot be ignored.",
+    "With {hegemon} this powerful, submission or solidarity are the only choices left.",
+]
+
+_COALITION_FORMS_FLAVORS = [
+    "Faced with {hegemon}'s dominance, {a} and {b} forge a pact of mutual survival.",
+    "The shadow of {hegemon} drives {a} and {b} together.",
+    "{a} and {b} agree: only together can they stand against {hegemon}.",
+    "A grand coalition takes shape as {a} joins forces with {b} against {hegemon}.",
+    "Fear of {hegemon} unites old rivals — {a} and {b} sign a defence pact.",
+    "Desperation forges strange alliances: {a} and {b} stand together against {hegemon}.",
+    "The world's nations choose survival. {a} and {b} ally in the face of {hegemon}.",
+    "Against {hegemon}'s might, {a} and {b} have no choice but to stand together.",
+]
+
+_COALITION_MERGE_FLAVORS = [
+    "Two alliances unite into a grand coalition against {hegemon}.",
+    "Facing {hegemon}, separate pacts dissolve into a single front.",
+    "The smaller blocs merge — {hegemon} has forced them into one.",
+    "A grand coalition is born: the alliances of the world combine against {hegemon}.",
+    "United they stand: the coalitions merge, staring down {hegemon}.",
+]
+
+_COALITION_WAR_FLAVORS = [
+    "The grand coalition declares war on {hegemon}! The balance of power must be restored.",
+    "United against the colossus, the coalition marches on {hegemon}.",
+    "The alliance has massed its forces — {hegemon} now faces the world.",
+    "In a desperate bid for survival, the coalition launches its campaign against {hegemon}.",
+    "No longer willing to wait, the coalition strikes first against {hegemon}.",
+    "The world refuses to kneel. The coalition goes to war with {hegemon}.",
+]
+
 def get_giant_threshold(world):
     caps = sorted(c.military_cap for c in world.countries)
     idx  = int(len(caps) * (1 - GIANT_PERCENTILE))
     return caps[max(idx, 0)]
 
+def get_hegemon(world):
+    """Return the single dominant nation if one has military_strength >= HEGEMON_RATIO × second place."""
+    if len(world.countries) < 2:
+        return None
+    by_str = sorted(world.countries, key=lambda c: c.military_strength, reverse=True)
+    if by_str[0].military_strength >= HEGEMON_RATIO * max(by_str[1].military_strength, 1):
+        return by_str[0]
+    return None
+
 def form_alliances(world):
     giant_threshold = get_giant_threshold(world)
     at_war_set = {c.attacker for c in world.active_conflicts} | {c.defender for c in world.active_conflicts}
+    hegemon = get_hegemon(world)
+
+    # Announce the first time a hegemon is detected
+    if hegemon:
+        prev = getattr(world, '_hegemon_name_logged', None)
+        if prev != hegemon.name:
+            world._hegemon_name_logged = hegemon.name
+            flavor = random.choice(_HEGEMON_DETECTED_FLAVORS).format(hegemon=hegemon.name)
+            log(f"  [WORLD] {flavor}")
+    else:
+        world._hegemon_name_logged = None
+
+    # When a hegemon exists, try to merge separate alliances into a grand coalition
+    if hegemon:
+        non_hegemon_alliances = [a for a in world.alliances if hegemon not in a.members]
+        if len(non_hegemon_alliances) >= 2:
+            non_hegemon_alliances.sort(key=lambda a: len(a.members))
+            big = non_hegemon_alliances[-1]
+            for small in non_hegemon_alliances[:-1]:
+                if random.random() > 0.15:
+                    continue
+                combined = len(big.members) + len(small.members)
+                if combined > MAX_COALITION_SIZE:
+                    continue
+                # No active wars between the two alliance blocs
+                if any(
+                    (c.attacker in small.members and c.defender in big.members) or
+                    (c.attacker in big.members and c.defender in small.members)
+                    for c in world.active_conflicts
+                ):
+                    continue
+                for member in list(small.members):
+                    big.members.append(member)
+                world.alliances.remove(small)
+                flavor = random.choice(_COALITION_MERGE_FLAVORS).format(hegemon=hegemon.name)
+                log(f"  [ALLIANCE] {flavor}")
 
     for country in list(world.countries):
         if get_alliance(country, world):
             continue
-        if country.military_cap >= giant_threshold:
-            continue
+        if country == hegemon:
+            continue  # the hegemon doesn't need allies
         if country in at_war_set:
             continue
-        if random.random() > ALLIANCE_CHANCE:
+
+        if hegemon:
+            # Anti-hegemon urgency: big nations can also ally, much higher chance
+            alliance_chance = HEGEMON_ALLIANCE_CHANCE
+            max_size = MAX_COALITION_SIZE
+        else:
+            if country.military_cap >= giant_threshold:
+                continue
+            alliance_chance = ALLIANCE_CHANCE
+            max_size = MAX_ALLIANCE_SIZE
+
+        if random.random() > alliance_chance:
             continue
 
-        # Existing alliances this country could join (not full, no giants, not at war with any member)
+        # Existing alliances this country could join
         joinable = [
             a for a in world.alliances
-            if len(a.members) < MAX_ALLIANCE_SIZE
-            and all(m.military_cap < giant_threshold for m in a.members)
+            if len(a.members) < max_size
+            and (hegemon not in a.members)
+            and (hegemon or all(m.military_cap < giant_threshold for m in a.members))
             and not any(m in at_war_set for m in a.members)
             and not any(
                 (c.attacker == country and c.defender in a.members) or
@@ -453,13 +553,14 @@ def form_alliances(world):
             )
         ]
 
-        # Unaligned non-giant countries this country could partner with
+        # Unaligned non-hegemon countries this country could partner with
         unaligned = [
             c for c in world.countries
             if not get_alliance(c, world)
             and c != country
-            and c.military_cap < giant_threshold
+            and c != hegemon
             and c not in at_war_set
+            and (hegemon or c.military_cap < giant_threshold)
             and not any(
                 (cf.attacker == country and cf.defender == c) or
                 (cf.attacker == c and cf.defender == country)
@@ -482,12 +583,58 @@ def form_alliances(world):
 
         if isinstance(chosen, Alliance):
             chosen.members.append(country)
-            flavor = random.choice(_ALLIANCE_JOIN_FLAVORS).format(country=country.name, alliance=chosen.name)
+            if hegemon:
+                partner = chosen.members[0] if chosen.members else chosen
+                flavor = random.choice(_COALITION_FORMS_FLAVORS).format(
+                    hegemon=hegemon.name, a=country.name, b=partner.name)
+            else:
+                flavor = random.choice(_ALLIANCE_JOIN_FLAVORS).format(
+                    country=country.name, alliance=chosen.name)
             log(f"  [ALLIANCE] {flavor}")
         else:
             world.alliances.append(Alliance([country, chosen]))
-            flavor = random.choice(_ALLIANCE_FORM_FLAVORS).format(a=country.name, b=chosen.name)
+            if hegemon:
+                flavor = random.choice(_COALITION_FORMS_FLAVORS).format(
+                    hegemon=hegemon.name, a=country.name, b=chosen.name)
+            else:
+                flavor = random.choice(_ALLIANCE_FORM_FLAVORS).format(a=country.name, b=chosen.name)
             log(f"  [ALLIANCE] {flavor}")
+
+def check_coalition_war(world):
+    """When a hegemon exists, a sufficiently powerful coalition may declare war on it."""
+    hegemon = get_hegemon(world)
+    if not hegemon:
+        return
+    at_war_set = {c.attacker for c in world.active_conflicts} | {c.defender for c in world.active_conflicts}
+    if hegemon in at_war_set:
+        return  # already fighting
+    for alliance in world.alliances:
+        if hegemon in alliance.members:
+            continue
+        if any(m in at_war_set for m in alliance.members):
+            continue
+        coalition_str = sum(m.military_strength for m in alliance.members)
+        # Trigger war if coalition has at least 30% of hegemon's strength
+        if coalition_str < 0.30 * hegemon.military_strength:
+            continue
+        if random.random() > 0.06:  # 6% chance per month once threshold met
+            continue
+        lead = max(alliance.members, key=lambda m: m.military_strength)
+        flavor = random.choice(_COALITION_WAR_FLAVORS).format(
+            hegemon=hegemon.name, coalition=alliance.name)
+        log(f"  >> {flavor}")
+        world.active_conflicts.append(Conflict(lead, hegemon))
+        # All other coalition members also join the fight against the hegemon
+        for member in alliance.get_allies(lead):
+            if member not in world.countries:
+                continue
+            if any(c.attacker == member or c.defender == member for c in world.active_conflicts):
+                continue
+            world.active_conflicts.append(Conflict(member, hegemon))
+            entry_flavor = random.choice(_WAR_ALLIANCE_ENTRY_FLAVORS).format(
+                ally=member.name, defender=lead.name, attacker=hegemon.name)
+            log(f"  >> {entry_flavor}")
+        break
 
 def decay_alliances(world):
     """Each month, members may defect from their alliance."""
@@ -908,6 +1055,7 @@ def simulate_day(world, events):
 
     decay_alliances(world)
     form_alliances(world)
+    check_coalition_war(world)
     check_final_war(world)
 
 def _update_risk(current_day, current_risk):

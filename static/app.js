@@ -339,9 +339,12 @@ function updateConflictArcs() {
     // Use current total military on each side (not start-relative losses) so the dot
     // reflects the real balance of power and never resets when a territory is captured.
     // defender_total is the defender's full national military (not just the garrison).
-    const totalStr = Math.max(c.attacker_str + c.defender_total, 1);
-    const t = Math.min(1, Math.max(0, c.attacker_str / totalStr));
-    const front = bezierAt(a, ctrl, d, t);
+    const totalStr = Math.max((c.attacker_str || 0) + (c.defender_total || 0), 1);
+    const t = Math.min(1, Math.max(0, (c.attacker_str || 0) / totalStr));
+    // Clamp display position away from endpoints so the dot is never hidden behind
+    // an endpoint badge (which renders on top in SVG order).
+    const tDisplay = Math.min(0.88, Math.max(0.12, t));
+    const front = bezierAt(a, ctrl, d, tDisplay);
     const status = t > 0.58 ? 'winning' : t < 0.42 ? 'losing' : 'even';
 
     // Country colors for endpoint badges — territoryInfo has 'c' (color) keyed by original name
@@ -361,15 +364,16 @@ function updateConflictArcs() {
       .attr('d', d => d.path)
       .attr('marker-end', 'url(#conflict-arrow)');
 
-  // Front-line dot
+  // Front-line dot — raised to top so it always renders above endpoint badges
   conflictSel.selectAll('.conflict-front')
     .data(arcs, d => d.key)
     .join('circle')
       .attr('class', d => `conflict-front conflict-front-${d.status}`)
       .attr('cx', d => d.front[0])
       .attr('cy', d => d.front[1])
-      .attr('r', 4)
-      .attr('pointer-events', 'none');
+      .attr('r', 5)
+      .attr('pointer-events', 'none')
+      .raise();
 
   // Attacker badge — filled circle in attacker's country color at arc origin
   conflictSel.selectAll('.conflict-dot-attacker')
@@ -818,6 +822,34 @@ function downloadLog() {
 }
 
 // ─────────────────────────────────────────────
+//  Hall of Fame
+// ─────────────────────────────────────────────
+function loadHallOfFame() {
+  fetch('/winners')
+    .then(r => r.json())
+    .then(winners => {
+      const el = document.getElementById('hof-list');
+      if (!winners.length) {
+        el.innerHTML = '<span class="hof-empty">No completed runs yet</span>';
+        return;
+      }
+      el.innerHTML = winners.map((w, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        const meta  = [w.start_year ? `started ${w.start_year}` : null, w.years ? `${w.years} yrs` : null, w.completed]
+                        .filter(Boolean).join(' · ');
+        return `<div class="hof-entry">
+          <span class="hof-rank">${medal}</span>
+          <span class="hof-name" title="${w.winner}">${w.winner}</span>
+          <span class="hof-meta">${meta}</span>
+        </div>`;
+      }).join('');
+    })
+    .catch(() => {});
+}
+
+loadHallOfFame();
+
+// ─────────────────────────────────────────────
 //  Socket.IO
 // ─────────────────────────────────────────────
 const socket = io();
@@ -875,6 +907,7 @@ socket.on('gameover', (data) => {
   document.getElementById('go-days').textContent   = `${data.years} years · ${data.months % 12} months`;
   banner.style.display = 'block';
   appendLog(`★ SIMULATION OVER — ${data.winner} has conquered the world!`);
+  setTimeout(loadHallOfFame, 2000);  // refresh after log file is flushed
 });
 
 // ─────────────────────────────────────────────

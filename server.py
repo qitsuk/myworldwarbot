@@ -4,6 +4,7 @@ Production:   pip install eventlet
               gunicorn --worker-class eventlet -w 1 server:app
 """
 import os
+import re
 import random
 import threading
 from collections import deque
@@ -16,6 +17,20 @@ import logger
 import main as sim
 from data_loader import load_countries, load_events, DATA_YEAR
 from world import World
+
+# Regex patterns to extract winner name from each gameover flavor
+_WINNER_PATTERNS = [
+    r'After \d+ years of struggle, (.+?) stands alone',
+    r'^(.+?) has done the impossible',
+    r'The last flag standing belongs to (.+?)\.',
+    r'History ends and begins again — (.+?) reigns supreme',
+    r'From the ashes of a hundred nations, (.+?) emerges victorious',
+    r'The world has known nothing but war for \d+ years\. Now it knows only (.+?)\.',
+    r'One nation to rule them all: (.+?) claims the world',
+    r'The struggle is over\. (.+?) is the last nation',
+    r'After \d+ years and countless wars, (.+?) stands as the sole',
+    r'The simulation ends as it must — with one\. (.+?) has conquered the world',
+]
 
 load_dotenv(Path(__file__).parent / '.env')
 
@@ -117,6 +132,49 @@ def serve_log(filename):
     if not path.exists():
         abort(404)
     return send_file(str(path), as_attachment=True, download_name=filename, mimetype='text/plain')
+
+
+@app.route('/winners')
+def get_winners():
+    """Return the last 5 simulation winners parsed from log files."""
+    if not LOGS_DIR.exists():
+        return jsonify([])
+    logs = sorted(LOGS_DIR.glob('sim_*.log'), key=lambda p: p.stat().st_mtime, reverse=True)
+    winners = []
+    for log_path in logs:
+        if len(winners) >= 5:
+            break
+        try:
+            start_year = int(log_path.stem.split('_')[1])
+        except (IndexError, ValueError):
+            start_year = None
+        try:
+            with open(log_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        except Exception:
+            continue
+        for line in reversed(lines):
+            line = line.strip()
+            if not line.startswith('SIMULATION OVER'):
+                continue
+            flavor = line[len('SIMULATION OVER — '):]
+            winner_name = None
+            for pat in _WINNER_PATTERNS:
+                m = re.search(pat, flavor)
+                if m:
+                    winner_name = m.group(1)
+                    break
+            years_m = re.search(r'(\d+) years', flavor)
+            years = int(years_m.group(1)) if years_m else None
+            if winner_name:
+                winners.append({
+                    'winner': winner_name,
+                    'years': years,
+                    'start_year': start_year,
+                    'completed': datetime.fromtimestamp(log_path.stat().st_mtime).strftime('%Y-%m-%d'),
+                })
+            break
+    return jsonify(winners)
 
 
 # ── Socket ────────────────────────────────────────────────────────────────────
