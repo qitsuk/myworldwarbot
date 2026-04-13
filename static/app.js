@@ -794,7 +794,12 @@ function appendLog(msg) {
   div.addEventListener('mouseenter', e => {
     if (div.dataset.launcher && div.dataset.target) {
       showStrikeLogTip(e, div.dataset.launcher, div.dataset.target);
-      animateNuclearStrike(div.dataset.launcher, div.dataset.target, null, null);
+      let replayCityPos = null;
+      if (div.dataset.lat && div.dataset.lon && pathFn) {
+        const proj = pathFn.projection();
+        if (proj) replayCityPos = proj([+div.dataset.lon, +div.dataset.lat]);
+      }
+      animateNuclearStrike(div.dataset.launcher, div.dataset.target, replayCityPos, +div.dataset.warheads || null);
     } else {
       showLogTip(e, div.className);
     }
@@ -847,15 +852,17 @@ socket.on('nuclear_strike', (data) => {
   }
   animateNuclearStrike(data.launcher, data.target, cityPos, data.warheads);
 
-  // Tag the matching log entry so hovering over it replays the animation.
-  // The launch log message always contains both the launcher and target names.
-  // It arrives just before the nuclear_strike event in the same tick.
+  // Tag the matching log entry so hovering over it replays the animation with
+  // the exact city position and warhead count.
   const entries = logEl.querySelectorAll('.log-nuclear:not([data-launcher])');
   for (const entry of entries) {
     const text = entry.textContent;
     if (text.includes(data.launcher) && text.includes(data.target)) {
       entry.dataset.launcher = data.launcher;
       entry.dataset.target   = data.target;
+      if (data.lat  != null) entry.dataset.lat      = data.lat;
+      if (data.lon  != null) entry.dataset.lon      = data.lon;
+      if (data.warheads != null) entry.dataset.warheads = data.warheads;
       entry.classList.add('log-nuclear-strike');
       break;
     }

@@ -370,9 +370,17 @@ class Conflict:
             tgt_pop_frac  = sat(0.55, 2.5)   # tighter scale — large nations still take real hits
             tgt_econ_frac = sat(0.88, 3.0)
 
+            mil_before  = target.military_strength
+            pop_before  = target.population
+            econ_before = target.economy
+
             target.military_strength = max(0, target.military_strength * (1.0 - tgt_mil_frac))
             target.population        = max(1, int(target.population    * (1.0 - tgt_pop_frac)))
             target.economy           = max(0, int(target.economy       * (1.0 - tgt_econ_frac)))
+
+            mil_lost  = int(mil_before  - target.military_strength)
+            pop_lost  = pop_before - target.population
+            econ_lost = econ_before - target.economy
 
             # Severity label
             if tgt_mil_frac < 0.15:
@@ -386,8 +394,8 @@ class Conflict:
             else:
                 severity = "Apocalyptic"
 
-            log(f"  [NUCLEAR] \u2622 {severity} strike ({used} warheads, density {density:.1f}/M pop) — "
-                f"{target.name} loses {tgt_mil_frac*100:.0f}% military, {tgt_pop_frac*100:.0f}% population, {tgt_econ_frac*100:.0f}% economy.")
+            log(f"  [NUCLEAR] \u2622 {severity} strike ({used} warheads) on {target.name} — "
+                f"{mil_lost:,} troops, {pop_lost:,} civilians, \u20ac{econ_lost:,} economy lost.")
 
             # ── Blast radius collateral check ────────────────────────────────
             if city and world is not None:
