@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from data_loader import load_countries, load_events
 from world import World
 from conflict import Conflict, PYRRHIC_RATIO, _PEACE_PYRRHIC_FLAVORS
+from cities import fallout_duration_months
 from alliance import Alliance
 from logger import log
 from data_loader import DATA_YEAR
@@ -51,6 +52,12 @@ START_DATE = date(START_YEAR, 1, 1)
 
 _default_timescale = TIMESCALE_TEST if DEBUG else TIMESCALE_PROD
 sleep_time = float(os.getenv('TIMESCALE', _default_timescale))
+
+# During the pre-war peace period the sim fast-forwards so viewers don't wait
+# hours before anything happens.  Once the first conflict breaks out it drops
+# back to the real timescale.  In debug/test mode we just use sleep_time throughout.
+_default_peace_timescale = sleep_time if DEBUG else min(sleep_time, 3.0)
+peace_sleep_time = float(os.getenv('TIMESCALE_PEACE', _default_peace_timescale))
 
 def current_date(world):
     """Each simulation tick = 1 month. Returns the 1st of the corresponding month."""
@@ -124,16 +131,8 @@ def blend_country_names(a, b):
     result = pa + pb
     return result[0].upper() + result[1:] if result else ''
 
-def get_valid_neighbors(country, world):
-    existing_names = {c.name for c in world.countries}
-    return [c for c in world.countries if c.name in country.neighbors and c.name in existing_names]
-
 def get_targets(country, world):
-    valid = get_valid_neighbors(country, world)
-    if valid:
-        return valid
-    others = [c for c in world.countries if c != country]
-    return random.sample(others, min(3, len(others)))
+    return [c for c in world.countries if c != country]
 
 def get_alliance(country, world):
     for alliance in world.alliances:
@@ -611,6 +610,7 @@ def get_world_state(world):
 
     return {
         'day': world.current_day,
+        'nuked_cities': [c for c in world.nuked_cities if c['expires'] > world.current_day],
         'date': current_date(world).strftime('%B %d, %Y'),
         'risk': round(world.risk, 4),
         'total_countries': len(world.countries),
@@ -725,11 +725,17 @@ def simulate_day(world, events):
             country.war_exhaustion = max(0.0, country.war_exhaustion - 0.04)
 
     # Natural population growth (annual rate applied monthly)
-    # Nations at war skip growth — civilian casualties in Conflict handle their population
+    # Nations at war skip growth — civilian casualties in Conflict handle their population.
+    # Nuked nations suffer permanent fallout: growth rate is halved and a 0.3%/yr radiation
+    # mortality penalty is applied every tick for the rest of the simulation.
+    FALLOUT_GROWTH_PENALTY = 0.003 / 12   # 0.3 % annual radiation mortality, applied monthly
     at_war_countries = {c.attacker for c in world.active_conflicts} | {c.defender for c in world.active_conflicts}
     for country in world.countries:
         if country not in at_war_countries:
-            country.population = int(country.population * (1 + country.population_growth / 12))
+            growth = country.population_growth / 12
+            if country.was_nuked:
+                growth = growth * 0.5 - FALLOUT_GROWTH_PENALTY
+            country.population = max(1, int(country.population * (1 + growth)))
 
     # Military recruitment: nations build toward a target force size each month
     for country in world.countries:
@@ -756,7 +762,7 @@ def simulate_day(world, events):
             country.tech_level = round(country.tech_level + (target_tech - country.tech_level) * 0.03, 2)
 
     for conflict in list(world.active_conflicts):
-        conflict.simulate_day(len(world.countries), world.endgame_nuke_threshold)
+        conflict.simulate_day(len(world.countries), world.endgame_nuke_threshold, world)
         # Drain any nuclear strikes that fired this tick into the world queue
         world.pending_strikes.extend(conflict.pending_strikes)
         conflict.pending_strikes.clear()
@@ -793,12 +799,54 @@ def simulate_day(world, events):
                     log(f"  [PEACE] {flavor}")
                 annexe(winner, loser, world)
 
+    # ── Collateral nuclear diplomacy ──────────────────────────────────────────
+    # Process third-party casualties from nuclear blasts this tick.
+    # Each affected nation independently decides whether to declare war on the launcher.
+    _COLLATERAL_WAR_FLAVORS = [
+        "{victim} declares war on {attacker} after nuclear fallout struck {city}.",
+        "Outraged by the nuclear strike that killed thousands in {city}, {victim} goes to war with {attacker}.",
+        "{city} burns. {victim} holds {attacker} responsible and declares war.",
+        "Nuclear ash falls on {city}. {victim} answers with a declaration of war against {attacker}.",
+    ]
+    for victim_name, attacker_name, city_name, casualties, city_lat, city_lon, used in world.pending_collateral:
+        victim   = next((c for c in world.countries if c.name == victim_name),   None)
+        attacker = next((c for c in world.countries if c.name == attacker_name), None)
+        if not victim or not attacker:
+            continue
+        already = any(
+            (c.attacker is victim and c.defender is attacker) or
+            (c.attacker is attacker and c.defender is victim)
+            for c in world.active_conflicts
+        )
+        if already:
+            continue
+        # Record fallout badge for the collateral city
+        world.nuked_cities.append({
+            'lat': city_lat,           # may be None — frontend falls back to country centroid
+            'lon': city_lon,
+            'city': city_name, 'country': victim_name,
+            'warheads': used,
+            'expires': world.current_day + fallout_duration_months(used),
+        })
+        # War threshold: significant casualties (> 50 k) trigger a dice roll
+        war_chance = min(0.80, casualties / 2_000_000)
+        if random.random() < war_chance:
+            flavor = random.choice(_COLLATERAL_WAR_FLAVORS).format(
+                victim=victim_name, attacker=attacker_name, city=city_name
+            )
+            log(f"  [WORLD] {flavor}")
+            world.active_conflicts.append(Conflict(victim, attacker))
+            trigger_alliance_support(victim, attacker, world)
+    world.pending_collateral.clear()
+
     for country in list(world.countries):
         targets = get_targets(country, world)
         if not targets:
             continue
 
-        target = random.choice(targets)
+        neighbor_names = set(country.neighbors)
+        weights = [4 if c.name in neighbor_names else 1 for c in targets]
+        target = random.choices(targets, weights=weights, k=1)[0]
 
         already_at_war = any(
             (c.attacker == country or c.defender == country or
@@ -816,29 +864,18 @@ def simulate_day(world, events):
         attack_chance = base_probability * strength_ratio * world.risk * nuclear_deterrence * (1.0 - country.war_exhaustion)
 
         if random.random() < attack_chance:
+            conflict = Conflict(country, target)
+            world.active_conflicts.append(conflict)
             if strength_ratio >= INVASION_THRESHOLD:
-                # The underdog gets a chance to resist based on their tech advantage
-                tech_factor   = target.tech_level / max(country.tech_level, 0.1)
-                resist_chance = min(0.80, 0.35 * tech_factor)
-                if random.random() < resist_chance:
-                    if tech_factor > 1.1:
-                        flavor = random.choice(_WAR_TECH_DEFIANCE_FLAVORS).format(defender=target.name, attacker=country.name)
-                    else:
-                        flavor = random.choice(_WAR_BRAVE_RESISTANCE_FLAVORS).format(defender=target.name, attacker=country.name)
-                    log(f"  >> {flavor}")
-                    conflict = Conflict(country, target)
-                    world.active_conflicts.append(conflict)
-                    trigger_alliance_support(country, target, world)
+                tech_factor = target.tech_level / max(country.tech_level, 0.1)
+                if tech_factor > 1.1:
+                    flavor = random.choice(_WAR_TECH_DEFIANCE_FLAVORS).format(defender=target.name, attacker=country.name)
                 else:
-                    flavor = random.choice(_WAR_INSTANT_FLAVORS).format(attacker=country.name, defender=target.name)
-                    log(f"  >> {flavor}")
-                    annexe(country, target, world)
+                    flavor = random.choice(_WAR_BRAVE_RESISTANCE_FLAVORS).format(defender=target.name, attacker=country.name)
             else:
-                conflict = Conflict(country, target)
-                world.active_conflicts.append(conflict)
                 flavor = random.choice(_WAR_DECLARATION_FLAVORS).format(attacker=country.name, defender=target.name)
-                log(f"  >> {flavor}")
-                trigger_alliance_support(country, target, world)
+            log(f"  >> {flavor}")
+            trigger_alliance_support(country, target, world)
 
     # Nuclear proliferation: gradual uranium enrichment gated on tech + world tension
     if world.risk >= NUKE_RISK_THRESHOLD:

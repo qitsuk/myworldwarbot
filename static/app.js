@@ -19,7 +19,7 @@ const COUNTRY_IDS = {
   "748":"Eswatini","231":"Ethiopia","242":"Fiji","246":"Finland","250":"France",
   "260":"France",
   "266":"Gabon","270":"Gambia","268":"Georgia","275":"Israel","276":"Germany","288":"Ghana",
-  "300":"Greece","304":"Denmark","320":"Guatemala","324":"Guinea","624":"Guinea-Bissau","328":"Guyana",
+  "300":"Greece","304":"Greenland","320":"Guatemala","324":"Guinea","624":"Guinea-Bissau","328":"Guyana",
   "332":"Haiti","340":"Honduras","344":"Hong Kong","348":"Hungary","352":"Iceland",
   "356":"India","360":"Indonesia","364":"Iran","368":"Iraq","372":"Ireland",
   "376":"Israel","380":"Italy","384":"Ivory Coast","388":"Jamaica","392":"Japan","400":"Jordan",
@@ -159,47 +159,35 @@ function updateBorders() {
 function updateNukeBadges() {
   if (!mapReady || !nukeSel) return;
 
-  // Build sets for launchers (☢) and strike targets (☣)
-  const launcherOwners = new Set();
-  const bombedOwners   = new Set();
-  if (worldState) {
-    for (const c of worldState.countries) {
-      if (c.nuked)      launcherOwners.add(c.name);
-      if (c.was_nuked)  bombedOwners.add(c.name);
+  // nuked_cities: array of {lat, lon, city, country, warheads, expires}
+  // Server only sends entries where expires > current_day, so all are still active.
+  const nukedCities = worldState ? worldState.nuked_cities || [] : [];
+  const currentDay  = worldState ? worldState.day || 0 : 0;
+
+  const projection = pathFn.projection();
+  const badges = nukedCities.map(entry => {
+    // Prefer precise city lat/lon; fall back to the country's map centroid
+    let pos = null;
+    if (entry.lat != null && entry.lon != null && projection) {
+      const p = projection([entry.lon, entry.lat]);
+      if (p && !isNaN(p[0]) && !isNaN(p[1])) pos = p;
     }
-  }
+    if (!pos) pos = findSimNameCentroid(entry.country) || findOwnerCentroid(entry.country);
+    if (!pos) return null;
 
-  // Compute centroid of largest feature per relevant owner
-  function buildPosMap(ownerSet) {
-    const pos  = new Map();
-    const area = new Map();
-    for (const feature of countrySel.data()) {
-      const simName = featureSimName(feature);
-      if (!simName) continue;
-      const info = territoryInfo[simName];
-      if (!info || !ownerSet.has(info.o)) continue;
-      const centroid = pathFn.centroid(feature);
-      if (isNaN(centroid[0]) || isNaN(centroid[1])) continue;
-      const [[x0, y0], [x1, y1]] = pathFn.bounds(feature);
-      const a = (x1 - x0) * (y1 - y0);
-      if (!area.has(info.o) || a > area.get(info.o)) {
-        area.set(info.o, a);
-        pos.set(info.o, centroid);
-      }
-    }
-    return pos;
-  }
+    // Fade in the last 20% of lifetime (minimum 6-month fade window)
+    const remaining  = entry.expires - currentDay;
+    const fadeWindow = Math.max(remaining * 0.2, 6);
+    const opacity    = remaining < fadeWindow ? Math.max(0.2, remaining / fadeWindow) : 1.0;
+    return { key: `${entry.country}-${entry.city}-${entry.lat}-${entry.lon}`, pos, opacity };
+  }).filter(d => d !== null);
 
-  const launcherPos = buildPosMap(launcherOwners);
-  const bombedPos   = buildPosMap(bombedOwners);
-
-  // ☢ badge — launcher (offset slightly up so it doesn't overlap with ☣)
   nukeSel.selectAll('.nuke-badge')
-    .data([...launcherPos.entries()].map(([name, pos]) => ({ name, pos })), d => d.name)
+    .data(badges, d => d.key)
     .join('text')
       .attr('class', 'nuke-badge')
       .attr('x', d => d.pos[0])
-      .attr('y', d => d.pos[1] - 8)
+      .attr('y', d => d.pos[1])
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .attr('font-size', '12px')
@@ -208,32 +196,22 @@ function updateNukeBadges() {
       .attr('stroke-width', '2px')
       .attr('paint-order', 'stroke')
       .attr('pointer-events', 'none')
+      .attr('opacity', d => d.opacity)
       .text('☢');
-
-  // ☣ badge — bombed target (offset slightly down)
-  nukeSel.selectAll('.bombed-badge')
-    .data([...bombedPos.entries()].map(([name, pos]) => ({ name, pos })), d => d.name)
-    .join('text')
-      .attr('class', 'bombed-badge')
-      .attr('x', d => d.pos[0])
-      .attr('y', d => d.pos[1] + 8)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'middle')
-      .attr('font-size', '12px')
-      .attr('fill', '#ff4444')
-      .attr('stroke', '#0d1117')
-      .attr('stroke-width', '2px')
-      .attr('paint-order', 'stroke')
-      .attr('pointer-events', 'none')
-      .text('☣');
 }
 
 // Animate a nuclear missile arc from launcher to target, then shockwave rings
-function animateNuclearStrike(launcherName, targetName) {
+function animateNuclearStrike(launcherName, targetName, cityPos, warheads) {
   if (!mapReady) return;
-  const a = findOwnerCentroid(launcherName);
-  const d = findOwnerCentroid(targetName);
+  const a = findSimNameCentroid(launcherName) || findOwnerCentroid(launcherName);
+  // Use exact city coordinates if available, otherwise fall back to country centroid
+  const d = cityPos || findSimNameCentroid(targetName) || findOwnerCentroid(targetName);
   if (!a || !d) return;
+
+  // Blast circle radius in map units: 1 km ≈ scale/6371 px (pre-zoom)
+  const scale     = pathFn.projection().scale();
+  const lethalKm  = 15 * Math.pow(Math.max(1, Math.min(warheads || 1, 50)), 1/3);
+  const blastR    = (lethalKm / 6371) * scale;
 
   const { path } = buildArc(a, d);
 
@@ -256,7 +234,7 @@ function animateNuclearStrike(launcherName, targetName) {
     .ease(d3.easeLinear)
     .attr('stroke-dashoffset', 0)
     .on('end', () => {
-      // Three expanding shockwave rings staggered by 200 ms
+      // Three expanding shockwave rings staggered by 220 ms, sized to blast radius
       for (let i = 0; i < 3; i++) {
         nukeSel.append('circle')
           .attr('class', 'nuke-shockwave')
@@ -270,7 +248,7 @@ function animateNuclearStrike(launcherName, targetName) {
           .delay(i * 220)
           .duration(1100)
           .ease(d3.easeCubicOut)
-          .attr('r', 36)
+          .attr('r', Math.max(12, blastR))
           .attr('opacity', 0)
           .remove();
       }
@@ -279,21 +257,49 @@ function animateNuclearStrike(launcherName, targetName) {
     });
 }
 
-// Returns the SVG centroid of the largest feature belonging to ownerName
-function findOwnerCentroid(ownerName) {
+// Returns the SVG centroid of the largest feature whose original sim name is simName.
+// Using the largest avoids landing on tiny overseas territories when a country has
+// multiple TopoJSON features (France → 250/260/540, USA → 630/840, UK → 238/826, etc.).
+// Falls back to bounding-box centre for features that cross the antimeridian (e.g. Russia),
+// where pathFn.centroid() returns NaN.
+function findSimNameCentroid(simName) {
   let bestPos = null, bestArea = -1;
+  for (const feature of countrySel.data()) {
+    if (featureSimName(feature) !== simName) continue;
+    const [[x0, y0], [x1, y1]] = pathFn.bounds(feature);
+    const area = (x1 - x0) * (y1 - y0);
+    if (area <= bestArea) continue;
+    let pos = pathFn.centroid(feature);
+    if (isNaN(pos[0]) || isNaN(pos[1])) pos = [(x0 + x1) / 2, (y0 + y1) / 2];
+    if (isNaN(pos[0]) || isNaN(pos[1])) continue;
+    bestArea = area;
+    bestPos = pos;
+  }
+  return bestPos;
+}
+
+// Returns the SVG centroid for ownerName, strongly preferring their original home territory.
+// "Original home" = the TopoJSON feature whose sim name equals ownerName (i.e. simName === ownerName).
+// Only falls back to largest-absorbed-territory when the country no longer holds its home feature.
+// Falls back to bounding-box centre for antimeridian-crossing features (e.g. Russia).
+function findOwnerCentroid(ownerName) {
+  let homePos = null;       // centroid of the feature whose name IS the country
+  let bestPos = null, bestArea = -1;  // largest owned feature as last resort
   for (const feature of countrySel.data()) {
     const simName = featureSimName(feature);
     if (!simName) continue;
     const info = territoryInfo[simName];
     if (!info || info.o !== ownerName) continue;
-    const centroid = pathFn.centroid(feature);
-    if (isNaN(centroid[0]) || isNaN(centroid[1])) continue;
     const [[x0, y0], [x1, y1]] = pathFn.bounds(feature);
+    let pos = pathFn.centroid(feature);
+    if (isNaN(pos[0]) || isNaN(pos[1])) pos = [(x0 + x1) / 2, (y0 + y1) / 2];
+    if (isNaN(pos[0]) || isNaN(pos[1])) continue;
+    // Prefer the feature that is the country's own original territory
+    if (simName === ownerName) { homePos = pos; }
     const area = (x1 - x0) * (y1 - y0);
-    if (area > bestArea) { bestArea = area; bestPos = centroid; }
+    if (area > bestArea) { bestArea = area; bestPos = pos; }
   }
-  return bestPos;
+  return homePos || bestPos;
 }
 
 // Quadratic bezier arc — returns { path, ctrl } so callers can place dots along the curve
@@ -321,29 +327,42 @@ function updateConflictArcs() {
   if (!mapReady || !conflictSel) return;
 
   const arcs = (worldState ? worldState.conflicts : []).map(c => {
-    const a = findOwnerCentroid(c.attacker);
-    const d = findOwnerCentroid(c.defender);
+    // Attacker: anchor to their original home polygon (stable, doesn't jump as they expand)
+    // Defender: contested territory first; fall back to defender's home; last resort = any owned feature
+    const a = findSimNameCentroid(c.attacker) || findOwnerCentroid(c.attacker);
+    const d = findSimNameCentroid(c.contested) || findSimNameCentroid(c.defender) || findOwnerCentroid(c.defender);
     if (!a || !d) return null;
 
     const { path, ctrl } = buildArc(a, d);
 
     // Front position: t=0 → attacker's side, t=1 → defender's side.
-    // The front shifts toward whoever is losing proportionally more troops.
-    const aLost = 1 - c.attacker_str / Math.max(c.attacker_start, 1);
-    const dLost = 1 - c.defender_str / Math.max(c.defender_start, 1);
-    const t = dLost / Math.max(aLost + dLost, 0.001);
+    // Clamp losses to [0,1] — military can grow via recruitment, so raw fraction can go negative.
+    const aLost = Math.min(1, Math.max(0, 1 - c.attacker_str / Math.max(c.attacker_start, 1)));
+    const dLost = Math.min(1, Math.max(0, 1 - c.defender_str / Math.max(c.defender_start, 1)));
+    // Start at 0.5 (even) when neither side has taken losses yet; clamp result to [0,1].
+    const denom = aLost + dLost;
+    const t = denom < 0.001 ? 0.5 : Math.min(1, Math.max(0, dLost / denom));
     const front = bezierAt(a, ctrl, d, t);
     const status = t > 0.58 ? 'winning' : t < 0.42 ? 'losing' : 'even';
 
-    return { key: `${c.attacker}|${c.defender}`, path, front, status };
+    // Country colors for endpoint badges — territoryInfo has 'c' (color) keyed by original name
+    const attackerColor  = territoryInfo[c.attacker]?.c  || '#ff4444';
+    const defenderColor  = territoryInfo[c.defender]?.c  || '#8b949e';
+
+    return { key: `${c.attacker}|${c.defender}`, path, ctrl, a, d, front, status,
+             attackerColor, defenderColor,
+             attackerName: c.attacker, defenderName: c.defender };
   }).filter(Boolean);
 
+  // Dashed arc line with arrowhead pointing at the contested territory
   conflictSel.selectAll('.conflict-arc')
     .data(arcs, d => d.key)
     .join('path')
       .attr('class', 'conflict-arc')
-      .attr('d', d => d.path);
+      .attr('d', d => d.path)
+      .attr('marker-end', 'url(#conflict-arrow)');
 
+  // Front-line dot
   conflictSel.selectAll('.conflict-front')
     .data(arcs, d => d.key)
     .join('circle')
@@ -352,6 +371,62 @@ function updateConflictArcs() {
       .attr('cy', d => d.front[1])
       .attr('r', 4)
       .attr('pointer-events', 'none');
+
+  // Attacker badge — filled circle in attacker's country color at arc origin
+  conflictSel.selectAll('.conflict-dot-attacker')
+    .data(arcs, d => d.key)
+    .join('circle')
+      .attr('class', 'conflict-dot-attacker')
+      .attr('cx', d => d.a[0])
+      .attr('cy', d => d.a[1])
+      .attr('r', 5)
+      .attr('fill', d => d.attackerColor)
+      .attr('stroke', '#0d1117')
+      .attr('stroke-width', 1.5)
+      .attr('pointer-events', 'none');
+
+  // Defender badge — filled circle in defender's country color at arc target
+  conflictSel.selectAll('.conflict-dot-defender')
+    .data(arcs, d => d.key)
+    .join('circle')
+      .attr('class', 'conflict-dot-defender')
+      .attr('cx', d => d.d[0])
+      .attr('cy', d => d.d[1])
+      .attr('r', 5)
+      .attr('fill', d => d.defenderColor)
+      .attr('stroke', '#0d1117')
+      .attr('stroke-width', 1.5)
+      .attr('pointer-events', 'none');
+
+  // "A" label on attacker dot
+  conflictSel.selectAll('.conflict-label-attacker')
+    .data(arcs, d => d.key)
+    .join('text')
+      .attr('class', 'conflict-label-attacker')
+      .attr('x', d => d.a[0])
+      .attr('y', d => d.a[1])
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .attr('font-size', '6px')
+      .attr('font-weight', 'bold')
+      .attr('fill', '#0d1117')
+      .attr('pointer-events', 'none')
+      .text('A');
+
+  // "D" label on defender dot
+  conflictSel.selectAll('.conflict-label-defender')
+    .data(arcs, d => d.key)
+    .join('text')
+      .attr('class', 'conflict-label-defender')
+      .attr('x', d => d.d[0])
+      .attr('y', d => d.d[1])
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .attr('font-size', '6px')
+      .attr('font-weight', 'bold')
+      .attr('fill', '#0d1117')
+      .attr('pointer-events', 'none')
+      .text('D');
 }
 
 function updateMap() {
@@ -413,6 +488,20 @@ async function initMap() {
   borderWarSel = mapGroup.append('path')
     .attr('class', 'border-mesh border-war')
     .attr('fill', 'none');
+
+  // Arrowhead marker for conflict arcs — reused by all arcs via marker-end
+  svgEl.append('defs').append('marker')
+    .attr('id', 'conflict-arrow')
+    .attr('viewBox', '0 -4 8 8')
+    .attr('refX', 6)
+    .attr('refY', 0)
+    .attr('markerWidth', 4)
+    .attr('markerHeight', 4)
+    .attr('orient', 'auto')
+    .append('path')
+      .attr('d', 'M0,-4L8,0L0,4Z')
+      .attr('fill', '#ff4444')
+      .attr('opacity', 0.9);
 
   // Conflict arc layer — above borders, below nuke badges
   conflictSel = mapGroup.append('g').attr('class', 'conflict-arcs');
@@ -706,7 +795,7 @@ function appendLog(msg) {
   div.addEventListener('mouseenter', e => {
     if (div.dataset.launcher && div.dataset.target) {
       showStrikeLogTip(e, div.dataset.launcher, div.dataset.target);
-      animateNuclearStrike(div.dataset.launcher, div.dataset.target);
+      animateNuclearStrike(div.dataset.launcher, div.dataset.target, null, null);
     } else {
       showLogTip(e, div.className);
     }
@@ -751,7 +840,13 @@ socket.on('log', (data) => {
 });
 
 socket.on('nuclear_strike', (data) => {
-  animateNuclearStrike(data.launcher, data.target);
+  // Project city lat/lon to screen space if available
+  let cityPos = null;
+  if (data.lat != null && data.lon != null && pathFn) {
+    const proj = pathFn.projection();
+    if (proj) cityPos = proj([data.lon, data.lat]);
+  }
+  animateNuclearStrike(data.launcher, data.target, cityPos, data.warheads);
 
   // Tag the matching log entry so hovering over it replays the animation.
   // The launch log message always contains both the launcher and target names.

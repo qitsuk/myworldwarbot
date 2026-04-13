@@ -167,6 +167,8 @@ def _run_simulation():
     logger.log(f'[STARTUP] A new simulation is starting! {len(world.countries)} nations in {sim.START_YEAR}, extrapolated {years_extrapolated} years from {DATA_YEAR}. Timescale: {_fmt_timescale(sim.sleep_time)}.')
 
     last_conflict_month = sim.PEACE_MONTHS
+    first_war_started   = sim.DEBUG    # in debug mode act as if war already started (no timescale switch)
+    current_sleep       = sim.sleep_time if sim.DEBUG else sim.peace_sleep_time
     _tension_thresholds = {
         0.25: "Tensions are rising across the globe.",
         0.40: "The world is on edge — conflicts grow more frequent.",
@@ -195,11 +197,35 @@ def _run_simulation():
 
             conflicts_before = len(world.active_conflicts)
             sim.simulate_day(world, events)
-            for launcher_name, target_name in world.pending_strikes:
-                socketio.emit('nuclear_strike', {'launcher': launcher_name, 'target': target_name})
+            for strike in world.pending_strikes:
+                launcher_name, target_name = strike[0], strike[1]
+                city_name = strike[2] if len(strike) > 2 else None
+                city_lat  = strike[3] if len(strike) > 3 else None
+                city_lon  = strike[4] if len(strike) > 4 else None
+                used      = strike[5] if len(strike) > 5 else None
+                socketio.emit('nuclear_strike', {
+                    'launcher': launcher_name,
+                    'target':   target_name,
+                    'city':     city_name,
+                    'lat':      city_lat,
+                    'lon':      city_lon,
+                    'warheads': used,
+                })
+                from cities import fallout_duration_months
+                world.nuked_cities.append({
+                    'lat': city_lat,          # may be None — frontend falls back to country centroid
+                    'lon': city_lon,
+                    'city': city_name or target_name, 'country': target_name,
+                    'warheads': used or 1,
+                    'expires': world.current_day + fallout_duration_months(used or 1),
+                })
             world.pending_strikes.clear()
             if len(world.active_conflicts) > conflicts_before:
                 last_conflict_month = world.current_day
+                if not first_war_started:
+                    first_war_started = True
+                    current_sleep     = sim.sleep_time
+                    logger.log(f'  [STARTUP] First conflict detected — switching to real timescale ({sim._fmt_timescale(sim.sleep_time)}).')
 
             # Stalemate breaker
             if (world.risk >= sim.BASE_RISK
@@ -221,7 +247,7 @@ def _run_simulation():
                 _last_state = state
             socketio.emit('state', state)
 
-            time.sleep(sim.sleep_time)
+            time.sleep(current_sleep)
 
         if world.countries:
             winner = world.countries[0].name
@@ -240,4 +266,4 @@ def _run_simulation():
 
 if __name__ == '__main__':
     debug = os.getenv('DEBUG', 'false').lower() == 'true'
-    socketio.run(app, host='0.0.0.0', port=5000, debug=debug)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=debug, allow_unsafe_werkzeug=True)
