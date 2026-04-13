@@ -304,6 +304,28 @@ _WAR_BETRAYAL_FLAVORS = [
     "The alliance dissolves in bloodshed as {attacker} betrays {defender}.",
 ]
 
+_NUCLEAR_UNDERDOG_WAR_FLAVORS = [
+    "Armed with nuclear weapons, {attacker} launches a daring assault on {defender}.",
+    "{attacker} bets its nuclear arsenal against {defender}'s conventional might.",
+    "David vs Goliath: {attacker} strikes {defender}, nuclear weapons at the ready.",
+    "Outgunned but not defenceless, {attacker} declares war on {defender}.",
+    "{attacker} decides its warheads are worth more than its troop count — it attacks {defender}.",
+    "The world watches in disbelief as {attacker} declares war on the far larger {defender}.",
+    "Reckless or brilliant? {attacker} opens hostilities against {defender}.",
+    "{attacker} has nukes. That, apparently, is enough to pick a fight with {defender}.",
+]
+
+_NUCLEAR_FIRST_STRIKE_FLAVORS = [
+    "Before a soldier crosses the border, {attacker} launches nuclear weapons against {defender}.",
+    "{attacker} opens hostilities with a nuclear first strike against {defender}.",
+    "No warning, no ultimatum — {attacker} unleashes nuclear fire on {defender} to start the war.",
+    "The war begins with mushroom clouds: {attacker} hits {defender} before troops have moved.",
+    "{attacker} softens {defender} with nuclear strikes before the invasion begins.",
+    "Ground troops are still mobilising as {attacker}'s missiles arc toward {defender}.",
+    "{attacker}'s opening move isn't soldiers — it's warheads aimed at {defender}.",
+    "In a shocking escalation, {attacker} leads with nukes against {defender}.",
+]
+
 _NUCLEAR_ENRICHMENT_FLAVORS = [
     "Satellites detect unusual heat signatures near {country}'s remote facilities.",
     "{country} quietly begins enriching uranium — the world watches nervously.",
@@ -1008,14 +1030,31 @@ def simulate_day(world, events):
         strength_ratio = country.military_strength / max(target.military_strength, 1)
         base_probability = next((e.base_probability for e in events if e.type == "invasion"), 0.01)
 
-        # Nuclear deterrence: each warhead tier halves willingness to attack
+        # Nuclear deterrence: defender's nukes reduce attacker's willingness
         nuclear_deterrence = 1.0 / (1.0 + 0.5 * (target.nukes / 100) ** 0.5) if target.nukes > 0 else 1.0
-        attack_chance = base_probability * strength_ratio * world.risk * nuclear_deterrence * (1.0 - country.war_exhaustion)
+
+        # Nuclear aggression: attacker's nukes embolden them against stronger foes.
+        # Each tier of warheads multiplies the attack chance (capped at 5×).
+        nuke_aggression = min(5.0, 1.0 + (country.nukes / 10) ** 0.5) if country.nukes > 0 else 1.0
+
+        # Underdog floor: even the weakest nation occasionally picks a fight.
+        underdog_floor = base_probability * world.risk * 0.08 * (1.0 - country.war_exhaustion)
+
+        attack_chance = max(
+            underdog_floor,
+            base_probability * strength_ratio * nuke_aggression * world.risk * nuclear_deterrence * (1.0 - country.war_exhaustion)
+        )
 
         if random.random() < attack_chance:
             conflict = Conflict(country, target)
             world.active_conflicts.append(conflict)
-            if strength_ratio >= INVASION_THRESHOLD:
+
+            # Choose declaration flavour based on context
+            nuclear_underdog = country.nukes > 0 and strength_ratio < 0.5
+            if nuclear_underdog:
+                flavor = random.choice(_NUCLEAR_UNDERDOG_WAR_FLAVORS).format(
+                    attacker=country.name, defender=target.name)
+            elif strength_ratio >= INVASION_THRESHOLD:
                 tech_factor = target.tech_level / max(country.tech_level, 0.1)
                 if tech_factor > 1.1:
                     flavor = random.choice(_WAR_TECH_DEFIANCE_FLAVORS).format(defender=target.name, attacker=country.name)
@@ -1024,6 +1063,14 @@ def simulate_day(world, events):
             else:
                 flavor = random.choice(_WAR_DECLARATION_FLAVORS).format(attacker=country.name, defender=target.name)
             log(f"  >> {flavor}")
+
+            # Nuclear first strike: outgunned nuclear aggressors open with warheads
+            if nuclear_underdog and random.random() < 0.65:
+                first_strike_flavor = random.choice(_NUCLEAR_FIRST_STRIKE_FLAVORS).format(
+                    attacker=country.name, defender=target.name)
+                log(f"  >> {first_strike_flavor}")
+                conflict.trigger_opening_strike(world)
+
             trigger_alliance_support(country, target, world)
 
     # Nuclear proliferation: gradual uranium enrichment gated on tech + world tension
