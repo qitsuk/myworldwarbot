@@ -287,6 +287,7 @@ def _run_simulation():
                     'lat': city_lat,          # may be None — frontend falls back to country centroid
                     'lon': city_lon,
                     'city': city_name or target_name, 'country': target_name,
+                    'launcher': launcher_name,
                     'warheads': used or 1,
                     'expires': world.current_day + fallout_duration_months(used or 1),
                 })

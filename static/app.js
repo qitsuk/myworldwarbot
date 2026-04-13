@@ -179,7 +179,14 @@ function updateNukeBadges() {
     const remaining  = entry.expires - currentDay;
     const fadeWindow = Math.max(remaining * 0.2, 6);
     const opacity    = remaining < fadeWindow ? Math.max(0.2, remaining / fadeWindow) : 1.0;
-    return { key: `${entry.country}-${entry.city}-${entry.lat}-${entry.lon}`, pos, opacity };
+    return {
+      key: `${entry.country}-${entry.city}-${entry.lat}-${entry.lon}`,
+      pos, opacity,
+      city: entry.city, country: entry.country,
+      launcher: entry.launcher || null,
+      warheads: entry.warheads || 1,
+      remaining,
+    };
   }).filter(d => d !== null);
 
   nukeSel.selectAll('.nuke-badge')
@@ -195,7 +202,25 @@ function updateNukeBadges() {
       .attr('stroke', '#0d1117')
       .attr('stroke-width', '2px')
       .attr('paint-order', 'stroke')
-      .attr('pointer-events', 'none')
+      .attr('pointer-events', 'all')
+      .style('cursor', 'crosshair')
+      .on('mouseenter', function(event, d) {
+        const monthsLeft = Math.max(0, d.remaining);
+        const lines = [];
+        lines.push(`<div class="lt-title">&#9762; Nuclear Fallout</div>`);
+        lines.push(`<div class="lt-row"><em>Target:</em> <span>${d.city}</span></div>`);
+        if (d.launcher) lines.push(`<div class="lt-row"><em>Fired by:</em> <span>${d.launcher}</span></div>`);
+        lines.push(`<div class="lt-row"><em>Warheads:</em> <span>${d.warheads.toLocaleString()}</span></div>`);
+        lines.push(`<div class="lt-row"><em>Fallout remaining:</em> <span>${monthsLeft} months</span></div>`);
+        logTip.innerHTML = lines.join('');
+        logTip.classList.remove('hidden');
+        const rect = this.getBoundingClientRect();
+        const x = rect.left - logTip.offsetWidth - 8;
+        const y = Math.max(4, Math.min(rect.top - 10, window.innerHeight - logTip.offsetHeight - 4));
+        logTip.style.left = Math.max(4, x) + 'px';
+        logTip.style.top  = y + 'px';
+      })
+      .on('mouseleave', () => logTip.classList.add('hidden'))
       .attr('opacity', d => d.opacity)
       .text('☢');
 }

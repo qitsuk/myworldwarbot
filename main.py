@@ -996,6 +996,7 @@ def simulate_day(world, events):
             'lat': city_lat,           # may be None — frontend falls back to country centroid
             'lon': city_lon,
             'city': city_name, 'country': victim_name,
+            'launcher': attacker_name,
             'warheads': used,
             'expires': world.current_day + fallout_duration_months(used),
         })
