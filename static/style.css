@@ -404,6 +404,18 @@ body {
 .conflict-front-losing  { fill: #f0a500; } /* defender winning — front pushed back */
 .conflict-front-even    { fill: #e6edf3; } /* roughly equal */
 
+.conflict-dot-attacker,
+.conflict-dot-defender {
+  pointer-events: none;
+}
+
+.conflict-label-attacker,
+.conflict-label-defender {
+  pointer-events: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+}
+
 @keyframes front-pulse {
   0%, 100% { opacity: 0.8; }
   50%       { opacity: 1;   }

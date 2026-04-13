@@ -4,6 +4,7 @@ import random
 import colorsys
 from country import Country
 from event import Event
+from cities import CITIES
 
 # Year the data in countries.json was sourced from
 DATA_YEAR = 2024
@@ -106,6 +107,7 @@ def load_countries(filepath="countries.json", variance=0.15, start_year=None):
             nukes=NUCLEAR_NATIONS.get(c["name"], 0),
             tech_level=_make_tech_level(economy, population),
         )
+        country.cities = CITIES.get(c["name"], [])
         countries.append(country)
 
     return countries

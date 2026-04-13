@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent / '.env')
 
 WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL', '')
+DEBUG       = os.getenv('DEBUG', 'false').lower() == 'true'
 
 # Toggle which event types get posted to Discord
 NOTIFY_EVENTS = {
@@ -109,7 +110,7 @@ def _post(event_type: str, message: str) -> None:
 def notify(message: str) -> None:
     """Call this for every log line. Filters and dispatches asynchronously."""
     print(f'[NOTIFY] called with {message[:80]}')
-    if not WEBHOOK_URL:
+    if not WEBHOOK_URL or DEBUG:
         return
     event_type = _classify(message)
     if event_type is None:

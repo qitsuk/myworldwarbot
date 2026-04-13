@@ -15,6 +15,7 @@ class Country:
         self.war_exhaustion = 0.0     # 0–1 modifier reducing willingness to start new wars
         self.uranium = 0.0            # enriched uranium stockpile (units; URANIUM_PER_NUKE → 1 warhead)
         self.was_nuked = False        # True once this nation has received a nuclear strike
+        self.cities = []              # list of {"name", "lat", "lon", "pop"} used for nuclear targeting
 
     @property
     def military_cap(self):

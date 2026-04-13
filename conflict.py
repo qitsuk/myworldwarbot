@@ -1,5 +1,7 @@
+import math
 import random
 from logger import log
+from cities import pick_target_city, blast_radius_km, haversine_km, LETHAL_MORTALITY, DAMAGE_MORTALITY, fallout_duration_months
 
 _NUCLEAR_LAUNCH_FLAVORS = [
     "{launcher} crosses the nuclear threshold, firing {used} warhead(s) at {target}.",
@@ -186,7 +188,7 @@ class Conflict:
         civilians = max(0, side.population - side.military_strength)
         return int(civilians * GUERRILLA_RATE * scale * GUERRILLA_EFFICIENCY)
 
-    def simulate_day(self, nation_count=999, endgame_threshold=2):
+    def simulate_day(self, nation_count=999, endgame_threshold=2, world=None):
         self.duration_days += 1
 
         attacker_roll = random.uniform(0.7, 1.3)
@@ -227,7 +229,7 @@ class Conflict:
             pop_loss = int(side.population * CIVILIAN_CASUALTY_RATE) + guerrilla_dead
             side.population = max(1, side.population - pop_loss)
 
-        self._check_nuclear_escalation(nation_count, endgame_threshold)
+        self._check_nuclear_escalation(nation_count, endgame_threshold, world)
         if not self.peace_deal:
             self._check_peace_offer()
 
@@ -300,7 +302,7 @@ class Conflict:
             self._peace_winner = winning
             self._peace_loser  = losing
 
-    def _check_nuclear_escalation(self, nation_count=999, endgame_threshold=2):
+    def _check_nuclear_escalation(self, nation_count=999, endgame_threshold=2, world=None):
         """A desperate nuclear power may launch a last-resort strike.
 
         Chance scales smoothly from NUCLEAR_TRIGGER_CHANCE at the trigger threshold
@@ -334,19 +336,84 @@ class Conflict:
             launcher.nukes -= used
             launcher.nuked  = True
             target.was_nuked = True
-            self.pending_strikes.append((launcher.name, target.name))
 
+            # Pick target city (weighted by population); fall back to None
+            city = pick_target_city(target)
+            city_name = city['name'] if city else None
+            city_lat  = city['lat']  if city else None
+            city_lon  = city['lon']  if city else None
+
+            self.pending_strikes.append((launcher.name, target.name, city_name, city_lat, city_lon, used))
+
+            city_str = f" ({city_name})" if city_name else ""
             flavor = random.choice(_NUCLEAR_LAUNCH_FLAVORS).format(launcher=launcher.name, used=used, target=target.name)
-            log(f"  [NUCLEAR] \u2622 {flavor}")
+            log(f"  [NUCLEAR] \u2622 {flavor}{city_str}")
 
-            launcher.military_strength = max(0, launcher.military_strength * 0.50)
-            target.military_strength   = max(0, target.military_strength   * 0.25)
-            launcher.population = max(1, int(launcher.population * 0.88))
-            target.population   = max(1, int(target.population   * 0.72))
-            launcher.economy = max(0, int(launcher.economy * 0.65))
-            target.economy   = max(0, int(target.economy   * 0.45))
+            # ── Scaled nuclear damage ────────────────────────────────────────
+            # Warhead density = warheads per million people in the target.
+            # Exponential saturation: damage = cap * (1 - exp(-density / scale))
+            # so each additional warhead contributes less than the last.
+            #
+            # Target damage caps / scales
+            #   military: cap 0.92, scale 2.0  (armies collapse fast)
+            #   population: cap 0.55, scale 8.0  (harder to kill everyone)
+            #   economy: cap 0.88, scale 3.0  (infrastructure destroyed)
+            #
+            # Launcher (fallout / disruption) = 35% of target damage fractions
+            target_pop_M = max(target.population / 1_000_000, 0.01)
+            density = used / target_pop_M
 
-            log(f"  [NUCLEAR] \u2622 Catastrophic damage to both sides! {target.name} loses 75% military, 28% population, 55% economy.")
+            def sat(cap, scale):
+                return cap * (1.0 - math.exp(-density / scale))
+
+            tgt_mil_frac  = sat(0.92, 2.0)
+            tgt_pop_frac  = sat(0.55, 2.5)   # tighter scale — large nations still take real hits
+            tgt_econ_frac = sat(0.88, 3.0)
+
+            target.military_strength = max(0, target.military_strength * (1.0 - tgt_mil_frac))
+            target.population        = max(1, int(target.population    * (1.0 - tgt_pop_frac)))
+            target.economy           = max(0, int(target.economy       * (1.0 - tgt_econ_frac)))
+
+            # Severity label
+            if tgt_mil_frac < 0.15:
+                severity = "Limited"
+            elif tgt_mil_frac < 0.40:
+                severity = "Significant"
+            elif tgt_mil_frac < 0.65:
+                severity = "Severe"
+            elif tgt_mil_frac < 0.82:
+                severity = "Devastating"
+            else:
+                severity = "Apocalyptic"
+
+            log(f"  [NUCLEAR] \u2622 {severity} strike ({used} warheads, density {density:.1f}/M pop) — "
+                f"{target.name} loses {tgt_mil_frac*100:.0f}% military, {tgt_pop_frac*100:.0f}% population, {tgt_econ_frac*100:.0f}% economy.")
+
+            # ── Blast radius collateral check ────────────────────────────────
+            if city and world is not None:
+                lethal_km, damage_km = blast_radius_km(used)
+                for bystander in list(world.countries):
+                    if bystander is launcher or bystander is target:
+                        continue
+                    for bcity in bystander.cities:
+                        dist = haversine_km(city['lat'], city['lon'], bcity['lat'], bcity['lon'])
+                        if dist <= lethal_km:
+                            mortality = LETHAL_MORTALITY
+                        elif dist <= damage_km:
+                            mortality = DAMAGE_MORTALITY * (1.0 - (dist - lethal_km) / (damage_km - lethal_km))
+                        else:
+                            continue
+                        casualties = int(bcity['pop'] * 1_000_000 * mortality)
+                        if casualties < 1000:
+                            continue
+                        bystander.population = max(1, bystander.population - casualties)
+                        bystander.was_nuked = True
+                        world.pending_collateral.append(
+                            (bystander.name, launcher.name, bcity['name'],
+                             casualties, bcity['lat'], bcity['lon'], used)
+                        )
+                        log(f"  [NUCLEAR] \u2622 Collateral: {bcity['name']} ({bystander.name}) struck by fallout — "
+                            f"{casualties:,} casualties ({dist:.0f} km from {city_name})")
             break
 
     def _capture_territory(self):
@@ -358,6 +425,16 @@ class Conflict:
         spread equally across their remaining territories.
         """
         territory = self.contested_territory  # the territory whose garrison just fell
+
+        # Guard: another simultaneous conflict may have already taken this territory.
+        # Re-sync to whatever the defender still holds and bail out.
+        if territory not in self.defender.absorbed_names:
+            if self.defender.absorbed_names:
+                self.contested_territory = self.defender.absorbed_names[-1]
+                remaining = len(self.defender.absorbed_names)
+                self._defender_garrison = self.defender.military_strength / max(remaining, 1)
+                self._defender_start    = max(self._defender_garrison, 1)
+            return
 
         n    = len(self.defender.absorbed_names)
         frac = 1.0 / n
@@ -414,6 +491,9 @@ class Conflict:
             return True
         # Garrison wiped with one territory left = final defeat
         if self._defender_garrison <= 0 and len(self.defender.absorbed_names) <= 1:
+            return True
+        # Defender has no territories left (stripped by other simultaneous conflicts)
+        if not self.defender.absorbed_names:
             return True
         return False
 

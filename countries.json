@@ -401,6 +401,7 @@
             "military_strength": 92000,
             "territory": 9984670,
             "neighbors": [
+                "Greenland",
                 "United States"
             ]
         },
@@ -894,6 +895,20 @@
             ]
         },
         {
+            "name": "Greenland",
+            "population": 57000,
+            "population_growth": 0.005,
+            "economy": 3500000000,
+            "military_strength": 2500,
+            "territory": 836330,
+            "neighbors": [
+                "Canada",
+                "Denmark",
+                "Iceland",
+                "Norway"
+            ]
+        },
+        {
             "name": "Guatemala",
             "population": 17000000,
             "population_growth": 0.02,
@@ -1009,6 +1024,7 @@
             "territory": 103000,
             "neighbors": [
                 "Denmark",
+                "Greenland",
                 "Norway",
                 "United Kingdom"
             ]
@@ -1760,6 +1776,7 @@
             "neighbors": [
                 "Denmark",
                 "Finland",
+                "Greenland",
                 "Russia",
                 "Sweden"
             ]
