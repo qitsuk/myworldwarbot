@@ -225,7 +225,7 @@ def _run_simulation():
                 if not first_war_started:
                     first_war_started = True
                     current_sleep     = sim.sleep_time
-                    logger.log(f'  [STARTUP] First conflict detected — switching to real timescale ({sim._fmt_timescale(sim.sleep_time)}).')
+                    logger.log(f'  [STARTUP] First conflict detected — switching to real timescale ({_fmt_timescale(sim.sleep_time)}).')
 
             # Stalemate breaker
             if (world.risk >= sim.BASE_RISK
