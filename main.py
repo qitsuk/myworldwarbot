@@ -39,11 +39,13 @@ MAX_RISK          = 0.70    # hard ceiling
 STALEMATE_MONTHS  = 36    # if no new conflict starts in this many months, force one
 
 # Nuclear proliferation thresholds
+# NOTE: 192/193 countries already start above tech 2.8 — the tech gate is effectively open.
+#       Russia and USA are excluded by NUKE_MAX_STOCKPILE (≥ 5000), not by tech.
 NUKE_TECH_THRESHOLD  = 2.8   # minimum tech_level to begin enrichment
-NUKE_RISK_THRESHOLD  = 0.25  # world.risk must exceed this before any enrichment starts
+NUKE_RISK_THRESHOLD  = 0.15  # world.risk must exceed this — equals BASE_RISK so enrichment starts when the peace ramp ends (~year 5.5)
 NUKE_MAX_STOCKPILE   = 4999  # cap to exclude Russia/USA-tier arsenals (>= 5000)
-URANIUM_PER_NUKE     = 12.0  # enrichment units needed to build one warhead
-URANIUM_RATE_BASE    = 0.04  # base units accumulated per month when enriching
+URANIUM_PER_NUKE     = 6.0   # enrichment units needed to build one warhead (was 12)
+URANIUM_RATE_BASE    = 0.20  # base units accumulated per month (was 0.04) — first warhead ~30 months after enrichment starts
 # enrichment rate scales with tech: base × (tech / NUKE_TECH_THRESHOLD) up to ×2
 URANIUM_RATE_MAX_MULT = 2.0
 
