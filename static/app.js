@@ -336,12 +336,11 @@ function updateConflictArcs() {
     const { path, ctrl } = buildArc(a, d);
 
     // Front position: t=0 → attacker's side, t=1 → defender's side.
-    // Clamp losses to [0,1] — military can grow via recruitment, so raw fraction can go negative.
-    const aLost = Math.min(1, Math.max(0, 1 - c.attacker_str / Math.max(c.attacker_start, 1)));
-    const dLost = Math.min(1, Math.max(0, 1 - c.defender_str / Math.max(c.defender_start, 1)));
-    // Start at 0.5 (even) when neither side has taken losses yet; clamp result to [0,1].
-    const denom = aLost + dLost;
-    const t = denom < 0.001 ? 0.5 : Math.min(1, Math.max(0, dLost / denom));
+    // Use current total military on each side (not start-relative losses) so the dot
+    // reflects the real balance of power and never resets when a territory is captured.
+    // defender_total is the defender's full national military (not just the garrison).
+    const totalStr = Math.max(c.attacker_str + c.defender_total, 1);
+    const t = Math.min(1, Math.max(0, c.attacker_str / totalStr));
     const front = bezierAt(a, ctrl, d, t);
     const status = t > 0.58 ? 'winning' : t < 0.42 ? 'losing' : 'even';
 
