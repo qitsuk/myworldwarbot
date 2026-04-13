@@ -97,6 +97,8 @@ _PEACE_PYRRHIC_FLAVORS = [
     "Pride before profit: {winner} wins the war but loses the peace.",
 ]
 
+TERRITORY_CAPTURE_ATTACKER_COST = 0.12  # attacker loses 12% of current military as occupation cost per territory
+
 NUCLEAR_TRIGGER_THRESHOLD = 0.25   # start rolling for launch below 25% of starting strength
 NUCLEAR_TRIGGER_CHANCE    = 0.08   # 8% per month at the trigger threshold
 NUCLEAR_PANIC_CHANCE      = 0.45   # 45% per month when nearly eliminated (≤ 5% of starting strength)
@@ -116,13 +118,48 @@ GUERRILLA_EFFICIENCY = 0.22   # guerrillas are ~22% as effective as trained sold
                                # (terrain knowledge offsets lack of training/equipment)
 
 
+_TERRITORY_CAPTURE_FLAVORS = [
+    "{attacker} seizes {territory} from {defender} — the front line advances.",
+    "After fierce fighting, {attacker} plants its flag in {territory}. {defender} falls back.",
+    "The banner of {attacker} flies over {territory}. {defender} regroups.",
+    "{territory} falls to {attacker}'s relentless advance. {defender} loses ground.",
+    "A strategic breakthrough: {attacker} occupies {territory}, pushing deeper into {defender}.",
+    "Wave after wave of troops — {attacker} finally secures {territory} from {defender}.",
+    "{defender} cedes {territory} to {attacker} under the weight of defeat.",
+    "The conquest continues — {territory} is now under {attacker} control.",
+    "{attacker} forces overrun {territory}. {defender}'s territory shrinks.",
+    "Despite fierce resistance, {territory} is taken by {attacker}.",
+    "{attacker} consolidates control over {territory} as {defender} retreats.",
+    "Another piece of {defender} falls — {territory} is now {attacker} land.",
+]
+
+_TERRITORY_LAST_STAND_FLAVORS = [
+    "{defender} has lost everything but {territory} — a last stand begins.",
+    "With all other territory gone, {defender} fights desperately for their homeland {territory}.",
+    "{attacker} closes in on {territory} — all that remains of {defender}.",
+    "The end approaches for {defender}. {attacker} marches on the capital.",
+    "{defender} makes a final stand on home soil. {territory} is all that remains.",
+    "Cornered and diminished, {defender} rallies everything for one last defence of {territory}.",
+]
+
+
 class Conflict:
     def __init__(self, attacker, defender):
         self.attacker = attacker
         self.defender = defender
         self.duration_days = 0
+
+        # The specific territory currently being fought over.
+        # Wars progress territory by territory — most recently acquired falls first.
+        self.contested_territory = defender.absorbed_names[-1]
+
+        # Garrison = the share of the defender's military stationed in the contested territory.
+        # Equal distribution: total / num_territories.  Attacker commits their full force.
+        n = len(defender.absorbed_names)
+        self._defender_garrison = defender.military_strength / max(n, 1)
+
         self._attacker_start = max(attacker.military_strength, 1)
-        self._defender_start = max(defender.military_strength, 1)
+        self._defender_start = max(self._defender_garrison, 1)
 
         # Nuclear strikes that fired this tick — drained into world.pending_strikes by simulate_day()
         self.pending_strikes = []
@@ -136,11 +173,12 @@ class Conflict:
         self._peace_winner = None
         self._peace_loser  = None
 
-    def _guerrilla_strength(self, side, start_strength):
+    def _guerrilla_strength(self, side, current_strength, start_strength):
         """Effective guerrilla contribution for a side that's taking heavy losses.
         Guerrillas are defenders — they fight for their homeland, not to invade.
-        They emerge gradually as the regular military is ground down."""
-        desperation = max(0.0, 1.0 - side.military_strength / max(start_strength, 1))
+        They emerge gradually as the regular military is ground down.
+        current_strength is passed explicitly so garrison can be used for the defender."""
+        desperation = max(0.0, 1.0 - current_strength / max(start_strength, 1))
         if desperation < GUERRILLA_THRESHOLD:
             return 0
         # Participation scales from 0 → GUERRILLA_RATE as losses go from threshold → 80%
@@ -156,22 +194,32 @@ class Conflict:
 
         tech_ratio = self.attacker.tech_level / max(self.defender.tech_level, 0.1)
 
+        # Attacker commits their full force.
+        # Defender fights with the garrison of the contested territory only —
+        # the rest of their army is holding other territories.
+        attacker_str = self.attacker.military_strength
+        defender_str = self._defender_garrison
+
         # Guerrillas supplement the losing side's defensive strength.
         # They're partially tech-resistant (terrain, concealment) so only half the tech
         # penalty applies to them — a guerrilla in the jungle is harder to bomb than a tank.
-        attacker_guerrillas = self._guerrilla_strength(self.attacker, self._attacker_start)
-        defender_guerrillas = self._guerrilla_strength(self.defender, self._defender_start)
-        attacker_effective  = self.attacker.military_strength + attacker_guerrillas * (1 + (tech_ratio - 1) * 0.5)
-        defender_effective  = self.defender.military_strength + defender_guerrillas * (1 + (1 / tech_ratio - 1) * 0.5)
+        attacker_guerrillas = self._guerrilla_strength(self.attacker, attacker_str,    self._attacker_start)
+        defender_guerrillas = self._guerrilla_strength(self.defender, defender_str,    self._defender_start)
+        attacker_effective  = attacker_str + attacker_guerrillas * (1 + (tech_ratio - 1) * 0.5)
+        defender_effective  = defender_str + defender_guerrillas * (1 + (1 / tech_ratio - 1) * 0.5)
 
         attacker_losses = (defender_effective * 0.08) * attacker_roll * 1.2 / tech_ratio
         defender_losses = (attacker_effective * 0.08) * defender_roll * 0.8 * tech_ratio
 
+        # Apply losses to attacker's total military
         self.attacker.military_strength = max(0, self.attacker.military_strength - attacker_losses)
-        self.defender.military_strength = max(0, self.defender.military_strength - defender_losses)
-
         self.attacker.military_strength = min(self.attacker.military_strength, self.attacker.military_cap)
-        self.defender.military_strength = min(self.defender.military_strength, self.defender.military_cap)
+
+        # Apply losses to the defender's garrison; sync the same loss to their total military
+        garrison_before = self._defender_garrison
+        self._defender_garrison = max(0.0, self._defender_garrison - defender_losses)
+        actual_garrison_loss = garrison_before - self._defender_garrison
+        self.defender.military_strength = max(0.0, self.defender.military_strength - actual_garrison_loss)
 
         # Civilian casualties — base rate plus extra for guerrilla fighters killed in action
         for side, guerrillas in ((self.attacker, attacker_guerrillas), (self.defender, defender_guerrillas)):
@@ -183,18 +231,38 @@ class Conflict:
         if not self.peace_deal:
             self._check_peace_offer()
 
+        # Territory capture: garrison wiped out but defender still holds multiple territories —
+        # transfer the contested territory and open a new front rather than ending the war.
+        # Guard: attacker must still be standing (mutual destruction ≠ capture).
+        if (not self.peace_deal
+                and self.attacker.military_strength > 0
+                and self._defender_garrison <= 0
+                and len(self.defender.absorbed_names) > 1):
+            self._capture_territory()
+
     def _check_peace_offer(self):
-        """Winning side may offer peace once the loser is desperate enough."""
-        # Identify current winning / losing side by military strength
-        if self.attacker.military_strength >= self.defender.military_strength:
+        """Winning side may offer peace once the loser is desperate enough.
+
+        For the defender, desperation is measured by garrison losses (they're only
+        fighting with the troops in the contested territory, not their entire army).
+        For the attacker, it's their total military.
+        """
+        # Use garrison for defender comparisons so peace triggers on battle momentum,
+        # not on the defender's total national military
+        attacker_str = self.attacker.military_strength
+        defender_str = self._defender_garrison
+
+        if attacker_str >= defender_str:
             winning, losing = self.attacker, self.defender
-            losing_start = self._defender_start
+            losing_strength = defender_str
+            losing_start    = self._defender_start
         else:
             winning, losing = self.defender, self.attacker
-            losing_start = self._attacker_start
+            losing_strength = attacker_str
+            losing_start    = self._attacker_start
 
         # Only when the loser has dropped far enough
-        if losing.military_strength > losing_start * PEACE_THRESHOLD:
+        if losing_strength > losing_start * PEACE_THRESHOLD:
             return
         if random.random() > PEACE_OFFER_CHANCE:
             return
@@ -203,7 +271,7 @@ class Conflict:
         log(f"  [PEACE] {flavor}")
 
         # Loser's roll — desperation increases acceptance
-        desperation  = 1.0 - losing.military_strength / max(losing_start, 1)
+        desperation   = 1.0 - losing_strength / max(losing_start, 1)
         accept_chance = min(0.95, LOSER_ACCEPT_CHANCE + desperation * 0.30)
 
         if random.random() > accept_chance:
@@ -239,13 +307,18 @@ class Conflict:
         up to NUCLEAR_PANIC_CHANCE as the launcher nears total elimination.
         Endgame (≤2 nations left) forces the panic rate unconditionally.
         """
-        endgame   = nation_count <= endgame_threshold
-        start_map = {self.attacker: self._attacker_start, self.defender: self._defender_start}
+        endgame = nation_count <= endgame_threshold
+        # Attacker desperation uses their total military; defender uses garrison
+        # (nukes get launched when the specific battle is lost, not when total reserves are low)
+        strength_map = {self.attacker: self.attacker.military_strength,
+                        self.defender: self._defender_garrison}
+        start_map    = {self.attacker: self._attacker_start,
+                        self.defender: self._defender_start}
         for launcher, target in [(self.attacker, self.defender), (self.defender, self.attacker)]:
             if launcher.nukes <= 0:
                 continue
             start = max(start_map[launcher], 1)
-            strength_ratio = launcher.military_strength / start
+            strength_ratio = strength_map[launcher] / start
             if not endgame and strength_ratio > NUCLEAR_TRIGGER_THRESHOLD:
                 continue
             if endgame:
@@ -276,11 +349,73 @@ class Conflict:
             log(f"  [NUCLEAR] \u2622 Catastrophic damage to both sides! {target.name} loses 75% military, 28% population, 55% economy.")
             break
 
+    def _capture_territory(self):
+        """Transfer the contested territory from defender to attacker and open the next front.
+
+        The garrison was already depleted to 0 during combat (and the defender's total
+        military was synced down by the same losses), so no separate military deduction
+        is needed here.  The new garrison is naturally the defender's remaining military
+        spread equally across their remaining territories.
+        """
+        territory = self.contested_territory  # the territory whose garrison just fell
+
+        n    = len(self.defender.absorbed_names)
+        frac = 1.0 / n
+
+        # Transfer proportional resources
+        econ_slice = int(self.defender.economy    * frac)
+        pop_slice  = int(self.defender.population * frac)
+        terr_slice = self.defender.territory      * frac
+
+        self.attacker.economy    += econ_slice
+        self.attacker.population += pop_slice
+        self.attacker.territory  += terr_slice
+        self.attacker.absorbed_names.append(territory)
+
+        self.defender.economy    = max(1, self.defender.economy    - econ_slice)
+        self.defender.population = max(1, self.defender.population - pop_slice)
+        self.defender.territory  = max(0, self.defender.territory  - terr_slice)
+        self.defender.absorbed_names.remove(territory)
+
+        # Attacker pays an occupation cost — garrisoning newly taken land is expensive
+        cost = int(self.attacker.military_strength * TERRITORY_CAPTURE_ATTACKER_COST)
+        self.attacker.military_strength = max(1, self.attacker.military_strength - cost)
+
+        # Accumulate war exhaustion per territory captured
+        self.attacker.war_exhaustion = min(1.0, self.attacker.war_exhaustion + 0.05)
+        self.defender.war_exhaustion = min(1.0, self.defender.war_exhaustion + 0.08)
+
+        flavor = random.choice(_TERRITORY_CAPTURE_FLAVORS).format(
+            attacker=self.attacker.name, defender=self.defender.name, territory=territory
+        )
+        log(f"  >> {flavor}")
+
+        # Open the next front: new contested territory + garrison = equal share of remaining
+        remaining = len(self.defender.absorbed_names)
+        self.contested_territory  = self.defender.absorbed_names[-1]
+        self._defender_garrison   = self.defender.military_strength / max(remaining, 1)
+        self._attacker_start      = max(self.attacker.military_strength, 1)
+        self._defender_start      = max(self._defender_garrison, 1)
+
+        # Last-stand notice when only the homeland remains
+        if remaining == 1:
+            flavor = random.choice(_TERRITORY_LAST_STAND_FLAVORS).format(
+                attacker=self.attacker.name,
+                defender=self.defender.name,
+                territory=self.contested_territory,
+            )
+            log(f"  >> {flavor}")
+
     @property
     def is_over(self):
-        return (self.peace_deal is not None or
-                self.attacker.military_strength <= 0 or
-                self.defender.military_strength <= 0)
+        if self.peace_deal is not None:
+            return True
+        if self.attacker.military_strength <= 0:
+            return True
+        # Garrison wiped with one territory left = final defeat
+        if self._defender_garrison <= 0 and len(self.defender.absorbed_names) <= 1:
+            return True
+        return False
 
     @property
     def winner(self):
@@ -288,7 +423,7 @@ class Conflict:
             return self._peace_winner
         if self.attacker.military_strength <= 0:
             return self.defender
-        if self.defender.military_strength <= 0:
+        if self._defender_garrison <= 0 and len(self.defender.absorbed_names) <= 1:
             return self.attacker
         return None
 
@@ -298,7 +433,7 @@ class Conflict:
             return self._peace_loser
         if self.attacker.military_strength <= 0:
             return self.attacker
-        if self.defender.military_strength <= 0:
+        if self._defender_garrison <= 0 and len(self.defender.absorbed_names) <= 1:
             return self.defender
         return None
 

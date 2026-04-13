@@ -604,9 +604,14 @@ function buildLogTipContent(cls) {
     if (!worldState.conflicts.length)
       return '<div class="lt-title">No Active Wars</div>';
     return `<div class="lt-title">Active Wars (${worldState.conflicts.length})</div>` +
-      worldState.conflicts.map(c =>
-        `<div class="lt-row"><span>${c.attacker}</span> <em>vs</em> <span>${c.defender}</span> · Month ${c.day}</div>`
-      ).join('');
+      worldState.conflicts.map(c => {
+        const contested = c.contested ? ` <em>·</em> <span style="color:#d29922">${c.contested}</span>` : '';
+        const def = c.defender_total != null
+          ? `${fmt(c.defender_str)} <em>/</em> ${fmt(c.defender_total)}`
+          : fmt(c.defender_str);
+        return `<div class="lt-row"><span>${c.attacker}</span> <em>vs</em> <span>${c.defender}</span>${contested} · Month ${c.day}</div>` +
+               `<div class="lt-row" style="padding-left:8px;font-size:10px"><em>Garrison:</em> <span>${def}</span></div>`;
+      }).join('');
   }
 
   if (cls.includes('log-alliance') || cls.includes('log-union')) {

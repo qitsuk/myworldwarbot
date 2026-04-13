@@ -634,13 +634,15 @@ def get_world_state(world):
         ],
         'conflicts': [
             {
-                'attacker':       c.attacker.name,
-                'defender':       c.defender.name,
-                'day':            c.duration_days,
-                'attacker_str':   int(c.attacker.military_strength),
-                'defender_str':   int(c.defender.military_strength),
-                'attacker_start': int(c._attacker_start),
-                'defender_start': int(c._defender_start),
+                'attacker':        c.attacker.name,
+                'defender':        c.defender.name,
+                'day':             c.duration_days,
+                'attacker_str':    int(c.attacker.military_strength),
+                'defender_str':    int(c._defender_garrison),        # garrison in contested territory
+                'defender_total':  int(c.defender.military_strength), # defender's full national military
+                'attacker_start':  int(c._attacker_start),
+                'defender_start':  int(c._defender_start),
+                'contested':       c.contested_territory,
             }
             for c in world.active_conflicts
         ],
@@ -665,7 +667,7 @@ def print_status(world):
     if world.active_conflicts:
         log(f"  Active conflicts ({len(world.active_conflicts)}):")
         for c in world.active_conflicts:
-            log(f"    {c.attacker.name} ({int(c.attacker.military_strength):,}) vs {c.defender.name} ({int(c.defender.military_strength):,}) - Month {c.duration_days}")
+            log(f"    {c.attacker.name} ({int(c.attacker.military_strength):,}) vs {c.defender.name} [{c.contested_territory}] (garrison {int(c._defender_garrison):,} / total {int(c.defender.military_strength):,}) - Month {c.duration_days}")
 
     if world.current_day % 12 == 0:
         log(f"\n  Top 5 countries by military strength:")
