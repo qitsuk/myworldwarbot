@@ -389,15 +389,26 @@ function updateConflictArcs() {
       .attr('marker-end', 'url(#conflict-arrow)');
 
   // Front-line dot — raised to top so it always renders above endpoint badges
-  conflictSel.selectAll('.conflict-front')
-    .data(arcs, d => d.key)
-    .join('circle')
-      .attr('class', d => `conflict-front conflict-front-${d.status}`)
-      .attr('cx', d => d.front[0])
-      .attr('cy', d => d.front[1])
-      .attr('r', 5)
-      .attr('pointer-events', 'none')
-      .raise();
+  const frontSel = conflictSel.selectAll('.conflict-front')
+    .data(arcs, d => d.key);
+
+  // Enter: place immediately at current position (no animated jump from 0,0)
+  frontSel.enter().append('circle')
+    .attr('class', d => `conflict-front conflict-front-${d.status}`)
+    .attr('cx', d => d.front[0])
+    .attr('cy', d => d.front[1])
+    .attr('r', 5)
+    .attr('pointer-events', 'none');
+
+  // Update: smoothly glide to new position over the sub-tick interval
+  frontSel
+    .attr('class', d => `conflict-front conflict-front-${d.status}`)
+    .transition().duration(9500).ease(d3.easeLinear)
+    .attr('cx', d => d.front[0])
+    .attr('cy', d => d.front[1]);
+
+  frontSel.exit().remove();
+  conflictSel.selectAll('.conflict-front').raise();
 
   // Attacker badge — filled circle in attacker's country color at arc origin
   conflictSel.selectAll('.conflict-dot-attacker')
@@ -809,10 +820,16 @@ function applyCountryHighlight(names) {
     const owner = info ? info.o : simName;
     return (names.has(simName) || names.has(owner)) ? 1.0 : 0.25;
   });
+  if (borderDefaultSel) borderDefaultSel.attr('opacity', 0.12);
+  if (borderAllySel)    borderAllySel.attr('opacity', 0.12);
+  if (borderWarSel)     borderWarSel.attr('opacity', 0.12);
 }
 
 function clearCountryHighlight() {
   if (countrySel) countrySel.attr('opacity', null);
+  if (borderDefaultSel) borderDefaultSel.attr('opacity', null);
+  if (borderAllySel)    borderAllySel.attr('opacity', null);
+  if (borderWarSel)     borderWarSel.attr('opacity', null);
 }
 
 // ─────────────────────────────────────────────
@@ -945,9 +962,26 @@ socket.on('log', (data) => {
 });
 
 socket.on('war_update', (data) => {
-  // Partial update: only conflict strengths changed — redraw front-line dots only
+  // Partial update: conflict progress + live military numbers for belligerents
   if (!worldState) return;
   worldState.conflicts = data.conflicts;
+  // Patch military/population for countries currently at war so tooltips stay current
+  if (data.war_countries) {
+    for (const wc of data.war_countries) {
+      const entry = byName.get(wc.name);
+      if (entry) {
+        entry.military     = wc.military;
+        entry.military_cap = wc.military_cap;
+        entry.population   = wc.population;
+      }
+      const idx = worldState.countries.findIndex(c => c.name === wc.name);
+      if (idx !== -1) {
+        worldState.countries[idx].military     = wc.military;
+        worldState.countries[idx].military_cap = wc.military_cap;
+        worldState.countries[idx].population   = wc.population;
+      }
+    }
+  }
   updateConflictArcs();
 });
 

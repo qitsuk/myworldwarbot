@@ -974,6 +974,21 @@ def step_wars(world, scale=None):
 
 def get_war_state(world):
     """Lightweight state update containing only the data needed to redraw conflict arcs."""
+    # Collect all countries currently in a conflict so tooltips stay current
+    war_country_names = set()
+    for c in world.active_conflicts:
+        war_country_names.add(c.attacker.name)
+        war_country_names.add(c.defender.name)
+    war_countries = [
+        {
+            'name':         co.name,
+            'military':     int(co.military_strength),
+            'military_cap': int(co.military_cap),
+            'population':   int(co.population),
+        }
+        for co in world.countries
+        if co.name in war_country_names
+    ]
     return {
         'conflicts': [
             {
@@ -989,6 +1004,7 @@ def get_war_state(world):
             }
             for c in world.active_conflicts
         ],
+        'war_countries': war_countries,
     }
 
 
