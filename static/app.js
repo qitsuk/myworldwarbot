@@ -189,6 +189,29 @@ function updateNukeBadges() {
     };
   }).filter(d => d !== null);
 
+  // Fallout-zone halos — drawn first so they sit below the ☢ glyphs
+  // Radius model: contamination zone ≈ 200 km × warheads^(1/3), capped at 50 warheads.
+  // (blast lethal ≈ 15 km, blast damage ≈ 80 km; fallout extends ~2-3× further)
+  const projScale = pathFn.projection().scale();
+  nukeSel.selectAll('.nuke-fallout')
+    .data(badges, d => d.key)
+    .join('circle')
+      .attr('class', 'nuke-fallout')
+      .attr('cx', d => d.pos[0])
+      .attr('cy', d => d.pos[1])
+      .attr('r', d => {
+        const eff = Math.max(1, Math.min(d.warheads, 50));
+        const falloutKm = 200 * Math.pow(eff, 1 / 3);
+        return (falloutKm / 6371) * projScale;
+      })
+      .attr('fill', 'rgba(180, 255, 60, 0.07)')
+      .attr('stroke', 'rgba(180, 255, 60, 0.35)')
+      .attr('stroke-width', 0.8)
+      .attr('stroke-dasharray', '3 2')
+      .attr('pointer-events', 'none')
+      .attr('opacity', d => d.opacity)
+      .lower();
+
   nukeSel.selectAll('.nuke-badge')
     .data(badges, d => d.key)
     .join('text')
@@ -206,11 +229,14 @@ function updateNukeBadges() {
       .style('cursor', 'crosshair')
       .on('mouseenter', function(event, d) {
         const monthsLeft = Math.max(0, d.remaining);
+        const eff = Math.max(1, Math.min(d.warheads, 50));
+        const falloutKm = Math.round(200 * Math.pow(eff, 1 / 3));
         const lines = [];
         lines.push(`<div class="lt-title">&#9762; Nuclear Fallout</div>`);
         lines.push(`<div class="lt-row"><em>Target:</em> <span>${d.city}</span></div>`);
         if (d.launcher) lines.push(`<div class="lt-row"><em>Fired by:</em> <span>${d.launcher}</span></div>`);
         lines.push(`<div class="lt-row"><em>Warheads:</em> <span>${d.warheads.toLocaleString()}</span></div>`);
+        lines.push(`<div class="lt-row"><em>Fallout zone:</em> <span>~${falloutKm.toLocaleString()} km radius</span></div>`);
         lines.push(`<div class="lt-row"><em>Fallout remaining:</em> <span>${monthsLeft} months</span></div>`);
         logTip.innerHTML = lines.join('');
         logTip.classList.remove('hidden');
@@ -798,40 +824,6 @@ function showStrikeLogTip(e, launcher, target) {
 }
 
 // ─────────────────────────────────────────────
-//  Country highlight (log hover)
-// ─────────────────────────────────────────────
-function extractCountryNames(text) {
-  // Match against all currently known country names, longest-first to avoid
-  // partial matches (e.g. "New Zealand" before "Zealand").
-  const names = [...byName.keys()].sort((a, b) => b.length - a.length);
-  const found = new Set();
-  for (const name of names) {
-    if (text.includes(name)) found.add(name);
-  }
-  return found;
-}
-
-function applyCountryHighlight(names) {
-  if (!countrySel || !names.size) return;
-  countrySel.attr('opacity', function(d) {
-    const simName = featureSimName(d);
-    if (!simName) return 0.25;
-    const info = territoryInfo[simName];
-    const owner = info ? info.o : simName;
-    return (names.has(simName) || names.has(owner)) ? 1.0 : 0.25;
-  });
-  if (borderDefaultSel) borderDefaultSel.attr('opacity', 0.12);
-  if (borderAllySel)    borderAllySel.attr('opacity', 0.12);
-  if (borderWarSel)     borderWarSel.attr('opacity', 0.12);
-}
-
-function clearCountryHighlight() {
-  if (countrySel) countrySel.attr('opacity', null);
-  if (borderDefaultSel) borderDefaultSel.attr('opacity', null);
-  if (borderAllySel)    borderAllySel.attr('opacity', null);
-  if (borderWarSel)     borderWarSel.attr('opacity', null);
-}
-
 // ─────────────────────────────────────────────
 //  Log
 // ─────────────────────────────────────────────
@@ -865,7 +857,6 @@ function appendLog(msg) {
   div.textContent = text;
 
   // Hover: nuclear strike entries replay the animation; others show context tooltip
-  // All entries highlight the countries mentioned in the text.
   div.addEventListener('mouseenter', e => {
     if (div.dataset.launcher && div.dataset.target) {
       showStrikeLogTip(e, div.dataset.launcher, div.dataset.target);
@@ -875,13 +866,11 @@ function appendLog(msg) {
         if (proj) replayCityPos = proj([+div.dataset.lon, +div.dataset.lat]);
       }
       animateNuclearStrike(div.dataset.launcher, div.dataset.target, replayCityPos, +div.dataset.warheads || null);
-      applyCountryHighlight(new Set([div.dataset.launcher, div.dataset.target]));
     } else {
       showLogTip(e, div.className);
-      applyCountryHighlight(extractCountryNames(div.textContent));
     }
   });
-  div.addEventListener('mouseleave', () => { hideLogTip(); clearCountryHighlight(); });
+  div.addEventListener('mouseleave', () => { hideLogTip(); });
 
   logEl.insertBefore(div, logEl.firstChild);
 
