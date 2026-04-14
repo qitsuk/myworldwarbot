@@ -140,12 +140,6 @@ body {
   line-height: 1.1;
 }
 
-/* ── COUNTRY HIGHLIGHT (log hover) ── */
-.country-highlight {
-  stroke: #ffe566 !important;
-  stroke-width: 2px !important;
-  filter: brightness(1.5);
-}
 
 /* ── ZOOM CONTROLS ── */
 #zoom-controls {
@@ -396,7 +390,7 @@ body {
 #log::-webkit-scrollbar-track  { background: transparent; }
 #log::-webkit-scrollbar-thumb  { background: #30363d; border-radius: 2px; }
 
-.log-entry { padding: 1px 0; word-break: break-word; }
+.log-entry { padding: 1px 0; word-break: break-word; cursor: pointer; }
 .log-war      { color: #f85149; }
 .log-alliance { color: #58a6ff; }
 .log-event    { color: #d29922; }

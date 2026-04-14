@@ -214,9 +214,8 @@ function updateNukeBadges() {
         lines.push(`<div class="lt-row"><em>Fallout remaining:</em> <span>${monthsLeft} months</span></div>`);
         logTip.innerHTML = lines.join('');
         logTip.classList.remove('hidden');
-        const rect = this.getBoundingClientRect();
-        const x = rect.left - logTip.offsetWidth - 8;
-        const y = Math.max(4, Math.min(rect.top - 10, window.innerHeight - logTip.offsetHeight - 4));
+        const x = event.clientX - logTip.offsetWidth - 14;
+        const y = Math.max(4, Math.min(event.clientY - 10, window.innerHeight - logTip.offsetHeight - 4));
         logTip.style.left = Math.max(4, x) + 'px';
         logTip.style.top  = y + 'px';
       })
@@ -803,19 +802,17 @@ function extractCountryNames(text) {
 
 function applyCountryHighlight(names) {
   if (!countrySel || !names.size) return;
-  countrySel.each(function(d) {
+  countrySel.attr('opacity', function(d) {
     const simName = featureSimName(d);
-    if (!simName) return;
+    if (!simName) return 0.25;
     const info = territoryInfo[simName];
     const owner = info ? info.o : simName;
-    if (names.has(simName) || names.has(owner)) {
-      d3.select(this).classed('country-highlight', true);
-    }
+    return (names.has(simName) || names.has(owner)) ? 1.0 : 0.25;
   });
 }
 
 function clearCountryHighlight() {
-  if (countrySel) countrySel.classed('country-highlight', false);
+  if (countrySel) countrySel.attr('opacity', null);
 }
 
 // ─────────────────────────────────────────────
@@ -945,6 +942,13 @@ socket.on('state', (state) => {
 
 socket.on('log', (data) => {
   appendLog(data.message);
+});
+
+socket.on('war_update', (data) => {
+  // Partial update: only conflict strengths changed — redraw front-line dots only
+  if (!worldState) return;
+  worldState.conflicts = data.conflicts;
+  updateConflictArcs();
 });
 
 socket.on('nuclear_strike', (data) => {

@@ -20,6 +20,8 @@ VOWELS = set('aeiouAEIOU')
 TIMESCALE_TEST = 0.5
 TIMESCALE_PROD = 1 * 60 * 60  # 1 hour per month
 
+WAR_SUBTICKS = 6          # combat sub-steps per calendar month (visual smoothness)
+
 INVASION_THRESHOLD = 10.0
 ALLIANCE_CHANCE        = 0.002  # chance per month an unaligned country seeks an alliance
 ALLIANCE_DECAY_CHANCE  = 0.008  # chance per member per month to defect
@@ -887,7 +889,110 @@ def apply_events(world, events):
 
             log(f"  [EVENT] {country.name} - {event.name}: {flavor}{impact_str}")
 
-def simulate_day(world, events):
+def _run_war_loop(world, scale=1.0):
+    """Run one (possibly scaled) war combat step for every active conflict.
+
+    scale=1.0  → full monthly damage (original behaviour)
+    scale=1/N  → 1/N monthly damage, intended to be called N times per month
+                 so that total combat damage is identical but spread over N
+                 visible steps for smoother front-line animation.
+    """
+    for conflict in list(world.active_conflicts):
+        conflict.simulate_day(len(world.countries), world.endgame_nuke_threshold, world, scale)
+        world.pending_strikes.extend(conflict.pending_strikes)
+        conflict.pending_strikes.clear()
+        if conflict.is_over:
+            world.active_conflicts.remove(conflict)
+            winner, loser = conflict.winner, conflict.loser
+
+            exhaustion = min(0.75, 0.10 + conflict.duration_days * 0.008)
+            if winner:
+                winner.war_exhaustion = min(1.0, winner.war_exhaustion + exhaustion * 0.6)
+            if loser:
+                loser.war_exhaustion  = min(1.0, loser.war_exhaustion  + exhaustion)
+
+            if conflict.peace_deal == 'merger':
+                alliance = get_alliance(winner, world)
+                merge_countries(winner, loser, world)
+                if alliance and alliance in world.alliances:
+                    world.alliances.remove(alliance)
+
+            elif conflict.peace_deal == 'annexation':
+                annexe(winner, loser, world)
+
+            else:
+                if conflict.pyrrhic:
+                    loser.economy    = int(loser.economy    * PYRRHIC_RATIO)
+                    loser.population = max(1, int(loser.population * PYRRHIC_RATIO))
+                    loser.nukes      = int(loser.nukes      * PYRRHIC_RATIO)
+                    flavor = random.choice(_PEACE_PYRRHIC_FLAVORS).format(winner=winner.name, loser=loser.name)
+                    log(f"  [PEACE] {flavor}")
+                annexe(winner, loser, world)
+
+    # Collateral nuclear diplomacy: bystanders hit by fallout may declare war on the launcher
+    _COLLATERAL_WAR_FLAVORS = [
+        "{victim} declares war on {attacker} after nuclear fallout struck {city}.",
+        "Outraged by the nuclear strike that killed thousands in {city}, {victim} goes to war with {attacker}.",
+        "{city} burns. {victim} holds {attacker} responsible and declares war.",
+        "Nuclear ash falls on {city}. {victim} answers with a declaration of war against {attacker}.",
+    ]
+    for victim_name, attacker_name, city_name, casualties, city_lat, city_lon, used in world.pending_collateral:
+        victim   = next((c for c in world.countries if c.name == victim_name),   None)
+        attacker = next((c for c in world.countries if c.name == attacker_name), None)
+        if not victim or not attacker:
+            continue
+        already = any(
+            (c.attacker is victim and c.defender is attacker) or
+            (c.attacker is attacker and c.defender is victim)
+            for c in world.active_conflicts
+        )
+        if already:
+            continue
+        world.nuked_cities.append({
+            'lat': city_lat, 'lon': city_lon,
+            'city': city_name, 'country': victim_name,
+            'launcher': attacker_name,
+            'warheads': used,
+            'expires': world.current_day + fallout_duration_months(used),
+        })
+        war_chance = min(0.80, casualties / 2_000_000)
+        if random.random() < war_chance:
+            flavor = random.choice(_COLLATERAL_WAR_FLAVORS).format(
+                victim=victim_name, attacker=attacker_name, city=city_name)
+            log(f"  [WORLD] {flavor}")
+            world.active_conflicts.append(Conflict(victim, attacker))
+            trigger_alliance_support(victim, attacker, world)
+    world.pending_collateral.clear()
+
+
+def step_wars(world, scale=None):
+    """Public API: advance all active wars by one sub-tick (1/WAR_SUBTICKS of a month)."""
+    if scale is None:
+        scale = 1.0 / WAR_SUBTICKS
+    _run_war_loop(world, scale)
+
+
+def get_war_state(world):
+    """Lightweight state update containing only the data needed to redraw conflict arcs."""
+    return {
+        'conflicts': [
+            {
+                'attacker':       c.attacker.name,
+                'defender':       c.defender.name,
+                'day':            int(c.duration_days),
+                'attacker_str':   int(c.attacker.military_strength),
+                'defender_str':   int(c._defender_garrison),
+                'defender_total': int(c.defender.military_strength),
+                'attacker_start': int(c._attacker_start),
+                'defender_start': int(c._defender_start),
+                'contested':      c.contested_territory,
+            }
+            for c in world.active_conflicts
+        ],
+    }
+
+
+def simulate_day(world, events, skip_war=False):
     apply_events(world, events)
 
     # War exhaustion decays over time — nations gradually recover their appetite for conflict
@@ -932,84 +1037,8 @@ def simulate_day(world, events):
         if target_tech > country.tech_level:
             country.tech_level = round(country.tech_level + (target_tech - country.tech_level) * 0.03, 2)
 
-    for conflict in list(world.active_conflicts):
-        conflict.simulate_day(len(world.countries), world.endgame_nuke_threshold, world)
-        # Drain any nuclear strikes that fired this tick into the world queue
-        world.pending_strikes.extend(conflict.pending_strikes)
-        conflict.pending_strikes.clear()
-        if conflict.is_over:
-            world.active_conflicts.remove(conflict)
-            winner, loser = conflict.winner, conflict.loser
-
-            # War exhaustion: both sides become less likely to start new conflicts.
-            # Scales with duration — longer wars leave nations more drained.
-            exhaustion = min(0.75, 0.10 + conflict.duration_days * 0.008)
-            if winner:
-                winner.war_exhaustion = min(1.0, winner.war_exhaustion + exhaustion * 0.6)
-            if loser:
-                loser.war_exhaustion  = min(1.0, loser.war_exhaustion  + exhaustion)
-
-            if conflict.peace_deal == 'merger':
-                # Negotiated union — both names blend, full resource transfer
-                alliance = get_alliance(winner, world)
-                merge_countries(winner, loser, world)
-                if alliance and alliance in world.alliances:
-                    world.alliances.remove(alliance)
-
-            elif conflict.peace_deal == 'annexation':
-                # Unconditional surrender — winner's name survives, full resources
-                annexe(winner, loser, world)
-
-            else:
-                # Military defeat — if winner refused a peace offer, pyrrhic penalty applies
-                if conflict.pyrrhic:
-                    loser.economy    = int(loser.economy    * PYRRHIC_RATIO)
-                    loser.population = max(1, int(loser.population * PYRRHIC_RATIO))
-                    loser.nukes      = int(loser.nukes      * PYRRHIC_RATIO)
-                    flavor = random.choice(_PEACE_PYRRHIC_FLAVORS).format(winner=winner.name, loser=loser.name)
-                    log(f"  [PEACE] {flavor}")
-                annexe(winner, loser, world)
-
-    # ── Collateral nuclear diplomacy ──────────────────────────────────────────
-    # Process third-party casualties from nuclear blasts this tick.
-    # Each affected nation independently decides whether to declare war on the launcher.
-    _COLLATERAL_WAR_FLAVORS = [
-        "{victim} declares war on {attacker} after nuclear fallout struck {city}.",
-        "Outraged by the nuclear strike that killed thousands in {city}, {victim} goes to war with {attacker}.",
-        "{city} burns. {victim} holds {attacker} responsible and declares war.",
-        "Nuclear ash falls on {city}. {victim} answers with a declaration of war against {attacker}.",
-    ]
-    for victim_name, attacker_name, city_name, casualties, city_lat, city_lon, used in world.pending_collateral:
-        victim   = next((c for c in world.countries if c.name == victim_name),   None)
-        attacker = next((c for c in world.countries if c.name == attacker_name), None)
-        if not victim or not attacker:
-            continue
-        already = any(
-            (c.attacker is victim and c.defender is attacker) or
-            (c.attacker is attacker and c.defender is victim)
-            for c in world.active_conflicts
-        )
-        if already:
-            continue
-        # Record fallout badge for the collateral city
-        world.nuked_cities.append({
-            'lat': city_lat,           # may be None — frontend falls back to country centroid
-            'lon': city_lon,
-            'city': city_name, 'country': victim_name,
-            'launcher': attacker_name,
-            'warheads': used,
-            'expires': world.current_day + fallout_duration_months(used),
-        })
-        # War threshold: significant casualties (> 50 k) trigger a dice roll
-        war_chance = min(0.80, casualties / 2_000_000)
-        if random.random() < war_chance:
-            flavor = random.choice(_COLLATERAL_WAR_FLAVORS).format(
-                victim=victim_name, attacker=attacker_name, city=city_name
-            )
-            log(f"  [WORLD] {flavor}")
-            world.active_conflicts.append(Conflict(victim, attacker))
-            trigger_alliance_support(victim, attacker, world)
-    world.pending_collateral.clear()
+    if not skip_war:
+        _run_war_loop(world, scale=1.0)
 
     for country in list(world.countries):
         targets = get_targets(country, world)

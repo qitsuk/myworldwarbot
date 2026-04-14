@@ -188,8 +188,9 @@ class Conflict:
         civilians = max(0, side.population - side.military_strength)
         return int(civilians * GUERRILLA_RATE * scale * GUERRILLA_EFFICIENCY)
 
-    def simulate_day(self, nation_count=999, endgame_threshold=2, world=None):
-        self.duration_days += 1
+    def simulate_day(self, nation_count=999, endgame_threshold=2, world=None, scale=1.0):
+        # scale < 1 for war sub-ticks: same total damage per month, spread over N steps
+        self.duration_days += scale   # tracks real months regardless of sub-tick count
 
         attacker_roll = random.uniform(0.7, 1.3)
         defender_roll = random.uniform(0.7, 1.3)
@@ -210,8 +211,8 @@ class Conflict:
         attacker_effective  = attacker_str + attacker_guerrillas * (1 + (tech_ratio - 1) * 0.5)
         defender_effective  = defender_str + defender_guerrillas * (1 + (1 / tech_ratio - 1) * 0.5)
 
-        attacker_losses = (defender_effective * 0.08) * attacker_roll * 1.2 / tech_ratio
-        defender_losses = (attacker_effective * 0.08) * defender_roll * 0.8 * tech_ratio
+        attacker_losses = (defender_effective * 0.08) * attacker_roll * 1.2 / tech_ratio * scale
+        defender_losses = (attacker_effective * 0.08) * defender_roll * 0.8 * tech_ratio * scale
 
         # Apply losses to attacker's total military
         attacker_mil_before = self.attacker.military_strength
@@ -231,16 +232,16 @@ class Conflict:
         # Civilian casualties — base rate plus extra for guerrilla fighters killed in action
         total_civ_lost = 0
         for side, guerrillas in ((self.attacker, attacker_guerrillas), (self.defender, defender_guerrillas)):
-            guerrilla_dead = int(guerrillas * 0.08 * random.uniform(0.7, 1.3))
-            pop_loss = int(side.population * CIVILIAN_CASUALTY_RATE) + guerrilla_dead
+            guerrilla_dead = int(guerrillas * 0.08 * random.uniform(0.7, 1.3) * scale)
+            pop_loss = int(side.population * CIVILIAN_CASUALTY_RATE * scale) + guerrilla_dead
             side.population = max(1, side.population - pop_loss)
             total_civ_lost += pop_loss
         if world is not None:
             world.total_civilian_casualties += total_civ_lost
 
-        self._check_nuclear_escalation(nation_count, endgame_threshold, world)
+        self._check_nuclear_escalation(nation_count, endgame_threshold, world, scale)
         if not self.peace_deal:
-            self._check_peace_offer()
+            self._check_peace_offer(scale)
 
         # Territory capture: garrison wiped out but defender still holds multiple territories —
         # transfer the contested territory and open a new front rather than ending the war.
@@ -251,7 +252,7 @@ class Conflict:
                 and len(self.defender.absorbed_names) > 1):
             self._capture_territory()
 
-    def _check_peace_offer(self):
+    def _check_peace_offer(self, scale=1.0):
         """Winning side may offer peace once the loser is desperate enough.
 
         For the defender, desperation is measured by garrison losses (they're only
@@ -275,7 +276,7 @@ class Conflict:
         # Only when the loser has dropped far enough
         if losing_strength > losing_start * PEACE_THRESHOLD:
             return
-        if random.random() > PEACE_OFFER_CHANCE:
+        if random.random() > PEACE_OFFER_CHANCE * scale:
             return
 
         flavor = random.choice(_PEACE_OFFER_FLAVORS).format(winner=winning.name, loser=losing.name)
@@ -436,7 +437,7 @@ class Conflict:
         self.attacker.nukes -= used
         self._execute_nuclear_strike(self.attacker, self.defender, used, world)
 
-    def _check_nuclear_escalation(self, nation_count=999, endgame_threshold=2, world=None):
+    def _check_nuclear_escalation(self, nation_count=999, endgame_threshold=2, world=None, scale=1.0):
         """A desperate nuclear power may launch a last-resort strike during combat."""
         endgame = nation_count <= endgame_threshold
         strength_map = {self.attacker: self.attacker.military_strength,
@@ -455,7 +456,7 @@ class Conflict:
             else:
                 t      = 1.0 - (strength_ratio / NUCLEAR_TRIGGER_THRESHOLD)
                 chance = NUCLEAR_TRIGGER_CHANCE + t * (NUCLEAR_PANIC_CHANCE - NUCLEAR_TRIGGER_CHANCE)
-            if random.random() > chance:
+            if random.random() > chance * scale:
                 continue
 
             used = min(launcher.nukes, max(1, launcher.nukes // 5))
