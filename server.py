@@ -299,6 +299,7 @@ def _run_simulation():
             # interval, so the front-line dot animates smoothly during the month.
             sub_sleep = current_sleep / sim.WAR_SUBTICKS
             for _ in range(sim.WAR_SUBTICKS):
+                countries_before = len(world.countries)
                 sim.step_wars(world)
 
                 # Drain nuclear strikes generated during this sub-tick
@@ -328,6 +329,15 @@ def _run_simulation():
                 world.pending_strikes.clear()
 
                 socketio.emit('war_update', sim.get_war_state(world))
+
+                # If a war ended this sub-tick, push a full state update immediately
+                # so the map reflects ownership changes the moment the log announces them.
+                if len(world.countries) != countries_before:
+                    state = sim.get_world_state(world)
+                    with _state_lock:
+                        _last_state = state
+                    socketio.emit('state', state)
+
                 time.sleep(sub_sleep)
 
             # Full state once per month (no extra sleep — already slept current_sleep above)

@@ -994,7 +994,7 @@ def get_war_state(world):
             {
                 'attacker':       c.attacker.name,
                 'defender':       c.defender.name,
-                'day':            int(c.duration_days),
+                'day':            c.duration_days,
                 'attacker_str':   int(c.attacker.military_strength),
                 'defender_str':   int(c._defender_garrison),
                 'defender_total': int(c.defender.military_strength),

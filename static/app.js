@@ -386,11 +386,13 @@ function updateConflictArcs() {
     const { path, ctrl } = buildArc(a, d);
 
     // Front position: t=0 → attacker's side, t=1 → defender's side.
-    // Use current total military on each side (not start-relative losses) so the dot
-    // reflects the real balance of power and never resets when a territory is captured.
-    // defender_total is the defender's full national military (not just the garrison).
-    const totalStr = Math.max((c.attacker_str || 0) + (c.defender_total || 0), 1);
-    const t = Math.min(1, Math.max(0, (c.attacker_str || 0) / totalStr));
+    // Momentum model: dot starts at midpoint (0.5) and moves toward the stronger side at
+    // a rate driven by both the military imbalance and battle duration (c.day, a float that
+    // increases by 1/WAR_SUBTICKS per sub-tick so movement is visible each war_update).
+    // 0.55 is tuned so a 2:1 fight moves the dot ~30% of the arc in the first month.
+    const rawRatio = (c.attacker_str || 0) / Math.max((c.attacker_str || 0) + (c.defender_str || 0), 1);
+    const advantage = rawRatio - 0.5;   // −0.5 … +0.5; positive = attacker stronger
+    const t = 0.5 + Math.sign(advantage) * Math.min(Math.abs(advantage) * (c.day || 0) * 0.55, 0.42);
     // Clamp display position away from endpoints so the dot is never hidden behind
     // an endpoint badge (which renders on top in SVG order).
     const tDisplay = Math.min(0.88, Math.max(0.12, t));
