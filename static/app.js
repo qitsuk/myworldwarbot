@@ -985,6 +985,23 @@ socket.on('nuclear_strike', (data) => {
   }
   animateNuclearStrike(data.launcher, data.target, cityPos, data.warheads);
 
+  // Immediately add the fallout badge — don't wait for the next monthly state.
+  if (worldState && data.expires != null) {
+    if (!worldState.nuked_cities) worldState.nuked_cities = [];
+    worldState.nuked_cities.push({
+      lat:      data.lat,
+      lon:      data.lon,
+      city:     data.city || data.target,
+      country:  data.target,
+      launcher: data.launcher,
+      warheads: data.warheads || 1,
+      expires:  data.expires,
+    });
+    // Sync day so the fade calculation in updateNukeBadges is correct
+    if (data.day != null) worldState.day = data.day;
+    updateNukeBadges();
+  }
+
   // Tag the matching log entry so hovering over it replays the animation with
   // the exact city position and warhead count.
   const entries = logEl.querySelectorAll('.log-nuclear:not([data-launcher])');
