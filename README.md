@@ -6,6 +6,96 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ---
 
+## Changelog
+
+### v1.3 — Special Weapons, Peace Deals & Nuclear Disarmament
+- **11 future special weapons** across three tiers: Cyberweapons, Drone Swarms, Hypersonic Missiles, EMP Strike, Neutron Bombs, AI Combat Systems, Directed Energy Defence, Orbital Kinetic Impactors, Orbital Laser Platform, Nanoweapons, Tectonic Weapons
+- Weapons are **soft year+tech gated** — research starts slowly before the gate year and accelerates past it
+- **Alliance tech sharing**: members slowly converge toward the highest tech level; the tech leader also gains a bonus per ally (incentive for both sides)
+- **Alliance research bonus**: 1.5× research speed if any ally has already fully researched a weapon
+- Nations must **build stockpiles** over time; no free starting weapons even if the tech is pre-researched
+- **Weapon combat effects**: drones boost effective strength, EMP disables enemy weapons, orbital kinetic impactors devastate garrisons, orbital laser fires charges, tectonic weapons cause catastrophic collateral damage, neutron bombs deployed by desperate nations
+- **Three new peace mechanics**: winner-initiated peace offer, loser-initiated surrender (winner chooses annexation/ceasefire/rejection), and nuclear coercion (desperate nuclear power threatens; winner backs down or faces a warning strike)
+- **Ceasefire outcome**: both nations survive; loser cedes 22% economy and 15% territory; war exhaustion applied to both
+- **Casus belli system**: being attacked raises your probability of striking back 3× when able
+- **Nuclear disarmament treaty**: the first nuclear strike ever fired triggers a global emergency pact — all arsenals zeroed, enrichment halted permanently, and all nations receive a research boost as they pivot to other weapons
+- **Hall of Fame fix**: unambiguous `SIMULATION WINNER` log line replaces fragile regex parsing of flavor text
+- Simulation always **starts in 2030** (first age gate); `BASE_RISK` raised to 0.25; peace period shortened to 2 years
+- Country tooltip panel now shows **weapon research %** and stockpile levels for all special weapons
+
+### v1.2 — War Animation & Visual Polish
+- **Sub-tick war simulation**: combat advances in 6 sub-steps per month so the front-line dot animates smoothly
+- Smooth front-line dot movement with easing between positions
+- Live war statistics panel (casualties, front movement)
+- Dim non-highlighted country borders when a country is selected
+- Fallout zone halo rendered on the map around nuclear strike sites
+- Fallout badge appears instantly on nuclear strike (no wait for next state push)
+- Instant map sync on annexation — ownership updates the moment the log announces it
+
+### v1.1 — Nuclear Improvements & Small Nations
+- Small nations can now act as aggressors; nuclear first-strike mechanic added
+- Hover tooltip on nuclear fallout badges showing strike details
+- Overhauled nuclear damage model: city-scale population density instead of national average
+- Track and display total nuclear warheads used in the Hall of Fame
+
+### v1.0 — Hall of Fame, War Statistics & Balance of Power
+- **Hall of Fame**: tracks winners across simulation runs, parsed from log files
+- World population counter displayed on map overlay
+- War casualty tracking (military and civilian) shown in end-of-run stats
+- **Balance-of-power / hegemon mechanic**: when one nation dominates militarily, others form anti-hegemon coalitions
+- Country log-hover highlighting (later removed in v1.2)
+
+### v0.9 — Nuclear Proliferation & Enrichment
+- Gradual uranium enrichment system: nations accumulate uranium over months before converting to warheads
+- Nuclear panic escalation: desperate nations are more likely to launch as they approach defeat
+- Animated nuclear strike visuals on the map
+- Cities data (`cities.py`) used for realistic strike targeting
+- Removed internal territory borders after annexation
+- Persistent per-run server-side logging with downloadable log files
+
+### v0.8 — Territory Garrisons & Fallout Badges
+- Territory conquest overhauled to use per-territory garrisons; wars can capture individual territories before ending
+- Nuclear fallout badges rendered on map after strikes
+- Replay nuclear strike animation when hovering a log entry
+- Various nuclear proliferation balance fixes (lower risk threshold, faster enrichment)
+
+### v0.7 — War Arcs, Map Zoom & Flavor Text
+- War arc visualisation connecting warring nations on the map
+- Battle-front indicator dot on war arcs
+- Map zoom and pan
+- Extensive flavor text for world events, tension milestones, war declarations
+- World tension UI showing global risk level
+- Discord notification improvements; startup message with timescale info
+
+### v0.6 — Logging, Discord & Production Setup
+- Log history replayed to clients on connect (no missed events on page load)
+- `.env` file for all secrets and configuration (Discord webhook, timescale, secret key)
+- `TIMESCALE` environment variable for runtime speed control
+- Discord notifier with configurable event categories
+- `.env` loading fix when running as a systemd service
+
+### v0.5 — Randomised Start Year & Extrapolation
+- Start year randomised across a wide range; country stats (population, economy, military) extrapolated forward from the data year to match
+- Basic alliance system
+
+### v0.4 — Simulation Balancing
+- Significant rebalancing of war outcomes, military strength scaling, and economic growth
+- Improved war probability and targeting logic
+
+### v0.3 — Web Interface
+- Flask + SocketIO web interface with a live world map (SVG)
+- Real-time log feed streamed to browser
+- Country tooltip showing basic stats on hover
+
+### v0.2 — Initial Web Port
+- Ported simulation from CLI to web server
+- Basic country rendering on map
+
+### v0.1 — Initial Commit
+- Text-based world war simulation: countries, military strength, economy, neighbours, war declarations, annexation, alliances
+
+---
+
 ## Prerequisites
 
 ```bash
