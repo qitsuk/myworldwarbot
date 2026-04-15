@@ -163,13 +163,16 @@ def get_winners():
                     m = re.search(rf'{key}:(\d+)', line)
                     if m:
                         stats[key] = int(m.group(1))
+            elif line.startswith('SIMULATION WINNER — '):
+                winner_name = line[len('SIMULATION WINNER — '):]
             elif line.startswith('SIMULATION OVER'):
                 flavor = line[len('SIMULATION OVER — '):]
-                for pat in _WINNER_PATTERNS:
-                    m = re.search(pat, flavor)
-                    if m:
-                        winner_name = m.group(1)
-                        break
+                if not winner_name:
+                    for pat in _WINNER_PATTERNS:
+                        m = re.search(pat, flavor)
+                        if m:
+                            winner_name = m.group(1)
+                            break
                 years_m = re.search(r'(\d+) years', flavor)
                 years = int(years_m.group(1)) if years_m else None
             if winner_name and ('start_pop' in stats or not stats):
@@ -332,6 +335,13 @@ def _run_simulation():
                     })
                 world.pending_strikes.clear()
 
+                # First nuclear strike ever → trigger global disarmament treaty
+                if world.total_nukes_used > 0 and not world.nuclear_disarmament:
+                    sim.apply_nuclear_disarmament(world)
+                    socketio.emit('nuclear_disarmament', {
+                        'day': world.current_day,
+                    })
+
                 socketio.emit('war_update', sim.get_war_state(world))
 
                 # If a war ended this sub-tick, push a full state update immediately
@@ -356,6 +366,7 @@ def _run_simulation():
             end_population = sum(c.population for c in world.countries)
             flavor = random.choice(_GAMEOVER_FLAVORS).format(winner=winner, years=months // 12)
             logger.log(f'SIMULATION OVER — {flavor}')
+            logger.log(f'SIMULATION WINNER — {winner}')
             logger.log(
                 f'SIMULATION STATS — '
                 f'start_pop:{world.start_population} '

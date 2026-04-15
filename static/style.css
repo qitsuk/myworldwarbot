@@ -103,6 +103,11 @@ body {
 #tooltip .tt-status.peace    { color: #3fb950; }
 #tooltip .tt-tech  { color: #58a6ff; letter-spacing: 1px; }
 #tooltip .tt-nukes { color: #f0a500; }
+#tooltip .tt-section-header { color: #8b949e; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; margin-bottom: 2px; border-top: 1px solid #30363d; padding-top: 4px; }
+#tooltip .tt-weapon { font-size: 10px; }
+#tooltip .tt-research { color: #d29922; }
+#tooltip .tt-passive  { color: #58a6ff; }
+#tooltip .tt-stock    { color: #3fb950; }
 .top-nuke-badge { color: #f0a500; font-size: 10px; }
 
 /* ── MAP TOP-LEFT STACK (world pop + hall of fame) ── */

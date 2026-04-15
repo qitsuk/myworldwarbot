@@ -665,6 +665,67 @@ function onMouseMove(event, feature) {
     ? `<div class="tt-row"><span>&#9762; Nuclear</span><span class="tt-val tt-nukes">${owner.nukes.toLocaleString()} warheads</span></div>`
     : '';
 
+  // Special Weapons section
+  const WEAPON_LABELS = {
+    cyber:        'Cyberweapons',
+    drones:       'Drone Swarms',
+    hypersonic:   'Hypersonic Missiles',
+    emp:          'EMP Strike',
+    neutron:      'Neutron Bombs',
+    ai_combat:    'AI Combat Systems',
+    shield:       'Directed Energy Defence',
+    kinetic:      'Orbital Kinetic Impactors',
+    orbital_laser:'Orbital Laser Platform',
+    nano:         'Nanoweapons',
+    tectonic:     'Tectonic Weapons',
+  };
+  const WEAPON_KEYS_ORDER = [
+    'cyber','drones','hypersonic','emp','neutron',
+    'ai_combat','shield','kinetic','orbital_laser','nano','tectonic'
+  ];
+  const PASSIVE_KEYS = new Set(['cyber','ai_combat','shield','orbital_laser']);
+
+  let weaponsHtml = '';
+  if (owner && owner.research && owner.weapons) {
+    const rows = [];
+    for (const key of WEAPON_KEYS_ORDER) {
+      const r = owner.research[key] || 0;
+      if (r <= 0) continue;
+      const label = WEAPON_LABELS[key];
+      if (r < 1.0) {
+        rows.push(`<div class="tt-row tt-weapon"><span>${label}</span><span class="tt-val tt-research">Researching (${Math.round(r*100)}%)</span></div>`);
+      } else if (PASSIVE_KEYS.has(key)) {
+        let levelVal;
+        if (key === 'cyber')         levelVal = owner.weapons.cyber_level;
+        else if (key === 'ai_combat')levelVal = owner.weapons.ai_combat;
+        else if (key === 'shield')   levelVal = owner.weapons.shield;
+        else if (key === 'orbital_laser') levelVal = owner.weapons.orbital_laser_level;
+        else levelVal = 0;
+        const pct = Math.round((levelVal || 0) * 100);
+        let extra = '';
+        if (key === 'orbital_laser') {
+          const charges = owner.weapons.orbital_laser_charges || 0;
+          extra = ` (${charges} charges)`;
+        }
+        rows.push(`<div class="tt-row tt-weapon"><span>${label}</span><span class="tt-val tt-passive">✓ Level: ${pct}%${extra}</span></div>`);
+      } else {
+        let stock;
+        if (key === 'drones')    stock = owner.weapons.drones;
+        else if (key === 'hypersonic') stock = owner.weapons.hypersonic;
+        else if (key === 'emp')   stock = owner.weapons.emp;
+        else if (key === 'neutron') stock = owner.weapons.neutron;
+        else if (key === 'kinetic') stock = owner.weapons.kinetic;
+        else if (key === 'nano')  stock = owner.weapons.nano;
+        else if (key === 'tectonic') stock = owner.weapons.tectonic;
+        else stock = 0;
+        rows.push(`<div class="tt-row tt-weapon"><span>${label}</span><span class="tt-val tt-stock">✓ Stock: ${stock}</span></div>`);
+      }
+    }
+    if (rows.length > 0) {
+      weaponsHtml = `<div class="tt-section-header">Special Weapons</div>` + rows.join('');
+    }
+  }
+
   tooltip.innerHTML = `
     ${nameHtml}
     ${owner ? `
@@ -673,6 +734,7 @@ function onMouseMove(event, feature) {
     <div class="tt-row"><span>Population</span><span class="tt-val">${fmt(owner.population)}</span></div>
     <div class="tt-row"><span>Technology</span><span class="tt-val tt-tech">${techDisplay}</span></div>
     ${nukesRow}
+    ${weaponsHtml}
     ` : `<div style="color:#555;font-size:10px">Updating…</div>`}
     ${statusHtml}
   `;

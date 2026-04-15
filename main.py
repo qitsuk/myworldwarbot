@@ -12,6 +12,7 @@ from cities import fallout_duration_months
 from alliance import Alliance
 from logger import log
 from data_loader import DATA_YEAR
+from weapons import WEAPON_KEYS, WEAPONS, advance_research, build_stockpiles
 
 load_dotenv(Path(__file__).parent / '.env')
 
@@ -37,9 +38,9 @@ WARTIME_ARMY_TARGET   = 0.40   # nations mobilise toward 40% of military_cap dur
 RECRUITMENT_RATE      = 0.04   # close 4% of the gap to target each month
 DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
-PEACE_MONTHS      = 42    # no wars for the first 3.5 years
-RAMP_MONTHS       = 24    # risk ramps 0 → BASE_RISK over the following 2 years
-BASE_RISK         = 0.15
+PEACE_MONTHS      = 24    # no wars for the first 2 years
+RAMP_MONTHS       = 18    # risk ramps 0 → BASE_RISK over the following 1.5 years
+BASE_RISK         = 0.25
 RISK_ESCALATION   = 0.0004  # risk grows by this much per month after the ramp ends
 MAX_RISK          = 0.70    # hard ceiling
 STALEMATE_MONTHS  = 36    # if no new conflict starts in this many months, force one
@@ -55,7 +56,7 @@ URANIUM_RATE_BASE    = 0.20  # base units accumulated per month (was 0.04) — f
 # enrichment rate scales with tech: base × (tech / NUKE_TECH_THRESHOLD) up to ×2
 URANIUM_RATE_MAX_MULT = 2.0
 
-START_YEAR = random.randint(2027, 2150)
+START_YEAR = 2030   # always begin at the first special-weapons age gate
 START_DATE = date(START_YEAR, 1, 1)
 
 _default_timescale = TIMESCALE_TEST if DEBUG else TIMESCALE_PROD
@@ -103,6 +104,21 @@ def annexe(winner, loser, world):
     winner.uranium   += loser.uranium
     winner.nuked      = winner.nuked     or loser.nuked
     winner.was_nuked  = winner.was_nuked or loser.was_nuked
+    # Inherit best weapons research and stockpiles
+    for k in WEAPON_KEYS:
+        winner.research[k] = max(winner.research[k], loser.research[k])
+    winner.drones            += loser.drones
+    winner.hypersonic        += loser.hypersonic
+    winner.emp_arsenal       += loser.emp_arsenal
+    winner.neutron_bombs     += loser.neutron_bombs
+    winner.kinetic_impactors += loser.kinetic_impactors
+    winner.nano_arsenal      += loser.nano_arsenal
+    winner.tectonic_arsenal  = min(1, winner.tectonic_arsenal + loser.tectonic_arsenal)
+    winner.cyber_level       = max(winner.cyber_level,       loser.cyber_level)
+    winner.ai_combat_level   = max(winner.ai_combat_level,   loser.ai_combat_level)
+    winner.shield_level      = max(winner.shield_level,      loser.shield_level)
+    winner.orbital_laser_level   = max(winner.orbital_laser_level,   loser.orbital_laser_level)
+    winner.orbital_laser_charges = min(3, winner.orbital_laser_charges + loser.orbital_laser_charges)
     world.countries.remove(loser)
     flavor = random.choice(_WAR_ANNEXATION_FLAVORS).format(winner=winner.name, loser=loser.name)
     log(f"  >> {flavor}")
@@ -113,6 +129,66 @@ def annexe(winner, loser, world):
             alliance.remove_member(loser)
             if len(alliance.members) < 2:
                 world.alliances.remove(alliance)
+
+_CEASEFIRE_DEAL_FLAVORS = [
+    "{loser} accepts unfavourable terms — it yields resources to {winner} but survives.",
+    "{winner} takes its gains and halts the advance — {loser} endures, diminished.",
+    "The war ends on {winner}'s terms. {loser} pays reparations and lives to rebuild.",
+    "Pragmatic victory: {winner} accepts tribute from {loser} rather than prolonged conquest.",
+    "{winner} secures concessions from {loser} without the cost of total war.",
+    "{loser} submits to {winner}'s demands. Independence is preserved, but at a price.",
+    "A punishing peace: {loser} cedes economy and territory to {winner} in exchange for survival.",
+    "{winner} accepts tribute. {loser} pays a heavy toll but keeps its sovereignty.",
+]
+
+_NUCLEAR_DISARMAMENT_FLAVORS = [
+    "The first nuclear strike shocks the world into action. Every nation agrees: no more.",
+    "As mushroom clouds rise, world leaders make an emergency pact — all nuclear arsenals to be dismantled.",
+    "The nuclear taboo is shattered. Within hours, a global treaty dissolves every warhead on Earth.",
+    "One nation dared to use the bomb. In response, every other nation destroys theirs.",
+    "The smoke hasn't cleared, but the decision is unanimous: humanity will not end by nuclear fire. Other fires, perhaps.",
+    "The first strike triggers an emergency UN session. Resolution: total nuclear disarmament — effective immediately.",
+    "Every capital watched the strike in horror. Within a day, every nuclear code is wiped. The warheads? Dismantled.",
+    "The world condemns the strike — and quietly pivots to deadlier things.",
+]
+
+def apply_nuclear_disarmament(world):
+    """
+    Triggered by the first nuclear strike ever fired.
+    Dissolves all nuclear arsenals globally; nations pivot to special weapons.
+    """
+    world.nuclear_disarmament = True
+    for c in world.countries:
+        c.nukes = 0
+        # Keep uranium — it can still feed neutron bomb production
+    flavor = random.choice(_NUCLEAR_DISARMAMENT_FLAVORS)
+    log(f'  [DISARMAMENT] \u2622\ufe0f {flavor}')
+    # Small research bonus: the terror of nuclear war accelerates other weapons programmes
+    for c in world.countries:
+        for key in c.research:
+            if c.research[key] < 1.0:
+                c.research[key] = min(1.0, c.research[key] + 0.05)
+
+
+def ceasefire_deal(winner, loser, world):
+    """Partial peace: winner takes a share of loser's resources; both nations survive."""
+    CEASEFIRE_ECON_SHARE = 0.22    # loser cedes ~22% of its economy
+    CEASEFIRE_TERR_SHARE = 0.15    # loser cedes ~15% of territory value (no absorbed_names transfer)
+
+    econ_transfer = int(loser.economy * CEASEFIRE_ECON_SHARE)
+    terr_transfer = loser.territory * CEASEFIRE_TERR_SHARE
+
+    winner.economy   += econ_transfer
+    winner.territory += terr_transfer
+    loser.economy     = max(1, loser.economy  - econ_transfer)
+    loser.territory   = max(0.01, loser.territory - terr_transfer)
+
+    # War exhaustion: prevents immediate re-declaration
+    winner.war_exhaustion = min(1.0, winner.war_exhaustion + 0.20)
+    loser.war_exhaustion  = min(1.0, loser.war_exhaustion  + 0.40)
+
+    flavor = random.choice(_CEASEFIRE_DEAL_FLAVORS).format(winner=winner.name, loser=loser.name)
+    log(f"  [PEACE] {flavor}")
 
 def blend_country_names(a, b):
     """Create a portmanteau from two country names (e.g. Pakistan + Afghanistan = Pakighanistan)."""
@@ -750,6 +826,21 @@ def merge_countries(primary, secondary, world):
     primary.was_nuked  = primary.was_nuked or secondary.was_nuked
     primary.nuked = primary.nuked or secondary.nuked
     primary.tech_level = round(max(primary.tech_level, secondary.tech_level), 2)
+    # Inherit best research and combine stockpiles
+    for k in WEAPON_KEYS:
+        primary.research[k] = max(primary.research[k], secondary.research[k])
+    primary.drones            += secondary.drones
+    primary.hypersonic        += secondary.hypersonic
+    primary.emp_arsenal       += secondary.emp_arsenal
+    primary.neutron_bombs     += secondary.neutron_bombs
+    primary.kinetic_impactors += secondary.kinetic_impactors
+    primary.nano_arsenal      += secondary.nano_arsenal
+    primary.tectonic_arsenal  = min(1, primary.tectonic_arsenal + secondary.tectonic_arsenal)
+    primary.cyber_level       = max(primary.cyber_level,       secondary.cyber_level)
+    primary.ai_combat_level   = max(primary.ai_combat_level,   secondary.ai_combat_level)
+    primary.shield_level      = max(primary.shield_level,      secondary.shield_level)
+    primary.orbital_laser_level   = max(primary.orbital_laser_level,   secondary.orbital_laser_level)
+    primary.orbital_laser_charges = min(3, primary.orbital_laser_charges + secondary.orbital_laser_charges)
     world.countries.remove(secondary)
     flavor = random.choice(_UNION_FLAVORS).format(a=old_name, b=secondary.name, name=merged_name)
     log(f"  [UNION] {flavor}")
@@ -802,6 +893,21 @@ def get_world_state(world):
                 'nuked': c.nuked,
                 'was_nuked': c.was_nuked,
                 'tech_level': round(c.tech_level, 2),
+                'research': {k: round(c.research[k], 3) for k in WEAPON_KEYS},
+                'weapons': {
+                    'cyber_level':          round(c.cyber_level, 3),
+                    'drones':               c.drones,
+                    'hypersonic':           c.hypersonic,
+                    'emp':                  c.emp_arsenal,
+                    'neutron':              c.neutron_bombs,
+                    'ai_combat':            round(c.ai_combat_level, 3),
+                    'shield':               round(c.shield_level, 3),
+                    'kinetic':              c.kinetic_impactors,
+                    'orbital_laser_level':  round(c.orbital_laser_level, 3),
+                    'orbital_laser_charges':c.orbital_laser_charges,
+                    'nano':                 c.nano_arsenal,
+                    'tectonic':             c.tectonic_arsenal,
+                },
             }
             for c in world.countries
         ],
@@ -919,6 +1025,9 @@ def _run_war_loop(world, scale=1.0):
 
             elif conflict.peace_deal == 'annexation':
                 annexe(winner, loser, world)
+
+            elif conflict.peace_deal == 'ceasefire':
+                ceasefire_deal(winner, loser, world)
 
             else:
                 if conflict.pyrrhic:
@@ -1053,6 +1162,97 @@ def simulate_day(world, events, skip_war=False):
         if target_tech > country.tech_level:
             country.tech_level = round(country.tech_level + (target_tech - country.tech_level) * 0.03, 2)
 
+    # ── Alliance tech sharing ─────────────────────────────────────────────
+    for alliance in world.alliances:
+        if len(alliance.members) < 2:
+            continue
+        valid_members = [m for m in alliance.members if m in world.countries]
+        if not valid_members:
+            continue
+        max_tech = max(m.tech_level for m in valid_members)
+        tech_leader = max(valid_members, key=lambda m: m.tech_level)
+        for member in valid_members:
+            if member.tech_level < max_tech:
+                member.tech_level = round(
+                    member.tech_level + (max_tech - member.tech_level) * 0.005, 2)
+        # Tech leader bonus
+        tech_leader.tech_level = round(
+            tech_leader.tech_level + 0.012 * (len(valid_members) - 1), 2)
+
+    # ── Special weapons: research + stockpile building ────────────────────
+    current_year = current_date(world).year
+    for country in world.countries:
+        advance_research(country, current_year, world.alliances)
+        build_stockpiles(country, URANIUM_PER_NUKE)
+
+    # ── Out-of-combat cyber attacks ───────────────────────────────────────
+    for country in list(world.countries):
+        if country.cyber_level <= 0.2:
+            continue
+        if random.random() > 0.10:
+            continue
+        # Pick a non-allied, non-at-war target
+        ally_names = set()
+        for al in world.alliances:
+            if al.has_member(country):
+                ally_names = {m.name for m in al.members}
+                break
+        already_at_war_with = {
+            c.defender.name for c in world.active_conflicts if c.attacker is country
+        } | {
+            c.attacker.name for c in world.active_conflicts if c.defender is country
+        }
+        candidates = [
+            c for c in world.countries
+            if c is not country
+            and c.name not in ally_names
+            and c.name not in already_at_war_with
+        ]
+        if not candidates:
+            continue
+        target = random.choice(candidates)
+        # Economy damage
+        target.economy = max(1, int(target.economy * (1 - 0.02 * country.cyber_level)))
+        # Attribution roll
+        if random.random() < 0.08 * country.cyber_level:
+            log(f"  [CYBER] A cyberattack on {target.name} has been traced back to {country.name}.")
+            target.casus_belli.add(country.name)
+        else:
+            log(f"  [CYBER] {country.name} launches a cyberattack on {target.name}.")
+
+    # ── Out-of-combat nanoweapon attacks ──────────────────────────────────
+    for country in list(world.countries):
+        if country.nano_arsenal < 5:
+            continue
+        if random.random() > 0.05:
+            continue
+        ally_names = set()
+        for al in world.alliances:
+            if al.has_member(country):
+                ally_names = {m.name for m in al.members}
+                break
+        already_at_war_with = {
+            c.defender.name for c in world.active_conflicts if c.attacker is country
+        } | {
+            c.attacker.name for c in world.active_conflicts if c.defender is country
+        }
+        candidates = [
+            c for c in world.countries
+            if c is not country
+            and c.name not in ally_names
+            and c.name not in already_at_war_with
+        ]
+        if not candidates:
+            continue
+        target = random.choice(candidates)
+        country.nano_arsenal -= 1
+        target.military_strength = max(0, target.military_strength * 0.85)
+        if random.random() < 0.15:
+            log(f"  [NANO] A nanoweapon attack on {target.name} has been traced back to {country.name}.")
+            target.casus_belli.add(country.name)
+        else:
+            log(f"  [NANO] {country.name} deploys nanoweapons against {target.name}.")
+
     if not skip_war:
         _run_war_loop(world, scale=1.0)
 
@@ -1091,9 +1291,16 @@ def simulate_day(world, events, skip_war=False):
             base_probability * strength_ratio * nuke_aggression * world.risk * nuclear_deterrence * (1.0 - country.war_exhaustion)
         )
 
+        # Casus belli: tripled attack chance and clear after war is declared
+        if target.name in country.casus_belli:
+            attack_chance *= 3.0
+
         if random.random() < attack_chance:
             conflict = Conflict(country, target)
             world.active_conflicts.append(conflict)
+            # Clear casus belli on both sides now that war is declared
+            country.casus_belli.discard(target.name)
+            target.casus_belli.discard(country.name)
 
             # Choose declaration flavour based on context
             nuclear_underdog = country.nukes > 0 and strength_ratio < 0.5
@@ -1120,7 +1327,7 @@ def simulate_day(world, events, skip_war=False):
             trigger_alliance_support(country, target, world)
 
     # Nuclear proliferation: gradual uranium enrichment gated on tech + world tension
-    if world.risk >= NUKE_RISK_THRESHOLD:
+    if world.risk >= NUKE_RISK_THRESHOLD and not world.nuclear_disarmament:
         for country in list(world.countries):
             # Skip superpowers with existing massive arsenals (Russia/USA tier)
             if country.nukes >= NUKE_MAX_STOCKPILE:

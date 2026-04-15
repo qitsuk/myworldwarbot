@@ -5,6 +5,7 @@ import colorsys
 from country import Country
 from event import Event
 from cities import CITIES
+from weapons import init_country_weapons
 
 # Year the data in countries.json was sourced from
 DATA_YEAR = 2024
@@ -108,6 +109,7 @@ def load_countries(filepath="countries.json", variance=0.15, start_year=None):
             tech_level=_make_tech_level(economy, population),
         )
         country.cities = CITIES.get(c["name"], [])
+        init_country_weapons(country, start_year or DATA_YEAR)
         countries.append(country)
 
     return countries
