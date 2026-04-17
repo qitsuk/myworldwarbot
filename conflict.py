@@ -409,8 +409,8 @@ class Conflict:
                             log(f"  [TECTONIC] \U0001F30D Collateral: {nc.name} struck by seismic shockwaves.")
                             break
 
-        if not getattr(world, 'nuclear_disarmament', False):
-            self._check_nuclear_escalation(nation_count, endgame_threshold, world, scale)
+        # Always check — rogue states may retain nukes even after the disarmament treaty
+        self._check_nuclear_escalation(nation_count, endgame_threshold, world, scale)
         self._check_neutron_escalation(world, scale)
         if not self.peace_deal:
             self._check_peace_offer(scale, nation_count)

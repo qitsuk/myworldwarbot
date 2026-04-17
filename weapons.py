@@ -40,7 +40,7 @@ WEAPONS = {
     'tectonic':     {'tier': 3, 'year_gate': 2095, 'tech_gate': 5.0, 'type': 'consumed'},
 }
 
-BASE_RESEARCH_RATE = 0.008  # per month
+BASE_RESEARCH_RATE = 0.005  # per month — tier-1 takes ~8 yrs for avg nation, tier-3 20+ yrs
 
 
 def _economy_factor(country):
@@ -79,7 +79,7 @@ def advance_research(country, current_year, world_alliances):
 
         year_factor = max(0.05, min(1.0, 1.0 + (current_year - year_gate) / 25.0))
         tech_factor = min(1.0, country.tech_level / tech_gate)
-        alliance_bonus = 1.5 if alliance_has_researched[key] else 1.0
+        alliance_bonus = 1.25 if alliance_has_researched[key] else 1.0
 
         rate = BASE_RESEARCH_RATE * year_factor * tech_factor * ef * alliance_bonus
         country.research[key] = min(1.0, country.research[key] + rate)
@@ -92,86 +92,86 @@ def build_stockpiles(country, uranium_per_nuke):
     """
     ef = _economy_factor(country)
 
-    # Drones
+    # Drones — cap halved; build rate halved
     if country.research['drones'] >= 1.0:
-        country.drones = min(1000, country.drones + round(ef * 3.0))
+        country.drones = min(500, country.drones + round(ef * 1.5))
 
-    # Hypersonic
+    # Hypersonic — cap halved; build rate halved
     if country.research['hypersonic'] >= 1.0:
-        country.hypersonic = min(200, country.hypersonic + round(ef * 1.0))
+        country.hypersonic = min(80, country.hypersonic + round(ef * 0.5))
 
-    # EMP
+    # EMP — cap more than halved; build rate halved
     if country.research['emp'] >= 1.0:
-        inc = max(0, round(ef * 0.5))
-        country.emp_arsenal = min(30, country.emp_arsenal + inc)
+        inc = max(0, round(ef * 0.25))
+        country.emp_arsenal = min(12, country.emp_arsenal + inc)
 
-    # Neutron (requires uranium)
+    # Neutron (requires uranium) — costs more uranium; cap reduced
     if country.research['neutron'] >= 1.0:
-        cost_per_bomb = uranium_per_nuke * 0.6
+        cost_per_bomb = uranium_per_nuke * 1.2   # was 0.6 — now comparable to a real warhead
         if country.uranium >= cost_per_bomb:
             n = min(1, int(country.uranium / cost_per_bomb))
             country.uranium -= n * cost_per_bomb
-            country.neutron_bombs = min(150, country.neutron_bombs + n)
+            country.neutron_bombs = min(60, country.neutron_bombs + n)
 
-    # Kinetic
+    # Kinetic — build chance more than halved; cap halved
     if country.research['kinetic'] >= 1.0:
-        if random.random() < ef * 0.15:
-            country.kinetic_impactors = min(15, country.kinetic_impactors + 1)
+        if random.random() < ef * 0.06:
+            country.kinetic_impactors = min(8, country.kinetic_impactors + 1)
 
-    # Nano
+    # Nano — build rate halved; cap less than halved
     if country.research['nano'] >= 1.0:
-        country.nano_arsenal = min(80, country.nano_arsenal + round(ef * 0.8))
+        country.nano_arsenal = min(35, country.nano_arsenal + round(ef * 0.4))
 
-    # Tectonic
+    # Tectonic — build chance significantly reduced
     if country.research['tectonic'] >= 1.0:
-        if random.random() < ef * 0.02:
+        if random.random() < ef * 0.008:
             country.tectonic_arsenal = min(1, country.tectonic_arsenal + 1)
 
-    # Passive levels
+    # Passive levels — all build rates reduced ~30-40%
     if country.research['cyber'] >= 1.0:
-        country.cyber_level = min(1.0, country.cyber_level + ef * 0.003)
+        country.cyber_level = min(1.0, country.cyber_level + ef * 0.002)
 
     if country.research['ai_combat'] >= 1.0:
-        country.ai_combat_level = min(1.0, country.ai_combat_level + ef * 0.003)
+        country.ai_combat_level = min(1.0, country.ai_combat_level + ef * 0.002)
 
     if country.research['shield'] >= 1.0:
-        country.shield_level = min(1.0, country.shield_level + ef * 0.002)
+        country.shield_level = min(1.0, country.shield_level + ef * 0.0015)
 
     if country.research['orbital_laser'] >= 1.0:
-        country.orbital_laser_level = min(1.0, country.orbital_laser_level + ef * 0.002)
-        if country.orbital_laser_level >= 0.5:
-            charges_gained = 2 if country.orbital_laser_level >= 1.0 else 1
-            country.orbital_laser_charges = min(3, country.orbital_laser_charges + charges_gained)
+        country.orbital_laser_level = min(1.0, country.orbital_laser_level + ef * 0.0015)
+        if country.orbital_laser_level >= 0.8:
+            # One charge per month once nearly maxed out; cap 2 so it never floods
+            country.orbital_laser_charges = min(2, country.orbital_laser_charges + 1)
 
 
 def _starting_stockpile(country, key, uranium_per_nuke):
-    """Give a country a reasonable starting stockpile for already-researched weapons."""
+    """Give a country a modest starting stockpile (~12 months of production at new rates)."""
     ef = _economy_factor(country)
 
     if key == 'drones':
-        country.drones = min(1000, round(ef * 3.0 * 24))  # ~24 months of building
+        country.drones = min(500, round(ef * 1.5 * 12))
     elif key == 'hypersonic':
-        country.hypersonic = min(200, round(ef * 1.0 * 24))
+        country.hypersonic = min(80, round(ef * 0.5 * 12))
     elif key == 'emp':
-        country.emp_arsenal = min(30, max(1, round(ef * 0.5 * 24)))
+        country.emp_arsenal = min(12, max(1, round(ef * 0.25 * 12)))
     elif key == 'neutron':
-        country.neutron_bombs = min(150, max(1, round(ef * 0.8 * 12)))
+        country.neutron_bombs = min(60, max(1, round(ef * 0.5 * 12)))
     elif key == 'kinetic':
-        country.kinetic_impactors = min(15, max(1, round(ef * 0.15 * 12)))
+        country.kinetic_impactors = min(8, max(1, round(ef * 0.06 * 12)))
     elif key == 'nano':
-        country.nano_arsenal = min(80, round(ef * 0.8 * 24))
+        country.nano_arsenal = min(35, round(ef * 0.4 * 12))
     elif key == 'tectonic':
-        country.tectonic_arsenal = 1 if random.random() < ef * 0.3 else 0
+        country.tectonic_arsenal = 1 if random.random() < ef * 0.15 else 0
     elif key == 'cyber':
-        country.cyber_level = min(1.0, ef * 0.003 * 24)
+        country.cyber_level = min(1.0, ef * 0.002 * 12)
     elif key == 'ai_combat':
-        country.ai_combat_level = min(1.0, ef * 0.003 * 24)
+        country.ai_combat_level = min(1.0, ef * 0.002 * 12)
     elif key == 'shield':
-        country.shield_level = min(1.0, ef * 0.002 * 24)
+        country.shield_level = min(1.0, ef * 0.0015 * 12)
     elif key == 'orbital_laser':
-        country.orbital_laser_level = min(1.0, ef * 0.002 * 24)
-        if country.orbital_laser_level >= 0.5:
-            country.orbital_laser_charges = min(3, 2)
+        country.orbital_laser_level = min(1.0, ef * 0.0015 * 12)
+        if country.orbital_laser_level >= 0.8:
+            country.orbital_laser_charges = min(2, 1)
 
 
 def init_country_weapons(country, start_year, uranium_per_nuke=6.0):

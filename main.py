@@ -94,9 +94,11 @@ def annexe(winner, loser, world):
             world.countries.remove(loser)
             return
 
-    winner.economy += loser.economy
-    winner.population += loser.population
-    winner.territory += loser.territory
+    # War devastation: only 82% of conquered resources survive the conflict
+    ANNEXATION_YIELD = 0.82
+    winner.economy    += int(loser.economy    * ANNEXATION_YIELD)
+    winner.population += int(loser.population * ANNEXATION_YIELD)
+    winner.territory  += loser.territory      * ANNEXATION_YIELD
     winner.neighbors = list(set(winner.neighbors + loser.neighbors) - {winner.name})
     winner.military_strength = min(winner.military_strength, winner.military_cap)
     winner.absorbed_names.extend(loser.absorbed_names)
@@ -152,23 +154,56 @@ _NUCLEAR_DISARMAMENT_FLAVORS = [
     "The world condemns the strike — and quietly pivots to deadlier things.",
 ]
 
+_NUCLEAR_ROGUE_FLAVORS = [
+    "{country} refuses to dismantle its arsenal, defying the global treaty.",
+    "{country} signs the disarmament accord — then quietly retains {n} warheads.",
+    "Intelligence reports suggest {country} has hidden {n} warheads from inspectors.",
+    "{country} pledges disarmament in public. In secret, {n} warheads remain.",
+    "Inspectors are turned away from {country}'s silos. {n} warheads stay in the ground.",
+    "{country} submits only partial compliance — {n} warheads remain unaccounted for.",
+]
+
+DISARM_RATE_PER_MONTH = 0.18   # 18% of remaining surplus retired each month (~18 months to near-zero)
+
 def apply_nuclear_disarmament(world):
     """
     Triggered by the first nuclear strike ever fired.
-    Dissolves all nuclear arsenals globally; nations pivot to special weapons.
+    Sets each nuclear nation on a disarmament trajectory — compliant nations phase
+    down to zero over roughly 18 months; rogue states quietly keep a fraction.
+    No arsenals change immediately; the actual reductions happen in simulate_day().
+    New enrichment is halted globally from this point.
     """
     world.nuclear_disarmament = True
-    for c in world.countries:
-        c.nukes = 0
-        # Keep uranium — it can still feed neutron bomb production
     flavor = random.choice(_NUCLEAR_DISARMAMENT_FLAVORS)
     log(f'  [DISARMAMENT] \u2622\ufe0f {flavor}')
+
+    rogue_count = 0
+    for c in world.countries:
+        if c.nukes <= 0:
+            continue
+        # Larger arsenals are harder to fully surrender — higher rogue chance
+        rogue_chance = 0.08 + min(0.22, c.nukes / 400 * 0.22)
+        if random.random() < rogue_chance:
+            retained = max(1, int(c.nukes * random.uniform(0.10, 0.30)))
+            c.nuke_disarm_target = retained   # phase down to this level, then hold
+            rogue_count += 1
+            rogue_flavor = random.choice(_NUCLEAR_ROGUE_FLAVORS).format(country=c.name, n=retained)
+            log(f'  [DISARMAMENT] \u2622\ufe0f {rogue_flavor}')
+        else:
+            c.nuke_disarm_target = 0          # phase down fully to zero
+        # Keep uranium — it can still feed neutron bomb production
+
+    if rogue_count > 0:
+        log(f'  [DISARMAMENT] \u2622\ufe0f {rogue_count} nation(s) will only partially disarm.')
+
     # Small research bonus: the terror of nuclear war accelerates other weapons programmes
     for c in world.countries:
         for key in c.research:
             if c.research[key] < 1.0:
                 c.research[key] = min(1.0, c.research[key] + 0.05)
 
+
+CEASEFIRE_PROTECTION_MONTHS = 30  # neither side may re-declare war for this many months
 
 def ceasefire_deal(winner, loser, world):
     """Partial peace: winner takes a share of loser's resources; both nations survive."""
@@ -183,9 +218,14 @@ def ceasefire_deal(winner, loser, world):
     loser.economy     = max(1, loser.economy  - econ_transfer)
     loser.territory   = max(0.01, loser.territory - terr_transfer)
 
-    # War exhaustion: prevents immediate re-declaration
-    winner.war_exhaustion = min(1.0, winner.war_exhaustion + 0.20)
-    loser.war_exhaustion  = min(1.0, loser.war_exhaustion  + 0.40)
+    # Peace treaty: neither party may re-declare war for a set period
+    expiry = world.current_day + CEASEFIRE_PROTECTION_MONTHS
+    winner.peace_treaties[loser.name] = expiry
+    loser.peace_treaties[winner.name] = expiry
+
+    # War exhaustion: heavier penalty to discourage immediate revenge campaigns
+    winner.war_exhaustion = min(1.0, winner.war_exhaustion + 0.35)
+    loser.war_exhaustion  = min(1.0, loser.war_exhaustion  + 0.65)
 
     flavor = random.choice(_CEASEFIRE_DEAL_FLAVORS).format(winner=winner.name, loser=loser.name)
     log(f"  [PEACE] {flavor}")
@@ -1011,9 +1051,9 @@ def _run_war_loop(world, scale=1.0):
             world.active_conflicts.remove(conflict)
             winner, loser = conflict.winner, conflict.loser
 
-            exhaustion = min(0.75, 0.10 + conflict.duration_days * 0.008)
+            exhaustion = min(0.80, 0.20 + conflict.duration_days * 0.010)
             if winner:
-                winner.war_exhaustion = min(1.0, winner.war_exhaustion + exhaustion * 0.6)
+                winner.war_exhaustion = min(1.0, winner.war_exhaustion + exhaustion * 0.75)
             if loser:
                 loser.war_exhaustion  = min(1.0, loser.war_exhaustion  + exhaustion)
 
@@ -1124,6 +1164,20 @@ def simulate_day(world, events, skip_war=False):
     for country in world.countries:
         if country.war_exhaustion > 0:
             country.war_exhaustion = max(0.0, country.war_exhaustion - 0.04)
+
+    # Gradual nuclear disarmament: each month, nations reduce their stockpile toward
+    # their treaty target (0 for compliant nations, a small retained figure for rogue states).
+    # Rate: 18% of the remaining surplus per month → ~18 months to near-zero from a large arsenal.
+    if world.nuclear_disarmament:
+        for country in world.countries:
+            if getattr(country, 'nuke_disarm_target', None) is None:
+                continue
+            if country.nukes <= country.nuke_disarm_target:
+                country.nuke_disarm_target = None  # reached target — obligation fulfilled
+                continue
+            surplus = country.nukes - country.nuke_disarm_target
+            reduction = max(1, int(surplus * DISARM_RATE_PER_MONTH))
+            country.nukes = max(country.nuke_disarm_target, country.nukes - reduction)
 
     # Natural population growth (annual rate applied monthly)
     # Nations at war skip growth — civilian casualties in Conflict handle their population.
@@ -1272,6 +1326,13 @@ def simulate_day(world, events, skip_war=False):
         )
         if already_at_war:
             continue
+
+        # Peace treaty: cannot re-declare war while treaty is in effect
+        treaty_expiry = country.peace_treaties.get(target.name, 0)
+        if world.current_day < treaty_expiry:
+            continue
+        elif treaty_expiry > 0:
+            del country.peace_treaties[target.name]
 
         strength_ratio = country.military_strength / max(target.military_strength, 1)
         base_probability = next((e.base_probability for e in events if e.type == "invasion"), 0.01)

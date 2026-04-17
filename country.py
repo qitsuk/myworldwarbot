@@ -39,6 +39,8 @@ class Country:
         self.orbital_laser_charges = 0
         # Diplomatic / casus belli
         self.casus_belli = set()  # set of country names this country has a casus belli against
+        self.peace_treaties = {}  # name → expiry_day: no war declaration against that nation until then
+        self.nuke_disarm_target = None  # None = no treaty obligation; int = target stockpile level being phased toward
 
     @property
     def military_cap(self):

@@ -1,5 +1,7 @@
 venv/
 logs/
-__pycache__/*
 __pycache__/
+*.pyc
+*.pyo
 .env
+.claude/settings.local.json

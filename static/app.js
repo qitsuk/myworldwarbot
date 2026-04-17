@@ -386,13 +386,14 @@ function updateConflictArcs() {
     const { path, ctrl } = buildArc(a, d);
 
     // Front position: t=0 → attacker's side, t=1 → defender's side.
-    // Momentum model: dot starts at midpoint (0.5) and moves toward the stronger side at
-    // a rate driven by both the military imbalance and battle duration (c.day, a float that
-    // increases by 1/WAR_SUBTICKS per sub-tick so movement is visible each war_update).
-    // 0.55 is tuned so a 2:1 fight moves the dot ~30% of the arc in the first month.
+    // Momentum model: dot reflects the current strength ratio, weighted by how long
+    // the battle has been going (c.day).  A minimum effective day of 2 ensures even
+    // brand-new conflicts show slight displacement based on who's currently stronger,
+    // rather than always starting dead-center regardless of balance.
     const rawRatio = (c.attacker_str || 0) / Math.max((c.attacker_str || 0) + (c.defender_str || 0), 1);
     const advantage = rawRatio - 0.5;   // −0.5 … +0.5; positive = attacker stronger
-    const t = 0.5 + Math.sign(advantage) * Math.min(Math.abs(advantage) * (c.day || 0) * 0.55, 0.42);
+    const effectiveDay = Math.max(c.day || 0, 2);
+    const t = 0.5 + Math.sign(advantage) * Math.min(Math.abs(advantage) * effectiveDay * 0.55, 0.42);
     // Clamp display position away from endpoints so the dot is never hidden behind
     // an endpoint badge (which renders on top in SVG order).
     const tDisplay = Math.min(0.88, Math.max(0.12, t));
@@ -416,26 +417,24 @@ function updateConflictArcs() {
       .attr('d', d => d.path)
       .attr('marker-end', 'url(#conflict-arrow)');
 
-  // Front-line dot — raised to top so it always renders above endpoint badges
-  const frontSel = conflictSel.selectAll('.conflict-front')
-    .data(arcs, d => d.key);
-
-  // Enter: place immediately at current position (no animated jump from 0,0)
-  frontSel.enter().append('circle')
-    .attr('class', d => `conflict-front conflict-front-${d.status}`)
-    .attr('cx', d => d.front[0])
-    .attr('cy', d => d.front[1])
-    .attr('r', 5)
-    .attr('pointer-events', 'none');
-
-  // Update: smoothly glide to new position over the sub-tick interval
-  frontSel
-    .attr('class', d => `conflict-front conflict-front-${d.status}`)
-    .transition().duration(9500).ease(d3.easeLinear)
-    .attr('cx', d => d.front[0])
-    .attr('cy', d => d.front[1]);
-
-  frontSel.exit().remove();
+  // Front-line dot — raised to top so it always renders above endpoint badges.
+  // Position is set immediately on both enter and update; CSS handles the smooth
+  // transition so the dot tracks the arc correctly at any tick rate.
+  conflictSel.selectAll('.conflict-front')
+    .data(arcs, d => d.key)
+    .join(
+      enter => enter.append('circle')
+        .attr('class', d => `conflict-front conflict-front-${d.status}`)
+        .attr('cx', d => d.front[0])
+        .attr('cy', d => d.front[1])
+        .attr('r', 5)
+        .attr('pointer-events', 'none'),
+      update => update
+        .attr('class', d => `conflict-front conflict-front-${d.status}`)
+        .attr('cx', d => d.front[0])
+        .attr('cy', d => d.front[1]),
+      exit => exit.remove()
+    );
   conflictSel.selectAll('.conflict-front').raise();
 
   // Attacker badge — filled circle in attacker's country color at arc origin
