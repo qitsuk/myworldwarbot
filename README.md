@@ -8,6 +8,17 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.4 — Simulation Longevity, Weapon Scarcity & Bug Fixes
+- **Gradual nuclear disarmament**: when the first nuke fires, nations phase down their arsenals at 18%/month (~18 months to near-zero) rather than all vanishing instantly; rogue states (8–30% chance, higher for large arsenals) secretly retain 10–30% of their warheads and hold that floor permanently
+- **Rogue nuke use**: nukes flagged as retained by rogue states can still be fired in combat even after the disarmament treaty
+- **Ceasefire peace treaties**: after a ceasefire both parties are blocked from re-declaring war for 30 months; previously winners could immediately re-invade the same tick
+- **War exhaustion increased**: base exhaustion after a war raised from 0.10→0.20; winner penalty scaled up; ceasefires impose heavier exhaustion (0.35/0.65) to discourage quick revenge campaigns
+- **Annexation devastation**: conquering nation only receives 82% of the loser's economy, population, and territory — war damage is now modelled rather than a free 100% transfer
+- **Special weapons made scarce**: `BASE_RESEARCH_RATE` cut from 0.008→0.005/month (tier-1 ~8 yrs avg, tier-3 20+ yrs); all stockpile build rates and caps roughly halved; neutron bomb uranium cost doubled (now comparable to a real warhead); orbital laser capped at 2 charges; alliance research bonus reduced 1.5×→1.25×; starting stockpiles cut from 24 months → 12 months of production
+- **Front-line battle dot fix**: dot was frozen at the arc midpoint in test mode because the 9 500 ms D3 transition was constantly interrupted by 83 ms subtick updates; replaced with D3 `.join()` + immediate attribute setting; CSS `transition: cx/cy 0.6s` now handles smooth tracking at any tick rate
+- **Initial dot position**: new conflicts now show a slight displacement based on current strength ratio instead of always centering at t=0.5
+- **Git hygiene**: untracked `__pycache__/` and `.claude/settings.local.json` (caused dirty working tree on server pull); `.gitignore` updated with `*.pyc`/`*.pyo` patterns
+
 ### v1.3 — Special Weapons, Peace Deals & Nuclear Disarmament
 - **11 future special weapons** across three tiers: Cyberweapons, Drone Swarms, Hypersonic Missiles, EMP Strike, Neutron Bombs, AI Combat Systems, Directed Energy Defence, Orbital Kinetic Impactors, Orbital Laser Platform, Nanoweapons, Tectonic Weapons
 - Weapons are **soft year+tech gated** — research starts slowly before the gate year and accelerates past it
