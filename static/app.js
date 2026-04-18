@@ -307,6 +307,97 @@ function animateNuclearStrike(launcherName, targetName, cityPos, warheads) {
     });
 }
 
+// Animate a kinetic impactor — blazing streak from top of viewport to target
+function animateKineticStrike(launcherName, targetName, cityPos) {
+  if (!mapReady) return;
+  const d = cityPos || findSimNameCentroid(targetName) || findOwnerCentroid(targetName);
+  if (!d) return;
+
+  // Entry point: just above the top of the SVG at the target's x position
+  const svgEl = document.getElementById('world-map');
+  const top = svgEl ? -20 : -20;
+  const origin = [d[0] + (Math.random() - 0.5) * 30, top];
+
+  const streak = nukeSel.append('line')
+    .attr('x1', origin[0]).attr('y1', origin[1])
+    .attr('x2', origin[0]).attr('y2', origin[1])
+    .attr('stroke', '#a8d8ff')
+    .attr('stroke-width', 2.5)
+    .attr('opacity', 0.95)
+    .attr('pointer-events', 'none');
+
+  streak.transition().duration(600).ease(d3.easeLinear)
+    .attr('x2', d[0]).attr('y2', d[1])
+    .on('end', () => {
+      streak.transition().duration(200).attr('opacity', 0).remove();
+      // Impact flash
+      nukeSel.append('circle')
+        .attr('cx', d[0]).attr('cy', d[1]).attr('r', 6)
+        .attr('fill', '#a8d8ff').attr('opacity', 1).attr('pointer-events', 'none')
+        .transition().duration(700).ease(d3.easeCubicOut)
+        .attr('r', 28).attr('opacity', 0).remove();
+      // Shockwave rings
+      for (let i = 0; i < 2; i++) {
+        nukeSel.append('circle')
+          .attr('cx', d[0]).attr('cy', d[1]).attr('r', 4)
+          .attr('fill', 'none').attr('stroke', '#a8d8ff').attr('stroke-width', 1.5)
+          .attr('opacity', 0.85).attr('pointer-events', 'none')
+          .transition().delay(i * 180).duration(900).ease(d3.easeCubicOut)
+          .attr('r', 30 + i * 12).attr('opacity', 0).remove();
+      }
+    });
+}
+
+// Animate an orbital laser — thin bright beam from above, sustained burn at target
+function animateLaserStrike(launcherName, targetName, cityPos) {
+  if (!mapReady) return;
+  const d = cityPos || findSimNameCentroid(targetName) || findOwnerCentroid(targetName);
+  if (!d) return;
+
+  const origin = [d[0], -30];
+
+  const beam = nukeSel.append('line')
+    .attr('x1', origin[0]).attr('y1', origin[1])
+    .attr('x2', d[0]).attr('y2', d[1])
+    .attr('stroke', '#ff4')
+    .attr('stroke-width', 1.5)
+    .attr('opacity', 0)
+    .attr('pointer-events', 'none');
+
+  beam.transition().duration(120).attr('opacity', 1)
+    .transition().duration(800).attr('opacity', 0.9)
+    .transition().duration(500).attr('opacity', 0).remove();
+
+  // Burn spot at target
+  nukeSel.append('circle')
+    .attr('cx', d[0]).attr('cy', d[1]).attr('r', 3)
+    .attr('fill', '#ff4').attr('opacity', 0).attr('pointer-events', 'none')
+    .transition().duration(100).attr('opacity', 1)
+    .transition().duration(1200)
+    .attr('r', 18).attr('opacity', 0).remove();
+}
+
+// Animate tectonic strike — concentric seismic rings radiating from target
+function animateTectonicStrike(launcherName, targetName, cityPos) {
+  if (!mapReady) return;
+  const d = cityPos || findSimNameCentroid(targetName) || findOwnerCentroid(targetName);
+  if (!d) return;
+
+  for (let i = 0; i < 5; i++) {
+    nukeSel.append('circle')
+      .attr('cx', d[0]).attr('cy', d[1]).attr('r', 4)
+      .attr('fill', 'none').attr('stroke', '#c8820a').attr('stroke-width', 2.5 - i * 0.4)
+      .attr('opacity', 0.9).attr('pointer-events', 'none')
+      .transition().delay(i * 250).duration(1500).ease(d3.easeLinear)
+      .attr('r', 20 + i * 18).attr('opacity', 0).remove();
+  }
+  // Ground crack flash
+  nukeSel.append('circle')
+    .attr('cx', d[0]).attr('cy', d[1]).attr('r', 5)
+    .attr('fill', '#c8820a').attr('opacity', 0.8).attr('pointer-events', 'none')
+    .transition().duration(400).attr('r', 14).attr('opacity', 0).remove();
+}
+
 // Returns the SVG centroid of the largest feature whose original sim name is simName.
 // Using the largest avoids landing on tiny overseas territories when a country has
 // multiple TopoJSON features (France → 250/260/540, USA → 630/840, UK → 238/826, etc.).
@@ -880,6 +971,9 @@ const logCountEl  = document.getElementById('log-count');
 
 function classifyMessage(msg) {
   if (/\[NUCLEAR\]/.test(msg))            return 'log-nuclear';
+  if (/\[NEUTRON\]/.test(msg))            return 'log-nuclear';
+  if (/\[ORBITAL\]/.test(msg))            return 'log-orbital';
+  if (/\[TECTONIC\]/.test(msg))           return 'log-tectonic';
   if (/\[UNION\]/.test(msg))              return 'log-union';
   if (/\[ALLIANCE\]/.test(msg))           return 'log-alliance';
   if (/\[EVENT\]/.test(msg))              return 'log-event';
@@ -1058,6 +1152,43 @@ socket.on('nuclear_strike', (data) => {
       if (data.lon  != null) entry.dataset.lon      = data.lon;
       if (data.warheads != null) entry.dataset.warheads = data.warheads;
       entry.classList.add('log-nuclear-strike');
+      break;
+    }
+  }
+});
+
+socket.on('weapon_strike', (data) => {
+  let cityPos = null;
+  if (data.lat != null && data.lon != null && pathFn) {
+    const proj = pathFn.projection();
+    if (proj) cityPos = proj([data.lon, data.lat]);
+  }
+  if (data.type === 'kinetic') animateKineticStrike(data.launcher, data.target, cityPos);
+  else if (data.type === 'laser') animateLaserStrike(data.launcher, data.target, cityPos);
+  else if (data.type === 'tectonic') animateTectonicStrike(data.launcher, data.target, cityPos);
+
+  // Tag the matching log entry for the weapon type
+  const tagClass = data.type === 'tectonic' ? 'log-tectonic' : 'log-orbital';
+  const entries = logEl.querySelectorAll(`.${tagClass}:not([data-launcher])`);
+  for (const entry of entries) {
+    const text = entry.textContent;
+    if (text.includes(data.launcher) && text.includes(data.target)) {
+      entry.dataset.launcher  = data.launcher;
+      entry.dataset.target    = data.target;
+      entry.dataset.strikeType = data.type;
+      if (data.lat  != null) entry.dataset.lat = data.lat;
+      if (data.lon  != null) entry.dataset.lon = data.lon;
+      entry.classList.add('log-weapon-strike');
+      entry.title = `Click to replay ${data.type} animation`;
+      entry.style.cursor = 'pointer';
+      entry.onclick = () => {
+        const pos = (entry.dataset.lat && entry.dataset.lon && pathFn)
+          ? pathFn.projection()([+entry.dataset.lon, +entry.dataset.lat])
+          : null;
+        if (data.type === 'kinetic') animateKineticStrike(data.launcher, data.target, pos);
+        else if (data.type === 'laser') animateLaserStrike(data.launcher, data.target, pos);
+        else if (data.type === 'tectonic') animateTectonicStrike(data.launcher, data.target, pos);
+      };
       break;
     }
   }

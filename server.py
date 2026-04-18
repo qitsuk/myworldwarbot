@@ -305,34 +305,48 @@ def _run_simulation():
                 countries_before = len(world.countries)
                 sim.step_wars(world)
 
-                # Drain nuclear strikes generated during this sub-tick
+                # Drain strikes generated during this sub-tick
+                from cities import fallout_duration_months
                 for strike in world.pending_strikes:
                     launcher_name, target_name = strike[0], strike[1]
-                    city_name = strike[2] if len(strike) > 2 else None
-                    city_lat  = strike[3] if len(strike) > 3 else None
-                    city_lon  = strike[4] if len(strike) > 4 else None
-                    used      = strike[5] if len(strike) > 5 else None
-                    from cities import fallout_duration_months
-                    warheads_used = used or 1
-                    expires = world.current_day + fallout_duration_months(warheads_used)
-                    world.nuked_cities.append({
-                        'lat': city_lat,
-                        'lon': city_lon,
-                        'city': city_name or target_name, 'country': target_name,
-                        'launcher': launcher_name,
-                        'warheads': warheads_used,
-                        'expires': expires,
-                    })
-                    socketio.emit('nuclear_strike', {
-                        'launcher': launcher_name,
-                        'target':   target_name,
-                        'city':     city_name,
-                        'lat':      city_lat,
-                        'lon':      city_lon,
-                        'warheads': warheads_used,
-                        'expires':  expires,
-                        'day':      world.current_day,
-                    })
+                    city_name   = strike[2] if len(strike) > 2 else None
+                    city_lat    = strike[3] if len(strike) > 3 else None
+                    city_lon    = strike[4] if len(strike) > 4 else None
+                    used        = strike[5] if len(strike) > 5 else None
+                    weapon_type = strike[6] if len(strike) > 6 else 'nuke'
+
+                    if weapon_type in ('kinetic', 'laser', 'tectonic'):
+                        socketio.emit('weapon_strike', {
+                            'type':     weapon_type,
+                            'launcher': launcher_name,
+                            'target':   target_name,
+                            'city':     city_name,
+                            'lat':      city_lat,
+                            'lon':      city_lon,
+                            'day':      world.current_day,
+                        })
+                    else:
+                        warheads_used = used or 1
+                        expires = world.current_day + fallout_duration_months(warheads_used)
+                        if weapon_type == 'nuke':
+                            world.nuked_cities.append({
+                                'lat': city_lat, 'lon': city_lon,
+                                'city': city_name or target_name, 'country': target_name,
+                                'launcher': launcher_name,
+                                'warheads': warheads_used,
+                                'expires': expires,
+                            })
+                        socketio.emit('nuclear_strike', {
+                            'type':     weapon_type,
+                            'launcher': launcher_name,
+                            'target':   target_name,
+                            'city':     city_name,
+                            'lat':      city_lat,
+                            'lon':      city_lon,
+                            'warheads': warheads_used,
+                            'expires':  expires,
+                            'day':      world.current_day,
+                        })
                 world.pending_strikes.clear()
 
                 socketio.emit('war_update', sim.get_war_state(world))

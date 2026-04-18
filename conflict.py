@@ -182,6 +182,56 @@ _NUCLEAR_THREAT_REJECTED_FLAVORS = [
     "{winner} dares {loser} to pull the trigger. The advance continues.",
 ]
 
+_KINETIC_FLAVORS = [
+    "{launcher} releases a tungsten rod from orbit — the kinetic impactor screams down on {target}.",
+    "Rod from God: {launcher} drops a kinetic impactor on {target}. The crater is visible from space.",
+    "Orbit-to-ground strike: {launcher}'s kinetic impactor punches through {target}'s defences.",
+    "{launcher} unleashes an orbital kinetic strike on {target}. No warning. No warning possible.",
+    "A streak of light crosses the sky as {launcher}'s kinetic impactor impacts {target}.",
+    "The ground shakes as {launcher}'s tungsten rod hits {target} at hypersonic velocity.",
+    "{launcher} drops the hammer from orbit — {target}'s military positions are obliterated.",
+    "Kinetic bombardment: {launcher} strikes {target} from space. No missile shield can stop it.",
+    "{launcher}'s orbital platform releases a kinetic rod. {target} never sees it coming.",
+    "Supersonic impact: {launcher}'s kinetic impactor devastates {target}'s front lines.",
+]
+
+_LASER_FLAVORS = [
+    "{launcher}'s orbital laser platform locks onto {target} and fires.",
+    "A beam of coherent light slices from orbit — {launcher} burns {target}'s positions.",
+    "{launcher} activates its orbital laser. {target}'s fortifications glow red, then nothing.",
+    "From above the clouds, {launcher}'s laser platform silently destroys {target}'s defences.",
+    "The sky ignites as {launcher} turns its orbital laser on {target}.",
+    "{launcher}'s high-energy laser burns through {target}'s armoured columns from orbit.",
+    "Precision orbital strike: {launcher}'s laser platform eliminates key targets in {target}.",
+    "{launcher} fires its orbital laser at {target}. No interceptor can touch it.",
+    "The orbital laser speaks: {launcher} cuts through {target}'s lines with pinpoint accuracy.",
+    "{launcher} deploys its space-based laser against {target}. The age of impunity has arrived.",
+]
+
+_TECTONIC_FLAVORS = [
+    "{launcher} triggers its tectonic weapons. The earth beneath {target} tears itself apart.",
+    "Seismic devastation: {launcher} activates tectonic warheads under {target}. Magnitude 9+.",
+    "{launcher} weaponises the planet itself — {target} is struck by engineered earthquakes.",
+    "The ground heaves and splits as {launcher}'s tectonic arsenal is unleashed on {target}.",
+    "{target}'s cities crumble. {launcher} has triggered catastrophic subsurface detonations.",
+    "Geological warfare: {launcher} turns tectonic forces against {target}. Civilisation-scale damage.",
+    "{launcher} activates tectonic weapons. {target} experiences simultaneous earthquakes across its territory.",
+    "The planet trembles under {target} as {launcher} deploys tectonic strike packages.",
+    "Cities fall. Infrastructure collapses. {launcher} has weaponised seismic energy against {target}.",
+    "{launcher} crosses the final threshold — tectonic weapons reshape the battlefield under {target}.",
+]
+
+_NEUTRON_FLAVORS = [
+    "{launcher} deploys neutron bombs against {target}. The buildings stand. The soldiers do not.",
+    "Enhanced radiation: {launcher} uses neutron bombs on {target}, killing combatants while sparing structures.",
+    "{launcher}'s neutron warheads saturate {target}'s positions. Personnel losses are catastrophic.",
+    "A silent killer: {launcher} rains neutron bombs on {target}'s front lines.",
+    "{launcher} deploys enhanced-radiation warheads. {target}'s troops have no answer.",
+    "Neutron bombardment: {launcher} strips {target}'s military strength without levelling its cities.",
+    "{launcher} uses neutron bombs against {target}. The radiation is indiscriminate.",
+    "The dead in {target} are beyond counting. {launcher}'s neutron weapons have spoken.",
+]
+
 _WHITE_PEACE_FLAVORS = [
     "{a} and {b} agree to lay down their arms. Both nations withdraw and the war ends with no concessions.",
     "After months of grinding stalemate, {a} and {b} sign a mutual ceasefire and disengage.",
@@ -327,42 +377,9 @@ class Conflict:
         if world is not None:
             world.total_civilian_casualties += total_civ_lost
 
-        # ── Orbital Kinetic Impactor ──────────────────────────────────────
-        if self.attacker.kinetic_impactors > 0 and random.random() < 0.08 * scale:
-            self.attacker.kinetic_impactors -= 1
-            mil_loss = self.defender.military_strength * 0.25
-            self.defender.military_strength = max(0, self.defender.military_strength - mil_loss)
-            self._defender_garrison = max(0.0, self._defender_garrison - mil_loss)
-            log(f"  [ORBITAL] \u2B07 {self.attacker.name} drops a kinetic impactor on {self.defender.name}.")
-            self.pending_strikes.append((self.attacker.name, self.defender.name, None, None, None, 0))
-
-        # ── Orbital Laser Platform ────────────────────────────────────────
-        if self.attacker.orbital_laser_charges > 0 and random.random() < 0.30 * scale:
-            self.attacker.orbital_laser_charges -= 1
-            mil_loss = self._defender_garrison * 0.18
-            self._defender_garrison = max(0.0, self._defender_garrison - mil_loss)
-            self.defender.military_strength = max(0.0, self.defender.military_strength - mil_loss)
-            log(f"  [ORBITAL] \u26A1 {self.attacker.name}'s orbital laser platform strikes {self.defender.name}.")
-
-        # ── Tectonic Weapons ──────────────────────────────────────────────
-        if self.attacker.tectonic_arsenal > 0 and random.random() < 0.03 * scale:
-            self.attacker.tectonic_arsenal -= 1
-            log(f"  [TECTONIC] \U0001F30D {self.attacker.name} activates tectonic weapons! The ground tears apart under {self.defender.name}.")
-            self.defender.economy = max(1, int(self.defender.economy * 0.3))
-            self.defender.population = max(1, int(self.defender.population * 0.7))
-            self.defender.military_strength = max(0, self.defender.military_strength * 0.4)
-            self._defender_garrison = max(0.0, self._defender_garrison * 0.4)
-            if world is not None:
-                for neighbor_name in self.defender.absorbed_names + list(getattr(self.defender, 'neighbors', [])):
-                    for nc in world.countries:
-                        if nc is self.defender or nc is self.attacker:
-                            continue
-                        if neighbor_name in nc.absorbed_names or nc.name == neighbor_name:
-                            nc.economy = max(1, int(nc.economy * 0.85))
-                            nc.population = max(1, int(nc.population * 0.92))
-                            log(f"  [TECTONIC] \U0001F30D Collateral: {nc.name} struck by seismic shockwaves.")
-                            break
-
+        self._check_kinetic_attack(world, scale)
+        self._check_laser_attack(world, scale)
+        self._check_tectonic_attack(world, scale)
         self._check_nuclear_escalation(nation_count, endgame_threshold, world, scale)
         self._check_neutron_escalation(world, scale)
         if not self.peace_deal:
@@ -548,6 +565,111 @@ class Conflict:
             losing.nukes -= used
             self._execute_nuclear_strike(losing, winning, used, world)
 
+    # ── Special weapon helpers ────────────────────────────────────────────────
+
+    def _check_kinetic_attack(self, world=None, scale=1.0):
+        """Either side may use orbital kinetic impactors during war — proactively, not just when desperate."""
+        from cities import pick_target_city
+        for launcher, target, is_attacker in [
+            (self.attacker, self.defender, True),
+            (self.defender, self.attacker, False),
+        ]:
+            if launcher.kinetic_impactors <= 0:
+                continue
+            if random.random() > 0.14 * scale:
+                continue
+            launcher.kinetic_impactors -= 1
+            mil_loss = target.military_strength * 0.25
+            target.military_strength = max(0, target.military_strength - mil_loss)
+            if is_attacker:
+                self._defender_garrison = max(0.0, self._defender_garrison - mil_loss)
+            if world is not None:
+                world.total_military_casualties += int(mil_loss)
+            flavor = random.choice(_KINETIC_FLAVORS).format(launcher=launcher.name, target=target.name)
+            log(f"  [ORBITAL] \u2B07 {flavor}")
+            city = pick_target_city(target)
+            self.pending_strikes.append((
+                launcher.name, target.name,
+                city['name'] if city else None,
+                city['lat']  if city else None,
+                city['lon']  if city else None,
+                0, 'kinetic',
+            ))
+            break
+
+    def _check_laser_attack(self, world=None, scale=1.0):
+        """Either side may fire the orbital laser platform during war."""
+        from cities import pick_target_city
+        for launcher, target, is_attacker in [
+            (self.attacker, self.defender, True),
+            (self.defender, self.attacker, False),
+        ]:
+            if launcher.orbital_laser_charges <= 0:
+                continue
+            if random.random() > 0.22 * scale:
+                continue
+            launcher.orbital_laser_charges -= 1
+            mil_loss = (self._defender_garrison if is_attacker else self.attacker.military_strength) * 0.18
+            if is_attacker:
+                self._defender_garrison = max(0.0, self._defender_garrison - mil_loss)
+                target.military_strength = max(0.0, target.military_strength - mil_loss)
+            else:
+                target.military_strength = max(0.0, target.military_strength - mil_loss)
+            if world is not None:
+                world.total_military_casualties += int(mil_loss)
+            flavor = random.choice(_LASER_FLAVORS).format(launcher=launcher.name, target=target.name)
+            log(f"  [ORBITAL] \u26A1 {flavor}")
+            city = pick_target_city(target)
+            self.pending_strikes.append((
+                launcher.name, target.name,
+                city['name'] if city else None,
+                city['lat']  if city else None,
+                city['lon']  if city else None,
+                0, 'laser',
+            ))
+            break
+
+    def _check_tectonic_attack(self, world=None, scale=1.0):
+        """Either side may activate tectonic weapons — rare but civilisation-scale damage."""
+        from cities import pick_target_city
+        for launcher, target, is_attacker in [
+            (self.attacker, self.defender, True),
+            (self.defender, self.attacker, False),
+        ]:
+            if launcher.tectonic_arsenal <= 0:
+                continue
+            if random.random() > 0.04 * scale:
+                continue
+            launcher.tectonic_arsenal -= 1
+            flavor = random.choice(_TECTONIC_FLAVORS).format(launcher=launcher.name, target=target.name)
+            log(f"  [TECTONIC] \U0001F30D {flavor}")
+            target.economy = max(1, int(target.economy * 0.3))
+            target.population = max(1, int(target.population * 0.7))
+            target.military_strength = max(0, target.military_strength * 0.4)
+            if is_attacker:
+                self._defender_garrison = max(0.0, self._defender_garrison * 0.4)
+            if world is not None:
+                world.total_military_casualties += int(target.military_strength * 0.6)
+                world.total_civilian_casualties += int(target.population * 0.3)
+                for neighbor_name in target.absorbed_names + list(getattr(target, 'neighbors', [])):
+                    for nc in world.countries:
+                        if nc is target or nc is launcher:
+                            continue
+                        if neighbor_name in nc.absorbed_names or nc.name == neighbor_name:
+                            nc.economy = max(1, int(nc.economy * 0.85))
+                            nc.population = max(1, int(nc.population * 0.92))
+                            log(f"  [TECTONIC] \U0001F30D Collateral: {nc.name} struck by seismic shockwaves.")
+                            break
+            city = pick_target_city(target)
+            self.pending_strikes.append((
+                launcher.name, target.name,
+                city['name'] if city else None,
+                city['lat']  if city else None,
+                city['lon']  if city else None,
+                0, 'tectonic',
+            ))
+            break
+
     # ── Nuclear strike helpers ────────────────────────────────────────────────
 
     def _distribute_warheads(self, target, used):
@@ -700,11 +822,11 @@ class Conflict:
             worst_sev_frac  = max(worst_sev_frac, sev_f)
 
             if city:
-                self.pending_strikes.append((launcher.name, target.name, city['name'], city['lat'], city['lon'], city_warheads))
+                self.pending_strikes.append((launcher.name, target.name, city['name'], city['lat'], city['lon'], city_warheads, 'nuke'))
                 if world is not None:
                     self._check_collateral(launcher, target, city, city_warheads, world)
             else:
-                self.pending_strikes.append((launcher.name, target.name, None, None, None, city_warheads))
+                self.pending_strikes.append((launcher.name, target.name, None, None, None, city_warheads, 'nuke'))
 
         # Missile shield: intercepts a fraction of incoming warheads
         # Max interception 85% — no shield is perfect against a mass salvo
@@ -817,7 +939,8 @@ class Conflict:
                 self._defender_garrison = max(0.0, self._defender_garrison - mil_loss)
             econ_hit = int(target.economy * 0.02)
             target.economy = max(1, target.economy - econ_hit)
-            log(f"  [NEUTRON] \u2622 {launcher.name} deploys neutron bombs against {target.name}.")
+            flavor = random.choice(_NEUTRON_FLAVORS).format(launcher=launcher.name, target=target.name)
+            log(f"  [NEUTRON] \u2622 {flavor}")
             if world is not None:
                 world.total_military_casualties += int(mil_loss)
                 world.total_civilian_casualties += pop_loss
@@ -828,7 +951,7 @@ class Conflict:
                 city['name'] if city else None,
                 city['lat']  if city else None,
                 city['lon']  if city else None,
-                1,
+                1, 'neutron',
             ))
             break
 

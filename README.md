@@ -8,6 +8,16 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v2.0 — Special Weapons Visualised & Preferred Over Nukes
+- **Special weapons now preferred over nukes**: kinetic impactors, orbital lasers, and tectonic weapons are checked and fired *before* nuclear escalation each combat tick — nations with these weapons will use them proactively rather than waiting for nuclear desperation conditions
+- **Both sides can use special weapons**: previously only the attacker could fire kinetic/laser/tectonic; now defending nations can retaliate with their own special arsenals
+- **Tuned fire rates**: kinetic impactors 14%/tick (was 8% attacker-only), orbital laser 22%/tick (was 30% attacker-only), tectonic 4%/tick (was 3% attacker-only)
+- **All special weapon attacks visualised on the map**: kinetic → blue-white streak from orbit + impact flash; orbital laser → sustained yellow beam from above; tectonic → concentric seismic rings in amber; previously only nukes had animations
+- **Rich flavor text** for every special weapon attack (10 lines each for kinetic, laser, tectonic, neutron); attacks now log full narrative lines rather than bare technical strings
+- **Neutron bomb flavor text added**: neutron strikes now choose from 8 dedicated flavor strings
+- **Log colour coding extended**: `[ORBITAL]` entries appear in cyan, `[TECTONIC]` in amber (distinct from nuclear gold); weapon-strike log entries are clickable to replay their animation (same UX as nuclear strikes)
+- **Weapon-strike socket events**: server now emits `weapon_strike` (with `type` field) for kinetic/laser/tectonic and reserves `nuclear_strike` for nukes and neutron bombs; city coordinates supplied to all special weapon events
+
 ### v1.9 — Superpower Nuclear Restraint & War Frequency Tuning
 - **Nuclear aggression rescaled**: formula changed from `1 + (nukes/10)^0.5` capped at 5× to `1 + (nukes/100)^0.5` capped at 2× — US/Russia were hitting the 5× ceiling with any arsenal above 164 warheads, making them hyper-aggressive; now superpowers get ~1.7× and small nuclear states ~1.1–1.3×
 - **Superpower first strikes suppressed**: the opportunistic 25% opening-strike chance is now restricted to nations with fewer than 500 warheads; US/Russia-tier arsenals only open with nukes when genuinely outgunned (strength ratio < 0.5), which almost never occurs

@@ -404,6 +404,10 @@ body {
 .log-nuclear  { color: #f0a500; font-weight: bold; }
 .log-nuclear-strike { cursor: crosshair; }
 .log-nuclear-strike:hover { text-decoration: underline dotted #f0a500; }
+.log-orbital  { color: #58d9f0; font-weight: bold; }
+.log-tectonic { color: #c8820a; font-weight: bold; }
+.log-weapon-strike { cursor: crosshair; }
+.log-weapon-strike:hover { text-decoration: underline dotted #58d9f0; }
 .log-date     { color: #30363d; font-size: 10px; }
 .log-system   { color: #3fb950; }
 .log-default  { color: #8b949e; }
