@@ -223,9 +223,9 @@ def _war_target_weights(attacker, targets):
         dest = _country_centroid(c)
         if origin and dest:
             dist_km = haversine_km(origin[0], origin[1], dest[0], dest[1])
-            w = 1.0 / (1.0 + dist_km / 1500.0)
+            w = 1.0 / (1.0 + dist_km / 750.0)
         else:
-            w = 0.5
+            w = 0.05  # no city data → treated as effectively unreachable
         if c.name in neighbor_names:
             w *= 3.0
         weights.append(w)

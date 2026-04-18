@@ -8,6 +8,10 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.8.2 — War Targeting Geography Fix
+- **Steeper distance decay**: war target weight formula tightened from 1500km → 750km half-distance, making regional conflicts much more likely and cross-ocean wars rare; Greenland now ranks ~#71–120 for African nations instead of being competitively weighted
+- **Fallback weight lowered**: the 22 nations with no city coordinate data (micro-states, remote islands) now fall back to 0.05 instead of 0.5, so they are no longer accidentally treated as close to everyone
+
 ### v1.8.1 — Staggered Nuclear Enrichment
 - **Enrichment start staggered**: nations no longer all begin enriching uranium on the same tick; each eligible nation now gets a random delay spread over up to 48 months, so `[NUCLEAR]` enrichment messages are distributed naturally across years rather than spamming the log simultaneously
 
