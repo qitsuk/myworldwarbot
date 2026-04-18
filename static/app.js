@@ -630,7 +630,13 @@ function onMouseMove(event, feature) {
 
   let statusHtml;
   if (info.w) {
-    statusHtml = '<div class="tt-status war">&#9888; At War</div>';
+    const opponents = (worldState ? worldState.conflicts : [])
+      .filter(c => c.attacker === info.o || c.defender === info.o)
+      .map(c => c.attacker === info.o ? c.defender : c.attacker);
+    const vsHtml = opponents.length
+      ? `<div style="font-size:11px;color:#f85149;margin-top:2px">vs ${opponents.join(', ')}</div>`
+      : '';
+    statusHtml = `<div class="tt-status war">&#9888; At War</div>${vsHtml}`;
   } else if (info.a && worldState) {
     const allianceMembers = worldState.alliances.find(a => a.includes(info.o));
     const allianceName = allianceMembers ? allianceMembers.join(' & ') : info.o;
