@@ -472,8 +472,6 @@ body {
   stroke-width: 1px;
   pointer-events: none;
   animation: front-pulse 1.4s ease-in-out infinite;
-  /* CSS geometry transitions: dot tracks its arc position smoothly at any tick rate */
-  transition: cx 0.6s linear, cy 0.6s linear;
 }
 .conflict-front-winning { fill: #f85149; } /* attacker winning — front deep in defender territory */
 .conflict-front-losing  { fill: #f0a500; } /* defender winning — front pushed back */

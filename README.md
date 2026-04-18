@@ -8,6 +8,9 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v2.4 — Smooth Front-line Dot Animation
+- **D3 transition for war bubble**: replaced unreliable CSS `transition: cx/cy` (ignored by most browsers for SVG presentation attributes) with a 9.5-second D3 linear transition; the front-line dot now glides smoothly to its new position on every `war_update` event (6× per 60-second month), giving continuous visible movement rather than a near-instant invisible jump
+
 ### v2.3 — Slow Nation Elimination, Reach Future Weapons Era
 - **`endgame_factor` fixed**: formula was `(nation_count - 2) / 48` which returned 1.0 (full annexation intensity) from day one with 193 nations; changed to `(150 - nation_count) / 140` so ef=0.0 at 150+ nations and ramps to 1.0 only at ~10 nations remaining — early wars now mostly end in white peace or ceasefire rather than annexation
 - **Ceasefire in peace offers**: `_check_peace_offer` now gives the winner a ceasefire option proportional to how early in the game it is; previously accepted peace offers always resulted in annexation

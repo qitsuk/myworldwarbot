@@ -504,8 +504,8 @@ function updateConflictArcs() {
       .attr('marker-end', 'url(#conflict-arrow)');
 
   // Front-line dot — raised to top so it always renders above endpoint badges.
-  // Position is set immediately on both enter and update; CSS handles the smooth
-  // transition so the dot tracks the arc correctly at any tick rate.
+  // Uses D3 transitions (~9.5s) to glide smoothly between sub-tick positions
+  // (WAR_SUBTICKS=6, so server emits war_update every ~10s at 60s/month).
   conflictSel.selectAll('.conflict-front')
     .data(arcs, d => d.key)
     .join(
@@ -515,10 +515,14 @@ function updateConflictArcs() {
         .attr('cy', d => d.front[1])
         .attr('r', 5)
         .attr('pointer-events', 'none'),
-      update => update
-        .attr('class', d => `conflict-front conflict-front-${d.status}`)
-        .attr('cx', d => d.front[0])
-        .attr('cy', d => d.front[1]),
+      update => {
+        update.attr('class', d => `conflict-front conflict-front-${d.status}`);
+        update.interrupt()
+          .transition().duration(9500).ease(d3.easeLinear)
+          .attr('cx', d => d.front[0])
+          .attr('cy', d => d.front[1]);
+        return update;
+      },
       exit => exit.remove()
     );
   conflictSel.selectAll('.conflict-front').raise();
