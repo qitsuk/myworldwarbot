@@ -1273,8 +1273,10 @@ def simulate_day(world, events, skip_war=False):
                 flavor = random.choice(_WAR_DECLARATION_FLAVORS).format(attacker=country.name, defender=target.name)
             log(f"  >> {flavor}")
 
-            # Nuclear first strike: outgunned nuclear aggressors open with warheads
-            if nuclear_underdog and random.random() < 0.65:
+            # Nuclear first strike: underdogs open with a high chance; any nuclear
+            # attacker has a lower baseline chance regardless of strength ratio.
+            first_strike_chance = 0.80 if nuclear_underdog else (0.25 if country.nukes > 0 else 0.0)
+            if first_strike_chance > 0 and random.random() < first_strike_chance:
                 first_strike_flavor = random.choice(_NUCLEAR_FIRST_STRIKE_FLAVORS).format(
                     attacker=country.name, defender=target.name)
                 log(f"  >> {first_strike_flavor}")
