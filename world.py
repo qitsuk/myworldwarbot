@@ -20,4 +20,3 @@ class World:
         self.total_military_casualties = 0
         self.total_civilian_casualties = 0
         self.total_nukes_used          = 0
-        self.nuclear_disarmament      = False  # True once first nuke fires — all arsenals dissolved

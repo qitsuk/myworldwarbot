@@ -24,23 +24,17 @@ class Country:
         # Research progress: 0.0 → 1.0 for each weapon key
         self.research = {k: 0.0 for k in WEAPON_KEYS}
         # Consumed stockpiles
-        self.drones            = 0
-        self.hypersonic        = 0
-        self.emp_arsenal       = 0
         self.neutron_bombs     = 0
         self.kinetic_impactors = 0
-        self.nano_arsenal      = 0
         self.tectonic_arsenal  = 0
         # Passive levels (0.0 – 1.0)
-        self.cyber_level       = 0.0
-        self.ai_combat_level   = 0.0
-        self.shield_level      = 0.0
         self.orbital_laser_level   = 0.0
         self.orbital_laser_charges = 0
+        # Missile defence (Iron Dome-style): 0.0 → 1.0, grows with world tension
+        self.missile_shield = 0.0
         # Diplomatic / casus belli
         self.casus_belli = set()  # set of country names this country has a casus belli against
         self.peace_treaties = {}  # name → expiry_day: no war declaration against that nation until then
-        self.nuke_disarm_target = None  # None = no treaty obligation; int = target stockpile level being phased toward
 
     @property
     def military_cap(self):

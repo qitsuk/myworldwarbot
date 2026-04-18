@@ -335,13 +335,6 @@ def _run_simulation():
                     })
                 world.pending_strikes.clear()
 
-                # First nuclear strike ever → trigger global disarmament treaty
-                if world.total_nukes_used > 0 and not world.nuclear_disarmament:
-                    sim.apply_nuclear_disarmament(world)
-                    socketio.emit('nuclear_disarmament', {
-                        'day': world.current_day,
-                    })
-
                 socketio.emit('war_update', sim.get_war_state(world))
 
                 # If a war ended this sub-tick, push a full state update immediately

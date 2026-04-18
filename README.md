@@ -8,6 +8,15 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.5 — Streamlined Weapons, War Pacing & Nuclear Realism
+- **Nuclear de-escalation removed**: no more forced global disarmament treaty on first nuclear strike — nations keep their arsenals and the simulation runs its full course
+- **Special weapons cut from 11 → 4**: removed Cyberweapons, Drone Swarms, Hypersonic Missiles, EMP Strike, AI Combat Systems, Directed Energy Defence, and Nanoweapons; kept only **Neutron Bombs**, **Orbital Kinetic Impactors**, **Orbital Laser Platform**, and **Tectonic Weapons**
+- **Weapons re-gated**: Neutron Bombs year 2060 / tech 4.0; Kinetic Impactors year 2075 / tech 4.5; Orbital Laser year 2080 / tech 4.5; Tectonic Weapons year 2100 / tech 5.0 — none available in the first 30–50 years of simulation
+- **Minimum 3-month war duration**: no war can end (by peace deal or military collapse) before 3 in-game months have passed, regardless of military size disparity
+- **Increased peace willingness**: `PEACE_OFFER_CHANCE` 15%→25%, `LOSER_ACCEPT_CHANCE` 60%→72%, `SURRENDER_CHANCE` 9%→15%, `WINNER_ACCEPT_SURRENDER` 55%→65%, `WINNER_CEASEFIRE_CHANCE` 50%→60%; peace thresholds raised so offers come earlier in a war
+- **Nuclear salvo spreading**: when a nation fires ≥ 5 warheads, they are now distributed across multiple cities (1 city per 3 warheads, up to 10 cities), weighted by city population — 1300 warheads no longer land on a single city; damage compounds independently per city
+- **Missile shield (Iron Dome mechanic)**: all nations passively develop missile defence, with research rate proportional to world tension and economy — once any nuke is ever fired, research triples as governments divert budget; max 85% interception at full level; shield level shown in country tooltip
+
 ### v1.4 — Simulation Longevity, Weapon Scarcity & Bug Fixes
 - **Gradual nuclear disarmament**: when the first nuke fires, nations phase down their arsenals at 18%/month (~18 months to near-zero) rather than all vanishing instantly; rogue states (8–30% chance, higher for large arsenals) secretly retain 10–30% of their warheads and hold that floor permanently
 - **Rogue nuke use**: nukes flagged as retained by rogue states can still be fired in combat even after the disarmament treaty

@@ -38,6 +38,9 @@ WARTIME_ARMY_TARGET   = 0.40   # nations mobilise toward 40% of military_cap dur
 RECRUITMENT_RATE      = 0.04   # close 4% of the gap to target each month
 DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
+MISSILE_SHIELD_RATE_BASE  = 0.010   # monthly research multiplier (scaled by risk + economy)
+MISSILE_SHIELD_NUKE_MULT  = 3.0    # rate multiplier once the first nuke has been fired
+
 PEACE_MONTHS      = 24    # no wars for the first 2 years
 RAMP_MONTHS       = 18    # risk ramps 0 → BASE_RISK over the following 1.5 years
 BASE_RISK         = 0.25
@@ -106,21 +109,15 @@ def annexe(winner, loser, world):
     winner.uranium   += loser.uranium
     winner.nuked      = winner.nuked     or loser.nuked
     winner.was_nuked  = winner.was_nuked or loser.was_nuked
+    winner.missile_shield = max(winner.missile_shield, loser.missile_shield)
     # Inherit best weapons research and stockpiles
     for k in WEAPON_KEYS:
         winner.research[k] = max(winner.research[k], loser.research[k])
-    winner.drones            += loser.drones
-    winner.hypersonic        += loser.hypersonic
-    winner.emp_arsenal       += loser.emp_arsenal
     winner.neutron_bombs     += loser.neutron_bombs
     winner.kinetic_impactors += loser.kinetic_impactors
-    winner.nano_arsenal      += loser.nano_arsenal
     winner.tectonic_arsenal  = min(1, winner.tectonic_arsenal + loser.tectonic_arsenal)
-    winner.cyber_level       = max(winner.cyber_level,       loser.cyber_level)
-    winner.ai_combat_level   = max(winner.ai_combat_level,   loser.ai_combat_level)
-    winner.shield_level      = max(winner.shield_level,      loser.shield_level)
     winner.orbital_laser_level   = max(winner.orbital_laser_level,   loser.orbital_laser_level)
-    winner.orbital_laser_charges = min(3, winner.orbital_laser_charges + loser.orbital_laser_charges)
+    winner.orbital_laser_charges = min(2, winner.orbital_laser_charges + loser.orbital_laser_charges)
     world.countries.remove(loser)
     flavor = random.choice(_WAR_ANNEXATION_FLAVORS).format(winner=winner.name, loser=loser.name)
     log(f"  >> {flavor}")
@@ -142,66 +139,6 @@ _CEASEFIRE_DEAL_FLAVORS = [
     "A punishing peace: {loser} cedes economy and territory to {winner} in exchange for survival.",
     "{winner} accepts tribute. {loser} pays a heavy toll but keeps its sovereignty.",
 ]
-
-_NUCLEAR_DISARMAMENT_FLAVORS = [
-    "The first nuclear strike shocks the world into action. Every nation agrees: no more.",
-    "As mushroom clouds rise, world leaders make an emergency pact — all nuclear arsenals to be dismantled.",
-    "The nuclear taboo is shattered. Within hours, a global treaty dissolves every warhead on Earth.",
-    "One nation dared to use the bomb. In response, every other nation destroys theirs.",
-    "The smoke hasn't cleared, but the decision is unanimous: humanity will not end by nuclear fire. Other fires, perhaps.",
-    "The first strike triggers an emergency UN session. Resolution: total nuclear disarmament — effective immediately.",
-    "Every capital watched the strike in horror. Within a day, every nuclear code is wiped. The warheads? Dismantled.",
-    "The world condemns the strike — and quietly pivots to deadlier things.",
-]
-
-_NUCLEAR_ROGUE_FLAVORS = [
-    "{country} refuses to dismantle its arsenal, defying the global treaty.",
-    "{country} signs the disarmament accord — then quietly retains {n} warheads.",
-    "Intelligence reports suggest {country} has hidden {n} warheads from inspectors.",
-    "{country} pledges disarmament in public. In secret, {n} warheads remain.",
-    "Inspectors are turned away from {country}'s silos. {n} warheads stay in the ground.",
-    "{country} submits only partial compliance — {n} warheads remain unaccounted for.",
-]
-
-DISARM_RATE_PER_MONTH = 0.18   # 18% of remaining surplus retired each month (~18 months to near-zero)
-
-def apply_nuclear_disarmament(world):
-    """
-    Triggered by the first nuclear strike ever fired.
-    Sets each nuclear nation on a disarmament trajectory — compliant nations phase
-    down to zero over roughly 18 months; rogue states quietly keep a fraction.
-    No arsenals change immediately; the actual reductions happen in simulate_day().
-    New enrichment is halted globally from this point.
-    """
-    world.nuclear_disarmament = True
-    flavor = random.choice(_NUCLEAR_DISARMAMENT_FLAVORS)
-    log(f'  [DISARMAMENT] \u2622\ufe0f {flavor}')
-
-    rogue_count = 0
-    for c in world.countries:
-        if c.nukes <= 0:
-            continue
-        # Larger arsenals are harder to fully surrender — higher rogue chance
-        rogue_chance = 0.08 + min(0.22, c.nukes / 400 * 0.22)
-        if random.random() < rogue_chance:
-            retained = max(1, int(c.nukes * random.uniform(0.10, 0.30)))
-            c.nuke_disarm_target = retained   # phase down to this level, then hold
-            rogue_count += 1
-            rogue_flavor = random.choice(_NUCLEAR_ROGUE_FLAVORS).format(country=c.name, n=retained)
-            log(f'  [DISARMAMENT] \u2622\ufe0f {rogue_flavor}')
-        else:
-            c.nuke_disarm_target = 0          # phase down fully to zero
-        # Keep uranium — it can still feed neutron bomb production
-
-    if rogue_count > 0:
-        log(f'  [DISARMAMENT] \u2622\ufe0f {rogue_count} nation(s) will only partially disarm.')
-
-    # Small research bonus: the terror of nuclear war accelerates other weapons programmes
-    for c in world.countries:
-        for key in c.research:
-            if c.research[key] < 1.0:
-                c.research[key] = min(1.0, c.research[key] + 0.05)
-
 
 CEASEFIRE_PROTECTION_MONTHS = 30  # neither side may re-declare war for this many months
 
@@ -866,21 +803,15 @@ def merge_countries(primary, secondary, world):
     primary.was_nuked  = primary.was_nuked or secondary.was_nuked
     primary.nuked = primary.nuked or secondary.nuked
     primary.tech_level = round(max(primary.tech_level, secondary.tech_level), 2)
+    primary.missile_shield = max(primary.missile_shield, secondary.missile_shield)
     # Inherit best research and combine stockpiles
     for k in WEAPON_KEYS:
         primary.research[k] = max(primary.research[k], secondary.research[k])
-    primary.drones            += secondary.drones
-    primary.hypersonic        += secondary.hypersonic
-    primary.emp_arsenal       += secondary.emp_arsenal
     primary.neutron_bombs     += secondary.neutron_bombs
     primary.kinetic_impactors += secondary.kinetic_impactors
-    primary.nano_arsenal      += secondary.nano_arsenal
     primary.tectonic_arsenal  = min(1, primary.tectonic_arsenal + secondary.tectonic_arsenal)
-    primary.cyber_level       = max(primary.cyber_level,       secondary.cyber_level)
-    primary.ai_combat_level   = max(primary.ai_combat_level,   secondary.ai_combat_level)
-    primary.shield_level      = max(primary.shield_level,      secondary.shield_level)
     primary.orbital_laser_level   = max(primary.orbital_laser_level,   secondary.orbital_laser_level)
-    primary.orbital_laser_charges = min(3, primary.orbital_laser_charges + secondary.orbital_laser_charges)
+    primary.orbital_laser_charges = min(2, primary.orbital_laser_charges + secondary.orbital_laser_charges)
     world.countries.remove(secondary)
     flavor = random.choice(_UNION_FLAVORS).format(a=old_name, b=secondary.name, name=merged_name)
     log(f"  [UNION] {flavor}")
@@ -933,19 +864,13 @@ def get_world_state(world):
                 'nuked': c.nuked,
                 'was_nuked': c.was_nuked,
                 'tech_level': round(c.tech_level, 2),
+                'missile_shield': round(c.missile_shield, 3),
                 'research': {k: round(c.research[k], 3) for k in WEAPON_KEYS},
                 'weapons': {
-                    'cyber_level':          round(c.cyber_level, 3),
-                    'drones':               c.drones,
-                    'hypersonic':           c.hypersonic,
-                    'emp':                  c.emp_arsenal,
                     'neutron':              c.neutron_bombs,
-                    'ai_combat':            round(c.ai_combat_level, 3),
-                    'shield':               round(c.shield_level, 3),
                     'kinetic':              c.kinetic_impactors,
                     'orbital_laser_level':  round(c.orbital_laser_level, 3),
                     'orbital_laser_charges':c.orbital_laser_charges,
-                    'nano':                 c.nano_arsenal,
                     'tectonic':             c.tectonic_arsenal,
                 },
             }
@@ -1165,20 +1090,6 @@ def simulate_day(world, events, skip_war=False):
         if country.war_exhaustion > 0:
             country.war_exhaustion = max(0.0, country.war_exhaustion - 0.04)
 
-    # Gradual nuclear disarmament: each month, nations reduce their stockpile toward
-    # their treaty target (0 for compliant nations, a small retained figure for rogue states).
-    # Rate: 18% of the remaining surplus per month → ~18 months to near-zero from a large arsenal.
-    if world.nuclear_disarmament:
-        for country in world.countries:
-            if getattr(country, 'nuke_disarm_target', None) is None:
-                continue
-            if country.nukes <= country.nuke_disarm_target:
-                country.nuke_disarm_target = None  # reached target — obligation fulfilled
-                continue
-            surplus = country.nukes - country.nuke_disarm_target
-            reduction = max(1, int(surplus * DISARM_RATE_PER_MONTH))
-            country.nukes = max(country.nuke_disarm_target, country.nukes - reduction)
-
     # Natural population growth (annual rate applied monthly)
     # Nations at war skip growth — civilian casualties in Conflict handle their population.
     # Nuked nations suffer permanent fallout: growth rate is halved and a 0.3%/yr radiation
@@ -1233,79 +1144,21 @@ def simulate_day(world, events, skip_war=False):
         tech_leader.tech_level = round(
             tech_leader.tech_level + 0.012 * (len(valid_members) - 1), 2)
 
+    # ── Missile shield development ────────────────────────────────────────
+    # All nations invest in missile defence as world tension rises.
+    # Once any nuke has ever been fired, budgets are diverted and research triples.
+    _nuke_fear_mult = MISSILE_SHIELD_NUKE_MULT if world.total_nukes_used > 0 else 1.0
+    for country in world.countries:
+        gdp_pc = country.economy / max(country.population, 1)
+        ef = max(0.2, min(2.0, (gdp_pc / 10_000) ** 0.5))
+        rate = MISSILE_SHIELD_RATE_BASE * world.risk * ef * _nuke_fear_mult
+        country.missile_shield = min(1.0, country.missile_shield + rate)
+
     # ── Special weapons: research + stockpile building ────────────────────
     current_year = current_date(world).year
     for country in world.countries:
         advance_research(country, current_year, world.alliances)
         build_stockpiles(country, URANIUM_PER_NUKE)
-
-    # ── Out-of-combat cyber attacks ───────────────────────────────────────
-    for country in list(world.countries):
-        if country.cyber_level <= 0.2:
-            continue
-        if random.random() > 0.10:
-            continue
-        # Pick a non-allied, non-at-war target
-        ally_names = set()
-        for al in world.alliances:
-            if al.has_member(country):
-                ally_names = {m.name for m in al.members}
-                break
-        already_at_war_with = {
-            c.defender.name for c in world.active_conflicts if c.attacker is country
-        } | {
-            c.attacker.name for c in world.active_conflicts if c.defender is country
-        }
-        candidates = [
-            c for c in world.countries
-            if c is not country
-            and c.name not in ally_names
-            and c.name not in already_at_war_with
-        ]
-        if not candidates:
-            continue
-        target = random.choice(candidates)
-        # Economy damage
-        target.economy = max(1, int(target.economy * (1 - 0.02 * country.cyber_level)))
-        # Attribution roll
-        if random.random() < 0.08 * country.cyber_level:
-            log(f"  [CYBER] A cyberattack on {target.name} has been traced back to {country.name}.")
-            target.casus_belli.add(country.name)
-        else:
-            log(f"  [CYBER] {country.name} launches a cyberattack on {target.name}.")
-
-    # ── Out-of-combat nanoweapon attacks ──────────────────────────────────
-    for country in list(world.countries):
-        if country.nano_arsenal < 5:
-            continue
-        if random.random() > 0.05:
-            continue
-        ally_names = set()
-        for al in world.alliances:
-            if al.has_member(country):
-                ally_names = {m.name for m in al.members}
-                break
-        already_at_war_with = {
-            c.defender.name for c in world.active_conflicts if c.attacker is country
-        } | {
-            c.attacker.name for c in world.active_conflicts if c.defender is country
-        }
-        candidates = [
-            c for c in world.countries
-            if c is not country
-            and c.name not in ally_names
-            and c.name not in already_at_war_with
-        ]
-        if not candidates:
-            continue
-        target = random.choice(candidates)
-        country.nano_arsenal -= 1
-        target.military_strength = max(0, target.military_strength * 0.85)
-        if random.random() < 0.15:
-            log(f"  [NANO] A nanoweapon attack on {target.name} has been traced back to {country.name}.")
-            target.casus_belli.add(country.name)
-        else:
-            log(f"  [NANO] {country.name} deploys nanoweapons against {target.name}.")
 
     if not skip_war:
         _run_war_loop(world, scale=1.0)
@@ -1388,7 +1241,7 @@ def simulate_day(world, events, skip_war=False):
             trigger_alliance_support(country, target, world)
 
     # Nuclear proliferation: gradual uranium enrichment gated on tech + world tension
-    if world.risk >= NUKE_RISK_THRESHOLD and not world.nuclear_disarmament:
+    if world.risk >= NUKE_RISK_THRESHOLD:
         for country in list(world.countries):
             # Skip superpowers with existing massive arsenals (Russia/USA tier)
             if country.nukes >= NUKE_MAX_STOCKPILE:

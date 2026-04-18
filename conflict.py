@@ -164,37 +164,38 @@ _NUCLEAR_THREAT_REJECTED_FLAVORS = [
     "{winner} dares {loser} to pull the trigger. The advance continues.",
 ]
 
-TERRITORY_CAPTURE_ATTACKER_COST = 0.12  # attacker loses 12% of current military as occupation cost per territory
+TERRITORY_CAPTURE_ATTACKER_COST = 0.12
 
-NUCLEAR_TRIGGER_THRESHOLD = 0.25   # start rolling for launch below 25% of starting strength
-NUCLEAR_TRIGGER_CHANCE    = 0.08   # 8% per month at the trigger threshold
-NUCLEAR_PANIC_CHANCE      = 0.45   # 45% per month when nearly eliminated (≤ 5% of starting strength)
+NUCLEAR_TRIGGER_THRESHOLD = 0.25
+NUCLEAR_TRIGGER_CHANCE    = 0.08
+NUCLEAR_PANIC_CHANCE      = 0.45
 
-PEACE_THRESHOLD           = 0.35   # loser below 35% of start strength → winner may offer peace
-PEACE_OFFER_CHANCE        = 0.15   # 15% per tick the winning side proposes terms (early game)
-PEACE_OFFER_ENDGAME_MIN   = 0.10   # endgame floor: winner still offers peace at 10% of base rate
-LOSER_ACCEPT_CHANCE       = 0.60   # base chance the losing side accepts a winner's peace offer
-MERGER_DEMAND_CHANCE      = 0.40   # chance the loser demands a merger as their condition
-WINNER_ACCEPT_MERGER      = 0.50   # chance the winner agrees to a merger
-PYRRHIC_RATIO             = 0.55   # fraction of loser's resources winner absorbs after refused peace
+PEACE_THRESHOLD           = 0.50   # loser below 50% of start strength → winner may offer peace
+PEACE_OFFER_CHANCE        = 0.25   # 25% per tick the winning side proposes terms
+PEACE_OFFER_ENDGAME_MIN   = 0.10
+LOSER_ACCEPT_CHANCE       = 0.72   # raised from 0.60 — losing nations are more willing to deal
+MERGER_DEMAND_CHANCE      = 0.40
+WINNER_ACCEPT_MERGER      = 0.50
+PYRRHIC_RATIO             = 0.55
 
-# Loser-initiated surrender
-SURRENDER_THRESHOLD       = 0.50   # loser below 50% of start strength may raise white flag
-SURRENDER_CHANCE          = 0.09   # 9% per tick (full early-game scale)
-WINNER_ACCEPT_SURRENDER   = 0.55   # base chance winner accepts the surrender offer
-WINNER_CEASEFIRE_CHANCE   = 0.50   # of accepted surrenders, chance winner takes ceasefire vs full annexation
+SURRENDER_THRESHOLD       = 0.65   # loser below 65% of start strength may raise white flag
+SURRENDER_CHANCE          = 0.15   # raised from 0.09
+WINNER_ACCEPT_SURRENDER   = 0.65   # raised from 0.55
+WINNER_CEASEFIRE_CHANCE   = 0.60   # raised from 0.50
 
-# Nuclear coercion (desperate loser threatens nukes to force a ceasefire)
-NUCLEAR_COERCE_THRESHOLD  = 0.35   # loser below 35% and has nukes may issue nuclear threat
-NUCLEAR_COERCE_CHANCE     = 0.10   # 10% per tick
-WINNER_BACKS_DOWN_BASE    = 0.50   # base chance winner accepts ceasefire under nuclear threat
+NUCLEAR_COERCE_THRESHOLD  = 0.35
+NUCLEAR_COERCE_CHANCE     = 0.10
+WINNER_BACKS_DOWN_BASE    = 0.50
 
-CIVILIAN_CASUALTY_RATE    = 0.003  # 0.3% of population lost per side per month of active war
+CIVILIAN_CASUALTY_RATE    = 0.003
 
-GUERRILLA_THRESHOLD  = 0.20   # guerrillas only emerge once a side has lost 20%+ of start strength
-GUERRILLA_RATE       = 0.04   # up to 4% of civilians take up arms at peak desperation
-GUERRILLA_EFFICIENCY = 0.22   # guerrillas are ~22% as effective as trained soldiers
-                               # (terrain knowledge offsets lack of training/equipment)
+GUERRILLA_THRESHOLD  = 0.20
+GUERRILLA_RATE       = 0.04
+GUERRILLA_EFFICIENCY = 0.22
+
+MIN_WAR_DURATION = 3.0  # wars last at least 3 months regardless of military size
+
+NUKE_SPREAD_THRESHOLD = 5  # fire this many or more warheads → spread across multiple cities
 
 
 _TERRITORY_CAPTURE_FLAVORS = [
@@ -228,132 +229,53 @@ class Conflict:
         self.defender = defender
         self.duration_days = 0
 
-        # The specific territory currently being fought over.
-        # Wars progress territory by territory — most recently acquired falls first.
         self.contested_territory = defender.absorbed_names[-1]
 
-        # Garrison = the share of the defender's military stationed in the contested territory.
-        # Equal distribution: total / num_territories.  Attacker commits their full force.
         n = len(defender.absorbed_names)
         self._defender_garrison = defender.military_strength / max(n, 1)
 
         self._attacker_start = max(attacker.military_strength, 1)
         self._defender_start = max(self._defender_garrison, 1)
 
-        # Nuclear strikes that fired this tick — drained into world.pending_strikes by simulate_day()
         self.pending_strikes = []
 
-        # EMP state
-        self.emp_months_remaining = 0
-        self.emp_target = None   # 'attacker' or 'defender'
-
-        # Peace negotiation outcome
-        # 'annexation' | 'merger' | None (military defeat)
         self.peace_deal   = None
-        # True when the winner refused a valid peace offer — pyrrhic conquest penalty applies
         self.pyrrhic      = False
-        # Cached winner/loser when peace is struck (military hasn't hit 0 yet)
         self._peace_winner = None
         self._peace_loser  = None
 
     def _guerrilla_strength(self, side, current_strength, start_strength):
-        """Effective guerrilla contribution for a side that's taking heavy losses.
-        Guerrillas are defenders — they fight for their homeland, not to invade.
-        They emerge gradually as the regular military is ground down.
-        current_strength is passed explicitly so garrison can be used for the defender."""
         desperation = max(0.0, 1.0 - current_strength / max(start_strength, 1))
         if desperation < GUERRILLA_THRESHOLD:
             return 0
-        # Participation scales from 0 → GUERRILLA_RATE as losses go from threshold → 80%
         scale = min(1.0, (desperation - GUERRILLA_THRESHOLD) / (0.80 - GUERRILLA_THRESHOLD))
         civilians = max(0, side.population - side.military_strength)
         return int(civilians * GUERRILLA_RATE * scale * GUERRILLA_EFFICIENCY)
 
     def simulate_day(self, nation_count=999, endgame_threshold=2, world=None, scale=1.0):
-        # scale < 1 for war sub-ticks: same total damage per month, spread over N steps
-        self.duration_days += scale   # tracks real months regardless of sub-tick count
+        self.duration_days += scale
 
         attacker_roll = random.uniform(0.7, 1.3)
         defender_roll = random.uniform(0.7, 1.3)
 
         tech_ratio = self.attacker.tech_level / max(self.defender.tech_level, 0.1)
 
-        # ── AI Combat Systems — passive tech_ratio boost ──────────────────
-        if self.attacker.ai_combat_level > 0:
-            tech_ratio *= (1 + 0.4 * self.attacker.ai_combat_level)
-        if self.defender.ai_combat_level > 0:
-            tech_ratio /= (1 + 0.4 * self.defender.ai_combat_level)
-
-        # Attacker commits their full force.
-        # Defender fights with the garrison of the contested territory only —
-        # the rest of their army is holding other territories.
         attacker_str = self.attacker.military_strength
         defender_str = self._defender_garrison
 
-        # Guerrillas supplement the losing side's defensive strength.
-        # They're partially tech-resistant (terrain, concealment) so only half the tech
-        # penalty applies to them — a guerrilla in the jungle is harder to bomb than a tank.
         attacker_guerrillas = self._guerrilla_strength(self.attacker, attacker_str,    self._attacker_start)
         defender_guerrillas = self._guerrilla_strength(self.defender, defender_str,    self._defender_start)
         attacker_effective  = attacker_str + attacker_guerrillas * (1 + (tech_ratio - 1) * 0.5)
         defender_effective  = defender_str + defender_guerrillas * (1 + (1 / tech_ratio - 1) * 0.5)
 
-        # ── Drone Swarms — both sides deploy if they have them ────────────
-        if self.attacker.drones > 0:
-            units = min(self.attacker.drones, max(1, int(self.attacker.military_strength * 0.03)))
-            attacker_effective += units * 8000
-            attrition = max(1, units // 5)
-            self.attacker.drones = max(0, self.attacker.drones - attrition)
-        if self.defender.drones > 0:
-            units = min(self.defender.drones, max(1, int(self._defender_garrison * 0.03)))
-            defender_effective += units * 8000
-            attrition = max(1, units // 5)
-            self.defender.drones = max(0, self.defender.drones - attrition)
-
-        # ── EMP Strike ────────────────────────────────────────────────────
-        # Decrement active EMP counter
-        if self.emp_months_remaining > 0:
-            self.emp_months_remaining = max(0, self.emp_months_remaining - scale)
-
-        # Attacker proactively uses EMP early in war
-        if (self.attacker.emp_arsenal > 0
-                and self.duration_days < 3
-                and random.random() < 0.20 * scale):
-            self.attacker.emp_arsenal -= 1
-            self.emp_months_remaining = 6
-            self.emp_target = 'defender'
-            log(f"  [EMP] ⚡ {self.attacker.name} launches an EMP strike against {self.defender.name}.")
-
-        # Defender uses EMP when losing badly
-        if (self.defender.emp_arsenal > 0
-                and self._defender_garrison < self._defender_start * 0.40
-                and random.random() < 0.15 * scale):
-            self.defender.emp_arsenal -= 1
-            self.emp_months_remaining = 6
-            self.emp_target = 'attacker'
-            log(f"  [EMP] ⚡ {self.defender.name} launches an EMP strike against {self.attacker.name}.")
-
-        # Apply active EMP: halve the affected side's effective military
-        if self.emp_months_remaining > 0:
-            if self.emp_target == 'defender':
-                defender_effective *= 0.5
-            elif self.emp_target == 'attacker':
-                attacker_effective *= 0.5
-
         attacker_losses = (defender_effective * 0.08) * attacker_roll * 1.2 / tech_ratio * scale
         defender_losses = (attacker_effective * 0.08) * defender_roll * 0.8 * tech_ratio * scale
 
-        # ── Directed Energy Shield — reduces defender losses ─────────────
-        if self.defender.shield_level > 0:
-            defender_losses *= (1 - 0.35 * self.defender.shield_level)
-
-        # Apply losses to attacker's total military
         attacker_mil_before = self.attacker.military_strength
         self.attacker.military_strength = max(0, self.attacker.military_strength - attacker_losses)
         self.attacker.military_strength = min(self.attacker.military_strength, self.attacker.military_cap)
         attacker_mil_lost = max(0, attacker_mil_before - self.attacker.military_strength)
 
-        # Apply losses to the defender's garrison; sync the same loss to their total military
         garrison_before = self._defender_garrison
         self._defender_garrison = max(0.0, self._defender_garrison - defender_losses)
         actual_garrison_loss = garrison_before - self._defender_garrison
@@ -362,7 +284,6 @@ class Conflict:
         if world is not None:
             world.total_military_casualties += int(attacker_mil_lost + actual_garrison_loss)
 
-        # Civilian casualties — base rate plus extra for guerrilla fighters killed in action
         total_civ_lost = 0
         for side, guerrillas in ((self.attacker, attacker_guerrillas), (self.defender, defender_guerrillas)):
             guerrilla_dead = int(guerrillas * 0.08 * random.uniform(0.7, 1.3) * scale)
@@ -397,7 +318,6 @@ class Conflict:
             self.defender.population = max(1, int(self.defender.population * 0.7))
             self.defender.military_strength = max(0, self.defender.military_strength * 0.4)
             self._defender_garrison = max(0.0, self._defender_garrison * 0.4)
-            # Collateral damage to neighbours
             if world is not None:
                 for neighbor_name in self.defender.absorbed_names + list(getattr(self.defender, 'neighbors', [])):
                     for nc in world.countries:
@@ -409,7 +329,6 @@ class Conflict:
                             log(f"  [TECTONIC] \U0001F30D Collateral: {nc.name} struck by seismic shockwaves.")
                             break
 
-        # Always check — rogue states may retain nukes even after the disarmament treaty
         self._check_nuclear_escalation(nation_count, endgame_threshold, world, scale)
         self._check_neutron_escalation(world, scale)
         if not self.peace_deal:
@@ -419,9 +338,6 @@ class Conflict:
         if not self.peace_deal:
             self._check_nuclear_coercion(scale, nation_count, world)
 
-        # Territory capture: garrison wiped out but defender still holds multiple territories —
-        # transfer the contested territory and open a new front rather than ending the war.
-        # Guard: attacker must still be standing (mutual destruction ≠ capture).
         if (not self.peace_deal
                 and self.attacker.military_strength > 0
                 and self._defender_garrison <= 0
@@ -429,19 +345,13 @@ class Conflict:
             self._capture_territory()
 
     def _endgame_factor(self, nation_count):
-        """Returns 1.0 at 50+ nations, 0.0 at 2. Used to scale peace-deal frequency."""
         return min(1.0, max(0.0, (nation_count - 2) / 48.0))
 
     def _check_peace_offer(self, scale=1.0, nation_count=999):
-        """Winning side may offer peace once the loser is desperate enough.
+        # No negotiations in the first 3 months — wars must run their course
+        if self.duration_days < MIN_WAR_DURATION:
+            return
 
-        For the defender, desperation is measured by garrison losses (they're only
-        fighting with the troops in the contested territory, not their entire army).
-        For the attacker, it's their total military.
-        Offer frequency scales down as fewer nations remain — endgame is a fight to the death.
-        """
-        # Use garrison for defender comparisons so peace triggers on battle momentum,
-        # not on the defender's total national military
         attacker_str = self.attacker.military_strength
         defender_str = self._defender_garrison
 
@@ -454,7 +364,6 @@ class Conflict:
             losing_strength = attacker_str
             losing_start    = self._attacker_start
 
-        # Only when the loser has dropped far enough
         if losing_strength > losing_start * PEACE_THRESHOLD:
             return
 
@@ -466,7 +375,6 @@ class Conflict:
         flavor = random.choice(_PEACE_OFFER_FLAVORS).format(winner=winning.name, loser=losing.name)
         log(f"  [PEACE] {flavor}")
 
-        # Loser's roll — desperation increases acceptance
         desperation   = 1.0 - losing_strength / max(losing_start, 1)
         accept_chance = min(0.95, LOSER_ACCEPT_CHANCE + desperation * 0.30)
 
@@ -475,7 +383,6 @@ class Conflict:
             log(f"  [PEACE] {flavor}")
             return
 
-        # Loser accepted — do they demand a merger?
         if random.random() < MERGER_DEMAND_CHANCE:
             flavor = random.choice(_PEACE_MERGER_DEMAND_FLAVORS).format(loser=losing.name, winner=winning.name)
             log(f"  [PEACE] {flavor}")
@@ -488,7 +395,7 @@ class Conflict:
             else:
                 flavor = random.choice(_PEACE_MERGER_REJECT_FLAVORS).format(winner=winning.name, loser=losing.name)
                 log(f"  [PEACE] {flavor}")
-                self.pyrrhic = True   # penalty applied on eventual military defeat
+                self.pyrrhic = True
         else:
             flavor = random.choice(_PEACE_SURRENDER_FLAVORS).format(loser=losing.name, winner=winning.name)
             log(f"  [PEACE] {flavor}")
@@ -497,19 +404,12 @@ class Conflict:
             self._peace_loser  = losing
 
     def _check_loser_surrender(self, scale=1.0, nation_count=999):
-        """The losing side may raise the white flag — the winner then accepts or rejects.
+        if self.duration_days < MIN_WAR_DURATION:
+            return
 
-        Distinct from _check_peace_offer (which is winner-initiated).  Triggers at a
-        higher desperation threshold so the loser reaches out before the winner bothers
-        to offer terms.  The winner can:
-          • Accept with full annexation — loser is absorbed.
-          • Accept with a ceasefire — loser cedes resources but survives.
-          • Reject — war continues; winner is marked pyrrhic for refusing a fair out.
-        Surrender offers dry up in the endgame: few-nation powers fight to the death.
-        """
         ef = self._endgame_factor(nation_count)
         if ef == 0.0:
-            return  # pure endgame — no surrenders accepted
+            return
 
         attacker_str = self.attacker.military_strength
         defender_str = self._defender_garrison
@@ -524,7 +424,7 @@ class Conflict:
             losing_start    = self._attacker_start
 
         if losing_strength > losing_start * SURRENDER_THRESHOLD:
-            return  # not desperate enough yet
+            return
 
         desperation = 1.0 - losing_strength / max(losing_start, 1)
         if random.random() > SURRENDER_CHANCE * ef * (0.5 + desperation) * scale:
@@ -533,7 +433,6 @@ class Conflict:
         flavor = random.choice(_SURRENDER_OFFER_FLAVORS).format(loser=losing.name, winner=winning.name)
         log(f"  [PEACE] {flavor}")
 
-        # Winner decides — less likely to show mercy as the endgame approaches
         accept_chance = WINNER_ACCEPT_SURRENDER * (0.3 + 0.7 * ef)
         if random.random() > accept_chance:
             flavor = random.choice(_WINNER_REJECTS_SURRENDER_FLAVORS).format(winner=winning.name, loser=losing.name)
@@ -541,7 +440,6 @@ class Conflict:
             self.pyrrhic = True
             return
 
-        # Accepted — full annexation or ceasefire?
         if random.random() < WINNER_CEASEFIRE_CHANCE:
             flavor = random.choice(_WINNER_ACCEPTS_CEASEFIRE_FLAVORS).format(winner=winning.name, loser=losing.name)
             log(f"  [PEACE] {flavor}")
@@ -556,12 +454,9 @@ class Conflict:
             self._peace_loser  = losing
 
     def _check_nuclear_coercion(self, scale=1.0, nation_count=999, world=None):
-        """Desperate nuclear power threatens to use the bomb to force a ceasefire.
+        if self.duration_days < MIN_WAR_DURATION:
+            return
 
-        If the winner backs down, the conflict ends as a ceasefire.
-        If the winner calls the bluff, the loser immediately launches a warning strike
-        and the war continues.
-        """
         attacker_str = self.attacker.military_strength
         defender_str = self._defender_garrison
 
@@ -577,9 +472,8 @@ class Conflict:
         if losing.nukes <= 0:
             return
         if losing_strength > losing_start * NUCLEAR_COERCE_THRESHOLD:
-            return  # not desperate enough to go nuclear
+            return
 
-        # Scale: still possible in endgame (nukes are always scary) but rarer
         ef = self._endgame_factor(nation_count)
         effective_chance = NUCLEAR_COERCE_CHANCE * max(0.30, ef)
         if random.random() > effective_chance * scale:
@@ -588,7 +482,6 @@ class Conflict:
         flavor = random.choice(_NUCLEAR_THREAT_FLAVORS).format(loser=losing.name, winner=winning.name)
         log(f"  [PEACE] {flavor}")
 
-        # Winner decides — less likely to back down in the endgame
         back_down_chance = WINNER_BACKS_DOWN_BASE * (0.25 + 0.75 * ef)
         if random.random() < back_down_chance:
             flavor = random.choice(_NUCLEAR_THREAT_ACCEPTED_FLAVORS).format(winner=winning.name, loser=losing.name)
@@ -599,155 +492,209 @@ class Conflict:
         else:
             flavor = random.choice(_NUCLEAR_THREAT_REJECTED_FLAVORS).format(winner=winning.name, loser=losing.name)
             log(f"  [PEACE] {flavor}")
-            # Bluff called — loser fires a warning strike immediately
             used = min(losing.nukes, max(1, losing.nukes // 4))
             losing.nukes -= used
             self._execute_nuclear_strike(losing, winning, used, world)
 
-    def _execute_nuclear_strike(self, launcher, target, used, world, hypersonic_boost=False):
-        """Apply one nuclear salvo: damage, logging, pending strike, collateral.
+    # ── Nuclear strike helpers ────────────────────────────────────────────────
 
-        If hypersonic_boost is True (launcher had a hypersonic missile available),
-        damage is multiplied by 1.35 and the defender's shield is bypassed.
+    def _distribute_warheads(self, target, used):
+        """Return list of (city, warheads) pairs for this strike.
+
+        When firing fewer than NUKE_SPREAD_THRESHOLD warheads, pick a single city.
+        For larger salvos, spread warheads across multiple cities weighted by population.
         """
-        # ── Hypersonic missile delivery boost ────────────────────────────
-        if not hypersonic_boost and launcher.hypersonic > 0:
-            launcher.hypersonic -= 1
-            hypersonic_boost = True
+        cities = getattr(target, 'cities', [])
+        if not cities or used < NUKE_SPREAD_THRESHOLD:
+            city = pick_target_city(target)
+            return [(city, used)]
 
+        # 1 city per 3 warheads, min 2, max min(10, len(cities))
+        n_targets = min(len(cities), max(2, used // 3), 10)
+
+        # Weighted sampling without replacement by city population
+        remaining = list(cities)
+        chosen = []
+        for _ in range(n_targets):
+            if not remaining:
+                break
+            weights = [c['pop'] for c in remaining]
+            total_w = sum(weights)
+            if total_w <= 0:
+                chosen.append(remaining.pop(0))
+                continue
+            r = random.uniform(0, total_w)
+            cum = 0.0
+            for i, city in enumerate(remaining):
+                cum += city['pop']
+                if r <= cum:
+                    chosen.append(city)
+                    remaining.pop(i)
+                    break
+            else:
+                chosen.append(remaining.pop(-1))
+
+        if not chosen:
+            return [(pick_target_city(target), used)]
+
+        # Distribute warheads proportional to city population
+        total_pop = sum(c['pop'] for c in chosen)
+        result = []
+        allocated = 0
+        for i, city in enumerate(chosen[:-1]):
+            n = max(1, round(used * city['pop'] / max(total_pop, 0.001)))
+            max_n = used - allocated - (len(chosen) - 1 - i)
+            n = min(n, max(1, max_n))
+            result.append((city, n))
+            allocated += n
+        result.append((chosen[-1], max(1, used - allocated)))
+        return result
+
+    def _city_damage_fracs(self, target, city, warheads_here):
+        """Return (mil_frac, pop_frac, econ_frac, severity_frac) for a single city strike."""
+        def sat(density, cap, scale):
+            return cap * (1.0 - math.exp(-density / scale))
+
+        if city:
+            city_pop_M   = max(city.get('pop', 0.1), 0.01)
+            density      = warheads_here / city_pop_M
+
+            city_pop_frac  = sat(density, 0.90, 1.0)
+            city_mil_frac  = sat(density, 0.95, 0.8)
+            city_econ_frac = sat(density, 0.95, 0.8)
+
+            city_share_pop  = min(1.0, city_pop_M * 1_000_000 / max(target.population, 1))
+            city_share_mil  = min(1.0, city_share_pop * 3.0)
+            city_share_econ = min(1.0, city_share_pop * 2.5)
+
+            mil_frac  = city_mil_frac  * city_share_mil
+            pop_frac  = city_pop_frac  * city_share_pop
+            econ_frac = city_econ_frac * city_share_econ
+            sev_frac  = city_pop_frac
+        else:
+            nation_pop_M   = max(target.population / 1_000_000, 0.01)
+            density        = warheads_here / nation_pop_M
+            mil_frac  = sat(density, 0.92, 2.0)
+            pop_frac  = sat(density, 0.55, 2.5)
+            econ_frac = sat(density, 0.88, 3.0)
+            sev_frac  = mil_frac
+
+        return mil_frac, pop_frac, econ_frac, sev_frac
+
+    def _check_collateral(self, launcher, target, city, warheads_here, world):
+        """Check for collateral damage to bystanders from a single city strike."""
+        lethal_km, damage_km = blast_radius_km(warheads_here)
+        for bystander in list(world.countries):
+            if bystander is launcher or bystander is target:
+                continue
+            for bcity in bystander.cities:
+                dist = haversine_km(city['lat'], city['lon'], bcity['lat'], bcity['lon'])
+                if dist <= lethal_km:
+                    mortality = LETHAL_MORTALITY
+                elif dist <= damage_km:
+                    mortality = DAMAGE_MORTALITY * (1.0 - (dist - lethal_km) / (damage_km - lethal_km))
+                else:
+                    continue
+                casualties = int(bcity['pop'] * 1_000_000 * mortality)
+                if casualties < 1000:
+                    continue
+                bystander.population = max(1, bystander.population - casualties)
+                bystander.was_nuked = True
+                world.total_civilian_casualties += casualties
+                world.pending_collateral.append(
+                    (bystander.name, launcher.name, bcity['name'],
+                     casualties, bcity['lat'], bcity['lon'], warheads_here)
+                )
+                log(f"  [NUCLEAR] \u2622 Collateral: {bcity['name']} ({bystander.name}) struck by fallout — "
+                    f"{casualties:,} casualties ({dist:.0f} km from {city['name']})")
+
+    def _execute_nuclear_strike(self, launcher, target, used, world):
+        """Apply a nuclear salvo: spread warheads across cities if firing many."""
         launcher.nuked   = True
         target.was_nuked = True
         if world is not None:
             world.total_nukes_used += used
 
-        city      = pick_target_city(target)
-        city_name = city['name'] if city else None
-        city_lat  = city['lat']  if city else None
-        city_lon  = city['lon']  if city else None
+        city_assignments = self._distribute_warheads(target, used)
 
-        self.pending_strikes.append((launcher.name, target.name, city_name, city_lat, city_lon, used))
+        # Build log line
+        city_names = [c['name'] for c, _ in city_assignments if c]
+        if len(city_names) > 1:
+            shown = city_names[:4]
+            suffix = '…' if len(city_names) > 4 else ''
+            city_str = f" ({', '.join(shown)}{suffix})"
+        elif city_names:
+            city_str = f" ({city_names[0]})"
+        else:
+            city_str = ""
 
-        hyp_str = " [HYPERSONIC DELIVERY]" if hypersonic_boost else ""
-        city_str = f" ({city_name})" if city_name else ""
+        n_cities = len(city_assignments)
+        spread_note = f", {n_cities} cities" if n_cities > 1 else ""
         flavor = random.choice(_NUCLEAR_LAUNCH_FLAVORS).format(
             launcher=launcher.name, used=used, target=target.name)
-        log(f"  [NUCLEAR] \u2622 {flavor}{city_str}{hyp_str}")
+        log(f"  [NUCLEAR] \u2622 {flavor}{city_str}")
 
-        # ── Damage model ─────────────────────────────────────────────────
-        # When a specific city is targeted, damage is calculated at city
-        # scale (warheads per million city residents) — so 12 warheads on
-        # Hiroshima devastates the city, not 12÷127M of Japan.
-        # The city-level destruction is then scaled back to national impact
-        # by the city's share of the nation's population, with military and
-        # economy weighted higher (both concentrate in cities).
-        # Without a city target, fall back to national density.
+        # Accumulate damage across city strikes (compound fractions)
+        total_mil_frac  = 0.0
+        total_pop_frac  = 0.0
+        total_econ_frac = 0.0
+        worst_sev_frac  = 0.0
 
-        def sat(density, cap, scale):
-            return cap * (1.0 - math.exp(-density / scale))
+        for city, city_warheads in city_assignments:
+            mil_f, pop_f, econ_f, sev_f = self._city_damage_fracs(target, city, city_warheads)
+            total_mil_frac  = 1.0 - (1.0 - total_mil_frac)  * (1.0 - mil_f)
+            total_pop_frac  = 1.0 - (1.0 - total_pop_frac)  * (1.0 - pop_f)
+            total_econ_frac = 1.0 - (1.0 - total_econ_frac) * (1.0 - econ_f)
+            worst_sev_frac  = max(worst_sev_frac, sev_f)
 
-        if city:
-            city_pop_M      = max(city.get('pop', 0.1), 0.01)   # millions
-            city_density    = used / city_pop_M
+            if city:
+                self.pending_strikes.append((launcher.name, target.name, city['name'], city['lat'], city['lon'], city_warheads))
+                if world is not None:
+                    self._check_collateral(launcher, target, city, city_warheads, world)
+            else:
+                self.pending_strikes.append((launcher.name, target.name, None, None, None, city_warheads))
 
-            # Destruction of the city itself
-            city_pop_frac   = sat(city_density, 0.90, 1.0)  # up to 90 % of city killed
-            city_mil_frac   = sat(city_density, 0.95, 0.8)  # military installations levelled
-            city_econ_frac  = sat(city_density, 0.95, 0.8)  # infrastructure annihilated
+        # Missile shield: intercepts a fraction of incoming warheads
+        # Max interception 85% — no shield is perfect against a mass salvo
+        shield = getattr(target, 'missile_shield', 0.0)
+        if shield > 0:
+            intercept = min(0.85, shield * 0.85)
+            total_mil_frac  *= (1.0 - intercept)
+            total_pop_frac  *= (1.0 - intercept)
+            total_econ_frac *= (1.0 - intercept)
+            if intercept >= 0.15:
+                log(f"  [SHIELD] \U0001F6E1 {target.name}'s missile defence intercepts {intercept*100:.0f}% of incoming warheads.")
 
-            # City's share of the nation — forces and industry concentrate in cities
-            city_share_pop  = min(1.0, city_pop_M * 1_000_000 / max(target.population, 1))
-            city_share_mil  = min(1.0, city_share_pop * 3.0)   # troops near cities
-            city_share_econ = min(1.0, city_share_pop * 2.5)   # economic hubs
-
-            tgt_pop_frac    = city_pop_frac  * city_share_pop
-            tgt_mil_frac    = city_mil_frac  * city_share_mil
-            tgt_econ_frac   = city_econ_frac * city_share_econ
-        else:
-            # No city data — scattered / area strike, use national density
-            nation_pop_M  = max(target.population / 1_000_000, 0.01)
-            nation_density = used / nation_pop_M
-            tgt_mil_frac  = sat(nation_density, 0.92, 2.0)
-            tgt_pop_frac  = sat(nation_density, 0.55, 2.5)
-            tgt_econ_frac = sat(nation_density, 0.88, 3.0)
-
-        # Hypersonic boost: multiply damage fracs by 1.35 (shield bypass handled below)
-        if hypersonic_boost:
-            tgt_mil_frac  = min(1.0, tgt_mil_frac  * 1.35)
-            tgt_pop_frac  = min(1.0, tgt_pop_frac  * 1.35)
-            tgt_econ_frac = min(1.0, tgt_econ_frac * 1.35)
-
-        # Directed Energy Shield reduces incoming damage UNLESS delivery is hypersonic
-        if not hypersonic_boost and target.shield_level > 0:
-            reduction = 0.35 * target.shield_level
-            tgt_mil_frac  = max(0.0, tgt_mil_frac  - reduction)
-            tgt_pop_frac  = max(0.0, tgt_pop_frac  - reduction)
-            tgt_econ_frac = max(0.0, tgt_econ_frac - reduction)
-
+        # Apply total damage
         mil_before  = target.military_strength
         pop_before  = target.population
         econ_before = target.economy
 
-        target.military_strength = max(0, target.military_strength * (1.0 - tgt_mil_frac))
-        target.population        = max(1, int(target.population    * (1.0 - tgt_pop_frac)))
-        target.economy           = max(0, int(target.economy       * (1.0 - tgt_econ_frac)))
+        target.military_strength = max(0, target.military_strength * (1.0 - total_mil_frac))
+        target.population        = max(1, int(target.population    * (1.0 - total_pop_frac)))
+        target.economy           = max(0, int(target.economy       * (1.0 - total_econ_frac)))
 
-        mil_lost  = int(mil_before - target.military_strength)
-        pop_lost  = pop_before - target.population
+        mil_lost  = int(mil_before  - target.military_strength)
+        pop_lost  = pop_before  - target.population
         econ_lost = econ_before - target.economy
+
         if world is not None:
             world.total_military_casualties += mil_lost
-            world.total_civilian_casualties  += pop_lost
+            world.total_civilian_casualties += pop_lost
 
-        # Severity label: use city-level destruction when available, since a
-        # large nation can absorb a city strike nationally but the city itself
-        # is still obliterated.
-        severity_frac = city_pop_frac if city else tgt_mil_frac
-        if severity_frac < 0.15:   severity = "Limited"
-        elif severity_frac < 0.40: severity = "Significant"
-        elif severity_frac < 0.65: severity = "Severe"
-        elif severity_frac < 0.82: severity = "Devastating"
-        else:                      severity = "Apocalyptic"
+        if worst_sev_frac < 0.15:   severity = "Limited"
+        elif worst_sev_frac < 0.40: severity = "Significant"
+        elif worst_sev_frac < 0.65: severity = "Severe"
+        elif worst_sev_frac < 0.82: severity = "Devastating"
+        else:                       severity = "Apocalyptic"
 
-        city_note = f" — {city_name} obliterated" if city and city_pop_frac > 0.75 else ""
-        log(f"  [NUCLEAR] \u2622 {severity} strike ({used} warheads) on {target.name}{city_note} — "
+        log(f"  [NUCLEAR] \u2622 {severity} strike ({used} warheads{spread_note}) on {target.name} — "
             f"{mil_lost:,} troops, {pop_lost:,} civilians, \u20ac{econ_lost:,} economy lost.")
 
-        if city and world is not None:
-            lethal_km, damage_km = blast_radius_km(used)
-            for bystander in list(world.countries):
-                if bystander is launcher or bystander is target:
-                    continue
-                for bcity in bystander.cities:
-                    dist = haversine_km(city['lat'], city['lon'], bcity['lat'], bcity['lon'])
-                    if dist <= lethal_km:
-                        mortality = LETHAL_MORTALITY
-                    elif dist <= damage_km:
-                        mortality = DAMAGE_MORTALITY * (1.0 - (dist - lethal_km) / (damage_km - lethal_km))
-                    else:
-                        continue
-                    casualties = int(bcity['pop'] * 1_000_000 * mortality)
-                    if casualties < 1000:
-                        continue
-                    bystander.population = max(1, bystander.population - casualties)
-                    bystander.was_nuked = True
-                    world.total_civilian_casualties += casualties
-                    world.pending_collateral.append(
-                        (bystander.name, launcher.name, bcity['name'],
-                         casualties, bcity['lat'], bcity['lon'], used)
-                    )
-                    log(f"  [NUCLEAR] \u2622 Collateral: {bcity['name']} ({bystander.name}) struck by fallout — "
-                        f"{casualties:,} casualties ({dist:.0f} km from {city_name})")
-
     def trigger_opening_strike(self, world):
-        """Nuclear first strike fired the moment war is declared.
-
-        Called when a nuclear-armed aggressor picks a fight they couldn't win
-        conventionally — they open with warheads to soften the target before
-        troops cross the border.
-        """
+        """Nuclear first strike fired the moment war is declared."""
         if self.attacker.nukes <= 0:
             return
-        # Use up to 30 % of the arsenal, minimum 1
         used = min(self.attacker.nukes, max(1, self.attacker.nukes // 3))
         self.attacker.nukes -= used
         self._execute_nuclear_strike(self.attacker, self.defender, used, world)
@@ -807,7 +754,6 @@ class Conflict:
             if world is not None:
                 world.total_military_casualties += int(mil_loss)
                 world.total_civilian_casualties += pop_loss
-            # Reuse the nuclear fallout system for the map marker
             from cities import pick_target_city
             city = pick_target_city(target)
             self.pending_strikes.append((
@@ -820,17 +766,8 @@ class Conflict:
             break
 
     def _capture_territory(self):
-        """Transfer the contested territory from defender to attacker and open the next front.
+        territory = self.contested_territory
 
-        The garrison was already depleted to 0 during combat (and the defender's total
-        military was synced down by the same losses), so no separate military deduction
-        is needed here.  The new garrison is naturally the defender's remaining military
-        spread equally across their remaining territories.
-        """
-        territory = self.contested_territory  # the territory whose garrison just fell
-
-        # Guard: another simultaneous conflict may have already taken this territory.
-        # Re-sync to whatever the defender still holds and bail out.
         if territory not in self.defender.absorbed_names:
             if self.defender.absorbed_names:
                 self.contested_territory = self.defender.absorbed_names[-1]
@@ -842,7 +779,6 @@ class Conflict:
         n    = len(self.defender.absorbed_names)
         frac = 1.0 / n
 
-        # Transfer proportional resources
         econ_slice = int(self.defender.economy    * frac)
         pop_slice  = int(self.defender.population * frac)
         terr_slice = self.defender.territory      * frac
@@ -857,11 +793,9 @@ class Conflict:
         self.defender.territory  = max(0, self.defender.territory  - terr_slice)
         self.defender.absorbed_names.remove(territory)
 
-        # Attacker pays an occupation cost — garrisoning newly taken land is expensive
         cost = int(self.attacker.military_strength * TERRITORY_CAPTURE_ATTACKER_COST)
         self.attacker.military_strength = max(1, self.attacker.military_strength - cost)
 
-        # Accumulate war exhaustion per territory captured
         self.attacker.war_exhaustion = min(1.0, self.attacker.war_exhaustion + 0.05)
         self.defender.war_exhaustion = min(1.0, self.defender.war_exhaustion + 0.08)
 
@@ -870,14 +804,12 @@ class Conflict:
         )
         log(f"  >> {flavor}")
 
-        # Open the next front: new contested territory + garrison = equal share of remaining
         remaining = len(self.defender.absorbed_names)
         self.contested_territory  = self.defender.absorbed_names[-1]
         self._defender_garrison   = self.defender.military_strength / max(remaining, 1)
         self._attacker_start      = max(self.attacker.military_strength, 1)
         self._defender_start      = max(self._defender_garrison, 1)
 
-        # Last-stand notice when only the homeland remains
         if remaining == 1:
             flavor = random.choice(_TERRITORY_LAST_STAND_FLAVORS).format(
                 attacker=self.attacker.name,
@@ -890,12 +822,13 @@ class Conflict:
     def is_over(self):
         if self.peace_deal is not None:
             return True
+        # Minimum war duration: wars last at least 3 months regardless of military size
+        if self.duration_days < MIN_WAR_DURATION:
+            return False
         if self.attacker.military_strength <= 0:
             return True
-        # Garrison wiped with one territory left = final defeat
         if self._defender_garrison <= 0 and len(self.defender.absorbed_names) <= 1:
             return True
-        # Defender has no territories left (stripped by other simultaneous conflicts)
         if not self.defender.absorbed_names:
             return True
         return False
