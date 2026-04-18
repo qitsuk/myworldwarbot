@@ -8,6 +8,11 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v2.3 — Slow Nation Elimination, Reach Future Weapons Era
+- **`endgame_factor` fixed**: formula was `(nation_count - 2) / 48` which returned 1.0 (full annexation intensity) from day one with 193 nations; changed to `(150 - nation_count) / 140` so ef=0.0 at 150+ nations and ramps to 1.0 only at ~10 nations remaining — early wars now mostly end in white peace or ceasefire rather than annexation
+- **Ceasefire in peace offers**: `_check_peace_offer` now gives the winner a ceasefire option proportional to how early in the game it is; previously accepted peace offers always resulted in annexation
+- **White peace chance raised**: 0.08 → 0.12 — more early wars end in mutual withdrawal
+
 ### v2.2.3 — Steeper Distance Decay
 - **Exponential war-target decay**: replaced `1/(1+d/750)` with `exp(-d/1500)` — at 8000 km (Africa→Greenland) the old formula gave weight 0.086, new formula gives 0.005, a 17× reduction; neighbour ratio jumps from ~25:1 to ~430:1 so intercontinental first-strikes are genuinely rare rather than a near-guaranteed early event
 

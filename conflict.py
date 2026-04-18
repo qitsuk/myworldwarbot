@@ -269,7 +269,7 @@ NUCLEAR_COERCE_THRESHOLD  = 0.35
 NUCLEAR_COERCE_CHANCE     = 0.10
 WINNER_BACKS_DOWN_BASE    = 0.50
 
-WHITE_PEACE_CHANCE = 0.08  # chance per tick that any war ends in mutual withdrawal
+WHITE_PEACE_CHANCE = 0.12  # chance per tick that any war ends in mutual withdrawal
 
 CIVILIAN_CASUALTY_RATE    = 0.003
 
@@ -398,7 +398,8 @@ class Conflict:
             self._capture_territory()
 
     def _endgame_factor(self, nation_count):
-        return min(1.0, max(0.0, (nation_count - 2) / 48.0))
+        # 0.0 at 150+ nations (early game), ramps to 1.0 at ~10 nations remaining
+        return min(1.0, max(0.0, (150 - nation_count) / 140.0))
 
     def _check_white_peace(self, scale=1.0):
         if self.duration_days < MIN_WAR_DURATION:
@@ -468,9 +469,16 @@ class Conflict:
         else:
             flavor = random.choice(_PEACE_SURRENDER_FLAVORS).format(loser=losing.name, winner=winning.name)
             log(f"  [PEACE] {flavor}")
-            self.peace_deal   = 'annexation'
-            self._peace_winner = winning
-            self._peace_loser  = losing
+            if random.random() < WINNER_CEASEFIRE_CHANCE * (1.0 - self._endgame_factor(nation_count)):
+                flavor = random.choice(_WINNER_ACCEPTS_CEASEFIRE_FLAVORS).format(winner=winning.name, loser=losing.name)
+                log(f"  [PEACE] {flavor}")
+                self.peace_deal    = 'ceasefire'
+                self._peace_winner = winning
+                self._peace_loser  = losing
+            else:
+                self.peace_deal   = 'annexation'
+                self._peace_winner = winning
+                self._peace_loser  = losing
 
     def _check_loser_surrender(self, scale=1.0, nation_count=999):
         if self.duration_days < MIN_WAR_DURATION:
