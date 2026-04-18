@@ -1194,6 +1194,11 @@ socket.on('weapon_strike', (data) => {
   }
 });
 
+socket.on('version', (data) => {
+  const el = document.getElementById('version-badge');
+  if (el) el.textContent = 'v' + data.version;
+});
+
 socket.on('gameover', (data) => {
   const banner = document.getElementById('gameover-banner');
   document.getElementById('go-winner').textContent = data.winner;

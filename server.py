@@ -192,11 +192,14 @@ def get_winners():
     return jsonify(winners)
 
 
+VERSION = '2.0'
+
 # ── Socket ────────────────────────────────────────────────────────────────────
 
 @socketio.on('connect')
 def on_connect():
     global _sim_started
+    emit('version', {'version': VERSION})
     with _state_lock:
         if _last_state:
             emit('state', _last_state)
