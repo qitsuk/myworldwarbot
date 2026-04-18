@@ -1,6 +1,7 @@
 class Alliance:
-    def __init__(self, members):
+    def __init__(self, members, formed_day=0):
         self.members = list(members)
+        self.formed_day = formed_day  # simulation day when the alliance was created
 
     @property
     def name(self):

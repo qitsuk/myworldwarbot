@@ -705,7 +705,7 @@ def form_alliances(world):
                     country=country.name, alliance=chosen.name)
             log(f"  [ALLIANCE] {flavor}")
         else:
-            world.alliances.append(Alliance([country, chosen]))
+            world.alliances.append(Alliance([country, chosen], formed_day=world.current_day))
             if hegemon:
                 flavor = random.choice(_COALITION_FORMS_FLAVORS).format(
                     hegemon=hegemon.name, a=country.name, b=chosen.name)
@@ -749,13 +749,34 @@ def check_coalition_war(world):
             log(f"  >> {entry_flavor}")
         break
 
+ALLIANCE_MIN_MONTHS  = 18   # base minimum duration before an alliance can break
+ALLIANCE_MIN_JITTER  = 12   # ± this many months of randomness (so 18±6 → 12–24 months)
+
 def decay_alliances(world):
     """Each month, members may defect from their alliance."""
+    at_war_set = {c.attacker for c in world.active_conflicts} | {c.defender for c in world.active_conflicts}
+
     for alliance in list(world.alliances):
         # Prune members no longer in the world
         for member in list(alliance.members):
             if member not in world.countries:
                 alliance.remove_member(member)
+
+        # Enforce minimum alliance duration with per-alliance jitter
+        if not hasattr(alliance, '_min_duration'):
+            jitter = random.randint(-ALLIANCE_MIN_JITTER, ALLIANCE_MIN_JITTER)
+            alliance._min_duration = ALLIANCE_MIN_MONTHS + jitter
+        age_months = world.current_day - getattr(alliance, 'formed_day', 0)
+        if age_months < alliance._min_duration:
+            if len(alliance.members) < 2 and alliance in world.alliances:
+                world.alliances.remove(alliance)
+            continue
+
+        # Don't let any member defect while any member is at war
+        if any(member in at_war_set for member in alliance.members):
+            if len(alliance.members) < 2 and alliance in world.alliances:
+                world.alliances.remove(alliance)
+            continue
 
         for member in list(alliance.members):
             if random.random() > ALLIANCE_DECAY_CHANCE:

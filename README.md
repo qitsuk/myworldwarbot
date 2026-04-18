@@ -8,6 +8,11 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v2.1 — Alliance Stability & Version Display
+- **Version badge**: simulation version now shown bottom-right of the UI, sourced from `VERSION` in `server.py`
+- **Alliance minimum duration**: alliances cannot be broken for 18 ± 6 months after forming (12–24 months of randomised protection)
+- **War locks alliances**: alliances cannot dissolve while any member is actively at war
+
 ### v2.0 — Special Weapons Visualised & Preferred Over Nukes
 - **Special weapons now preferred over nukes**: kinetic impactors, orbital lasers, and tectonic weapons are checked and fired *before* nuclear escalation each combat tick — nations with these weapons will use them proactively rather than waiting for nuclear desperation conditions
 - **Both sides can use special weapons**: previously only the attacker could fire kinetic/laser/tectonic; now defending nations can retaliate with their own special arsenals
