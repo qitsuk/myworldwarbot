@@ -8,6 +8,10 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v2.2.1 — Performance Fix
+- **Early-exit war check restored**: the `_war_count` check now runs before `_war_target_weights`, not after — v2.2 accidentally moved it after the expensive O(N²) haversine calculation, so all ~193 nations were paying that cost every month even when already at war
+- **Centroid cache**: `_country_centroid` results are now cached per simulate_day tick, eliminating redundant city-sum calculations across the N² war-target loop
+
 ### v2.2 — War Cap & Tooltip Fix
 - **Max simultaneous wars per nation capped at 2**: no nation can be dragged into more than 2 concurrent conflicts (as attacker or defender); alliance pile-ons and coalition wars respect this limit — if the target is already at cap, further allies hold back
 - **Tooltip "At War" now reliably shows opponent names**: tooltip war status now queries `worldState.conflicts` directly instead of gating on a stale monthly flag, so opponents show up immediately when a war starts

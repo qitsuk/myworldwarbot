@@ -214,18 +214,28 @@ def _country_centroid(country):
     lon = sum(c['lon'] * c['pop'] for c in cities) / total_pop
     return lat, lon
 
+# Per-tick centroid cache — recomputed once per simulate_day call, not per pair
+_centroid_cache: dict = {}
+
+def _get_centroid(country):
+    cached = _centroid_cache.get(id(country))
+    if cached is None:
+        cached = _country_centroid(country)
+        _centroid_cache[id(country)] = cached
+    return cached
+
 def _war_target_weights(attacker, targets):
     """Distance-decay weights: closer nations are far more likely targets. Neighbors get a 3× bonus."""
     neighbor_names = set(attacker.neighbors)
-    origin = _country_centroid(attacker)
+    origin = _get_centroid(attacker)
     weights = []
     for c in targets:
-        dest = _country_centroid(c)
+        dest = _get_centroid(c)
         if origin and dest:
             dist_km = haversine_km(origin[0], origin[1], dest[0], dest[1])
             w = 1.0 / (1.0 + dist_km / 750.0)
         else:
-            w = 0.05  # no city data → treated as effectively unreachable
+            w = 0.05
         if c.name in neighbor_names:
             w *= 3.0
         weights.append(w)
@@ -1153,6 +1163,7 @@ def get_war_state(world):
 
 
 def simulate_day(world, events, skip_war=False):
+    _centroid_cache.clear()
     apply_events(world, events)
 
     # War exhaustion decays over time — nations gradually recover their appetite for conflict
@@ -1234,6 +1245,10 @@ def simulate_day(world, events, skip_war=False):
         _run_war_loop(world, scale=1.0)
 
     for country in list(world.countries):
+        # Cheap early-exit checks before the expensive weight calculation
+        if _war_count(country, world) >= MAX_SIMULTANEOUS_WARS:
+            continue
+
         targets = get_targets(country, world)
         if not targets:
             continue
@@ -1241,8 +1256,6 @@ def simulate_day(world, events, skip_war=False):
         weights = _war_target_weights(country, targets)
         target = random.choices(targets, weights=weights, k=1)[0]
 
-        if _war_count(country, world) >= MAX_SIMULTANEOUS_WARS:
-            continue
         if _war_count(target, world) >= MAX_SIMULTANEOUS_WARS:
             continue
 
