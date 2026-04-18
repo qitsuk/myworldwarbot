@@ -56,8 +56,11 @@ def advance_research(country, current_year, world_alliances):
                 if ally.research[key] >= 1.0:
                     alliance_has_researched[key] = True
 
-    for key in WEAPON_KEYS:
+    for i, key in enumerate(WEAPON_KEYS):
         if country.research[key] >= 1.0:
+            continue
+        # Must have fully researched the previous weapon first
+        if i > 0 and country.research[WEAPON_KEYS[i - 1]] < 1.0:
             continue
         spec = WEAPONS[key]
         year_gate = spec['year_gate']

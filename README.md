@@ -8,6 +8,11 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.8 — War Front Fix, Longer Wars & Sequential Weapon Research
+- **Front-line dot fix**: dot now moves based on proportional losses from each side's starting strength rather than the raw strength ratio — it starts centred and drifts toward the losing side as the war unfolds, giving a clear visual of momentum over time
+- **Minimum war duration raised**: 3 months → 6 months — most wars now run at least half a year before any peace deal or collapse can trigger
+- **Sequential weapon research**: weapons must now be unlocked in order — Neutron Bombs first, then Orbital Kinetic Impactors, then Orbital Laser Platform, then Tectonic Weapons; all four can no longer research in parallel from the start
+
 ### v1.7 — Anti-Snowball Tuning
 - **Hegemon threshold lowered**: `HEGEMON_RATIO` 2.5→1.6 — coalitions form much earlier, before the leading nation becomes truly unstoppable
 - **Coalition war more aggressive**: trigger chance raised 6%→15%/month once a coalition has ≥30% of the hegemon's strength

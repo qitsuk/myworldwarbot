@@ -208,7 +208,7 @@ GUERRILLA_THRESHOLD  = 0.20
 GUERRILLA_RATE       = 0.04
 GUERRILLA_EFFICIENCY = 0.22
 
-MIN_WAR_DURATION = 3.0  # wars last at least 3 months regardless of military size
+MIN_WAR_DURATION = 6.0  # wars last at least 6 months regardless of military size
 
 NUKE_SPREAD_THRESHOLD = 5  # fire this many or more warheads → spread across multiple cities
 

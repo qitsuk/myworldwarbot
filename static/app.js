@@ -386,18 +386,13 @@ function updateConflictArcs() {
     const { path, ctrl } = buildArc(a, d);
 
     // Front position: t=0 → attacker's side, t=1 → defender's side.
-    // Momentum model: dot reflects the current strength ratio, weighted by how long
-    // the battle has been going (c.day).  A minimum effective day of 2 ensures even
-    // brand-new conflicts show slight displacement based on who's currently stronger,
-    // rather than always starting dead-center regardless of balance.
-    const rawRatio = (c.attacker_str || 0) / Math.max((c.attacker_str || 0) + (c.defender_str || 0), 1);
-    const advantage = rawRatio - 0.5;   // −0.5 … +0.5; positive = attacker stronger
-    const effectiveDay = Math.max(c.day || 0, 2);
-    const t = 0.5 + Math.sign(advantage) * Math.min(Math.abs(advantage) * effectiveDay * 0.55, 0.42);
-    // Clamp display position away from endpoints so the dot is never hidden behind
-    // an endpoint badge (which renders on top in SVG order).
-    const tDisplay = Math.min(0.88, Math.max(0.12, t));
-    const front = bezierAt(a, ctrl, d, tDisplay);
+    // Driven by proportional losses from each side's starting strength — the dot
+    // moves naturally as the war unfolds rather than snapping on day 1.
+    const attackerLoss = 1 - (c.attacker_str || 0) / Math.max(c.attacker_start || 1, 1);
+    const defenderLoss = 1 - (c.defender_str || 0) / Math.max(c.defender_start || 1, 1);
+    // Positive → defender losing more → attacker advancing → t > 0.5
+    const t = Math.min(0.88, Math.max(0.12, 0.5 + (defenderLoss - attackerLoss) * 0.45));
+    const front = bezierAt(a, ctrl, d, t);
     const status = t > 0.58 ? 'winning' : t < 0.42 ? 'losing' : 'even';
 
     // Country colors for endpoint badges — territoryInfo has 'c' (color) keyed by original name
