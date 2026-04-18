@@ -8,6 +8,9 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.8.3 — Nuclear Deterrence Fix
+- **Nukes now deter annexation**: when a losing nation fires nuclear weapons in combat, the attacker now has an 82% chance of halting their advance and accepting a white peace rather than pressing on to annex; in the remaining 18% of cases the attacker continues regardless; endgame (last 2 nations) is exempt — the final war always plays out to conclusion
+
 ### v1.8.2 — War Targeting Geography Fix
 - **Steeper distance decay**: war target weight formula tightened from 1500km → 750km half-distance, making regional conflicts much more likely and cross-ocean wars rare; Greenland now ranks ~#71–120 for African nations instead of being competitively weighted
 - **Fallback weight lowered**: the 22 nations with no city coordinate data (micro-states, remote islands) now fall back to 0.05 instead of 0.5, so they are no longer accidentally treated as close to everyone

@@ -156,6 +156,24 @@ _NUCLEAR_THREAT_ACCEPTED_FLAVORS = [
     "Mutually assured destruction speaks louder than any army: {winner} backs down.",
 ]
 
+_NUCLEAR_STRIKE_DETERS_FLAVORS = [
+    "Reeling from the nuclear strike, {attacker} halts its advance and agrees to a ceasefire.",
+    "The mushroom clouds change everything — {attacker} backs down and accepts peace with {defender}.",
+    "No conquest is worth a nuclear war. {attacker} withdraws and the fighting stops.",
+    "Struck by {defender}'s warheads, {attacker} recalculates — the advance is over.",
+    "{attacker}'s generals urge retreat after the nuclear exchange. A ceasefire is accepted.",
+    "The nuclear strike forces {attacker}'s hand — it accepts peace rather than risk annihilation.",
+    "After the strike on {attacker}, the political will to continue the war collapses. Peace is declared.",
+    "{attacker} has seen enough. The nuclear exchange ends the war on {defender}'s terms.",
+]
+
+_NUCLEAR_STRIKE_IGNORED_FLAVORS = [
+    "{attacker} presses on despite the nuclear strike — the advance will not stop.",
+    "The nuclear blow lands, but {attacker} refuses to yield. The war continues.",
+    "Shocked but undeterred, {attacker} continues its campaign against {defender}.",
+    "{attacker}'s resolve holds even after the strike. No ceasefire, no retreat.",
+]
+
 _NUCLEAR_THREAT_REJECTED_FLAVORS = [
     "{winner} calls {loser}'s bluff and presses the attack.",
     "Undeterred by the nuclear threat, {winner} refuses to stand down.",
@@ -182,6 +200,7 @@ TERRITORY_CAPTURE_ATTACKER_COST = 0.12
 NUCLEAR_TRIGGER_THRESHOLD = 0.25
 NUCLEAR_TRIGGER_CHANCE    = 0.08
 NUCLEAR_PANIC_CHANCE      = 0.45
+NUCLEAR_STRIKE_DETERS     = 0.82  # chance attacker backs off after being struck by defender's nukes
 
 PEACE_THRESHOLD           = 0.50   # loser below 50% of start strength → winner may offer peace
 PEACE_OFFER_CHANCE        = 0.25   # 25% per tick the winning side proposes terms
@@ -757,6 +776,21 @@ class Conflict:
             used = min(launcher.nukes, max(1, launcher.nukes // 5))
             launcher.nukes -= used
             self._execute_nuclear_strike(launcher, target, used, world)
+
+            # Deterrence: if the losing/defending side struck the attacker, the attacker
+            # may now back down rather than press on to annexation.
+            if not self.peace_deal and not endgame:
+                if random.random() < NUCLEAR_STRIKE_DETERS:
+                    flavor = random.choice(_NUCLEAR_STRIKE_DETERS_FLAVORS).format(
+                        attacker=target.name, defender=launcher.name)
+                    log(f"  [PEACE] {flavor}")
+                    self.peace_deal    = 'white_peace'
+                    self._peace_winner = launcher
+                    self._peace_loser  = target
+                else:
+                    flavor = random.choice(_NUCLEAR_STRIKE_IGNORED_FLAVORS).format(
+                        attacker=target.name, defender=launcher.name)
+                    log(f"  [PEACE] {flavor}")
             break
 
     def _check_neutron_escalation(self, world=None, scale=1.0):
