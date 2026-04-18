@@ -8,6 +8,10 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v2.2 — War Cap & Tooltip Fix
+- **Max simultaneous wars per nation capped at 2**: no nation can be dragged into more than 2 concurrent conflicts (as attacker or defender); alliance pile-ons and coalition wars respect this limit — if the target is already at cap, further allies hold back
+- **Tooltip "At War" now reliably shows opponent names**: tooltip war status now queries `worldState.conflicts` directly instead of gating on a stale monthly flag, so opponents show up immediately when a war starts
+
 ### v2.1 — Alliance Stability & Version Display
 - **Version badge**: simulation version now shown bottom-right of the UI, sourced from `VERSION` in `server.py`
 - **Alliance minimum duration**: alliances cannot be broken for 18 ± 6 months after forming (12–24 months of randomised protection)

@@ -737,12 +737,14 @@ def check_coalition_war(world):
             hegemon=hegemon.name, coalition=alliance.name)
         log(f"  >> {flavor}")
         world.active_conflicts.append(Conflict(lead, hegemon))
-        # All other coalition members also join the fight against the hegemon
+        # All other coalition members also join — but respect the per-nation war cap
         for member in alliance.get_allies(lead):
             if member not in world.countries:
                 continue
-            if any(c.attacker == member or c.defender == member for c in world.active_conflicts):
+            if _war_count(member, world) >= MAX_SIMULTANEOUS_WARS:
                 continue
+            if _war_count(hegemon, world) >= MAX_SIMULTANEOUS_WARS:
+                break  # hegemon already at cap — no more pile-on
             world.active_conflicts.append(Conflict(member, hegemon))
             entry_flavor = random.choice(_WAR_ALLIANCE_ENTRY_FLAVORS).format(
                 ally=member.name, defender=lead.name, attacker=hegemon.name)
@@ -751,6 +753,8 @@ def check_coalition_war(world):
 
 ALLIANCE_MIN_MONTHS  = 18   # base minimum duration before an alliance can break
 ALLIANCE_MIN_JITTER  = 12   # ± this many months of randomness (so 18±6 → 12–24 months)
+
+MAX_SIMULTANEOUS_WARS = 2   # max wars any single nation may be in at once (as attacker or defender)
 
 def decay_alliances(world):
     """Each month, members may defect from their alliance."""
@@ -822,6 +826,10 @@ def check_final_war(world):
             flavor = random.choice(_WAR_BETRAYAL_FLAVORS).format(attacker=c.name, defender=remaining[0].name)
             log(f"  >> {flavor}")
 
+def _war_count(nation, world):
+    """Number of active conflicts this nation is currently part of."""
+    return sum(1 for c in world.active_conflicts if c.attacker == nation or c.defender == nation)
+
 def trigger_alliance_support(attacker, defender, world):
     alliance = get_alliance(defender, world)
     if not alliance:
@@ -829,12 +837,10 @@ def trigger_alliance_support(attacker, defender, world):
     for ally in alliance.get_allies(defender):
         if ally not in world.countries:
             continue
-        already_fighting = any(
-            c.attacker == ally or c.defender == ally
-            for c in world.active_conflicts
-        )
-        if already_fighting:
+        if _war_count(ally, world) >= MAX_SIMULTANEOUS_WARS:
             continue
+        if _war_count(attacker, world) >= MAX_SIMULTANEOUS_WARS:
+            break  # attacker already swamped — stop piling on
         conflict = Conflict(ally, attacker)
         world.active_conflicts.append(conflict)
         flavor = random.choice(_WAR_ALLIANCE_ENTRY_FLAVORS).format(ally=ally.name, defender=defender.name, attacker=attacker.name)
@@ -1235,12 +1241,9 @@ def simulate_day(world, events, skip_war=False):
         weights = _war_target_weights(country, targets)
         target = random.choices(targets, weights=weights, k=1)[0]
 
-        already_at_war = any(
-            (c.attacker == country or c.defender == country or
-             c.attacker == target or c.defender == target)
-            for c in world.active_conflicts
-        )
-        if already_at_war:
+        if _war_count(country, world) >= MAX_SIMULTANEOUS_WARS:
+            continue
+        if _war_count(target, world) >= MAX_SIMULTANEOUS_WARS:
             continue
 
         # Peace treaty: cannot re-declare war while treaty is in effect
