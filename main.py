@@ -58,6 +58,7 @@ URANIUM_PER_NUKE     = 6.0   # enrichment units needed to build one warhead (was
 URANIUM_RATE_BASE    = 0.20  # base units accumulated per month (was 0.04) — first warhead ~30 months after enrichment starts
 # enrichment rate scales with tech: base × (tech / NUKE_TECH_THRESHOLD) up to ×2
 URANIUM_RATE_MAX_MULT = 2.0
+ENRICH_STAGGER_MONTHS = 48   # nations start enriching at a random offset spread over this many months
 
 START_YEAR = 2030   # always begin at the first special-weapons age gate
 START_DATE = date(START_YEAR, 1, 1)
@@ -1292,9 +1293,13 @@ def simulate_day(world, events, skip_war=False):
             # Accumulate enriched uranium; rate scales with tech level
             rate_mult = min(URANIUM_RATE_MAX_MULT, country.tech_level / NUKE_TECH_THRESHOLD)
             prev_uranium = country.uranium
-            country.uranium += URANIUM_RATE_BASE * rate_mult
-            # Log when enrichment first starts (only for non-nuclear nations, transition from 0)
+            # First time eligible: assign a random negative offset so nations stagger their start
             if prev_uranium == 0.0 and country.nukes == 0:
+                country.uranium = -random.uniform(0, ENRICH_STAGGER_MONTHS) * URANIUM_RATE_BASE * rate_mult
+                prev_uranium = country.uranium
+            country.uranium += URANIUM_RATE_BASE * rate_mult
+            # Log when enrichment crosses zero — each nation starts at a different time
+            if prev_uranium < 0.0 and country.uranium >= 0.0 and country.nukes == 0:
                 flavor = random.choice(_NUCLEAR_ENRICHMENT_FLAVORS).format(country=country.name)
                 log(f"  [NUCLEAR] \u2622 {flavor}")
             # Convert accumulated uranium into warheads

@@ -8,6 +8,9 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.8.1 — Staggered Nuclear Enrichment
+- **Enrichment start staggered**: nations no longer all begin enriching uranium on the same tick; each eligible nation now gets a random delay spread over up to 48 months, so `[NUCLEAR]` enrichment messages are distributed naturally across years rather than spamming the log simultaneously
+
 ### v1.8 — War Front Fix, Longer Wars & Sequential Weapon Research
 - **Front-line dot fix**: dot now moves based on proportional losses from each side's starting strength rather than the raw strength ratio — it starts centred and drifts toward the losing side as the war unfolds, giving a clear visual of momentum over time
 - **Minimum war duration raised**: 3 months → 6 months — most wars now run at least half a year before any peace deal or collapse can trigger
