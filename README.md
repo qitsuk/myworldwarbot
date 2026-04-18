@@ -8,6 +8,9 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v2.2.3 — Steeper Distance Decay
+- **Exponential war-target decay**: replaced `1/(1+d/750)` with `exp(-d/1500)` — at 8000 km (Africa→Greenland) the old formula gave weight 0.086, new formula gives 0.005, a 17× reduction; neighbour ratio jumps from ~25:1 to ~430:1 so intercontinental first-strikes are genuinely rare rather than a near-guaranteed early event
+
 ### v2.2.2 — No Unallied Pile-ons
 - **Single attacker per defender**: unallied nations can no longer independently declare war on a country that is already someone's defender; coalition wars (allied nations vs a hegemon) are still handled separately and unaffected
 

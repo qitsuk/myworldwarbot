@@ -192,7 +192,7 @@ def get_winners():
     return jsonify(winners)
 
 
-VERSION = '2.2.2'
+VERSION = '2.2.3'
 
 # ── Socket ────────────────────────────────────────────────────────────────────
 
