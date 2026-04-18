@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from data_loader import load_countries, load_events
 from world import World
 from conflict import Conflict, PYRRHIC_RATIO, _PEACE_PYRRHIC_FLAVORS
-from cities import fallout_duration_months
+from cities import fallout_duration_months, haversine_km
 from alliance import Alliance
 from logger import log
 from data_loader import DATA_YEAR
@@ -142,6 +142,14 @@ _CEASEFIRE_DEAL_FLAVORS = [
 
 CEASEFIRE_PROTECTION_MONTHS = 30  # neither side may re-declare war for this many months
 
+def white_peace_deal(a, b, world):
+    """Mutual withdrawal: no transfers, both nations survive intact."""
+    expiry = world.current_day + CEASEFIRE_PROTECTION_MONTHS
+    a.peace_treaties[b.name] = expiry
+    b.peace_treaties[a.name] = expiry
+    a.war_exhaustion = min(1.0, a.war_exhaustion + 0.45)
+    b.war_exhaustion = min(1.0, b.war_exhaustion + 0.45)
+
 def ceasefire_deal(winner, loser, world):
     """Partial peace: winner takes a share of loser's resources; both nations survive."""
     CEASEFIRE_ECON_SHARE = 0.22    # loser cedes ~22% of its economy
@@ -194,6 +202,33 @@ def blend_country_names(a, b):
 
 def get_targets(country, world):
     return [c for c in world.countries if c != country]
+
+def _country_centroid(country):
+    """Population-weighted mean lat/lon from a country's cities. Returns None if no cities."""
+    cities = getattr(country, 'cities', [])
+    if not cities:
+        return None
+    total_pop = sum(c['pop'] for c in cities) or 1
+    lat = sum(c['lat'] * c['pop'] for c in cities) / total_pop
+    lon = sum(c['lon'] * c['pop'] for c in cities) / total_pop
+    return lat, lon
+
+def _war_target_weights(attacker, targets):
+    """Distance-decay weights: closer nations are far more likely targets. Neighbors get a 3× bonus."""
+    neighbor_names = set(attacker.neighbors)
+    origin = _country_centroid(attacker)
+    weights = []
+    for c in targets:
+        dest = _country_centroid(c)
+        if origin and dest:
+            dist_km = haversine_km(origin[0], origin[1], dest[0], dest[1])
+            w = 1.0 / (1.0 + dist_km / 1500.0)
+        else:
+            w = 0.5
+        if c.name in neighbor_names:
+            w *= 3.0
+        weights.append(w)
+    return weights
 
 def get_alliance(country, world):
     for alliance in world.alliances:
@@ -994,6 +1029,9 @@ def _run_war_loop(world, scale=1.0):
             elif conflict.peace_deal == 'ceasefire':
                 ceasefire_deal(winner, loser, world)
 
+            elif conflict.peace_deal == 'white_peace':
+                white_peace_deal(winner, loser, world)
+
             else:
                 if conflict.pyrrhic:
                     loser.economy    = int(loser.economy    * PYRRHIC_RATIO)
@@ -1168,8 +1206,7 @@ def simulate_day(world, events, skip_war=False):
         if not targets:
             continue
 
-        neighbor_names = set(country.neighbors)
-        weights = [4 if c.name in neighbor_names else 1 for c in targets]
+        weights = _war_target_weights(country, targets)
         target = random.choices(targets, weights=weights, k=1)[0]
 
         already_at_war = any(

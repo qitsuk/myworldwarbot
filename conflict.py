@@ -164,6 +164,19 @@ _NUCLEAR_THREAT_REJECTED_FLAVORS = [
     "{winner} dares {loser} to pull the trigger. The advance continues.",
 ]
 
+_WHITE_PEACE_FLAVORS = [
+    "{a} and {b} agree to lay down their arms. Both nations withdraw and the war ends with no concessions.",
+    "After months of grinding stalemate, {a} and {b} sign a mutual ceasefire and disengage.",
+    "Neither side can claim victory. {a} and {b} accept a white peace and return to their borders.",
+    "Exhausted and deadlocked, {a} and {b} agree to stop fighting. No territory changes hands.",
+    "The war between {a} and {b} ends where it began — with both nations intact and no winner declared.",
+    "Diplomats from {a} and {b} broker a clean peace: full withdrawal, no reparations, no annexations.",
+    "A rare outcome: {a} and {b} agree to a mutual ceasefire. Both go home.",
+    "The stalemate speaks for itself. {a} and {b} formalise the peace and disengage.",
+    "With neither side gaining ground, {a} and {b} quietly end the war on equal terms.",
+    "White flags on both sides — {a} and {b} recognise the futility and agree to peace.",
+]
+
 TERRITORY_CAPTURE_ATTACKER_COST = 0.12
 
 NUCLEAR_TRIGGER_THRESHOLD = 0.25
@@ -186,6 +199,8 @@ WINNER_CEASEFIRE_CHANCE   = 0.60   # raised from 0.50
 NUCLEAR_COERCE_THRESHOLD  = 0.35
 NUCLEAR_COERCE_CHANCE     = 0.10
 WINNER_BACKS_DOWN_BASE    = 0.50
+
+WHITE_PEACE_CHANCE = 0.08  # chance per tick that any war ends in mutual withdrawal
 
 CIVILIAN_CASUALTY_RATE    = 0.003
 
@@ -332,6 +347,8 @@ class Conflict:
         self._check_nuclear_escalation(nation_count, endgame_threshold, world, scale)
         self._check_neutron_escalation(world, scale)
         if not self.peace_deal:
+            self._check_white_peace(scale)
+        if not self.peace_deal:
             self._check_peace_offer(scale, nation_count)
         if not self.peace_deal:
             self._check_loser_surrender(scale, nation_count)
@@ -346,6 +363,22 @@ class Conflict:
 
     def _endgame_factor(self, nation_count):
         return min(1.0, max(0.0, (nation_count - 2) / 48.0))
+
+    def _check_white_peace(self, scale=1.0):
+        if self.duration_days < MIN_WAR_DURATION:
+            return
+        if self.attacker.military_strength <= 0 or self._defender_garrison <= 0:
+            return
+        if random.random() > WHITE_PEACE_CHANCE * scale:
+            return
+
+        flavor = random.choice(_WHITE_PEACE_FLAVORS).format(
+            a=self.attacker.name, b=self.defender.name
+        )
+        log(f"  [PEACE] {flavor}")
+        self.peace_deal    = 'white_peace'
+        self._peace_winner = self.attacker
+        self._peace_loser  = self.defender
 
     def _check_peace_offer(self, scale=1.0, nation_count=999):
         # No negotiations in the first 3 months — wars must run their course

@@ -8,6 +8,10 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.6 — White Peace & Proximity-Based War Targeting
+- **White peace**: any war can now end with a mutual ceasefire and full withdrawal — no territory, resources, or concessions change hands; both sides get peace treaty protection and war exhaustion; previously only possible between evenly matched nations
+- **Proximity-based war targeting**: nations now strongly prefer attacking nearby countries; target weight decays continuously with distance (`1 / (1 + dist_km / 1500)`) so a border neighbour is ~5× more likely to be attacked than a nation 5 000 km away; direct neighbours retain an additional 3× bonus on top
+
 ### v1.5 — Streamlined Weapons, War Pacing & Nuclear Realism (Next war will be this one)
 - **Nuclear de-escalation removed**: no more forced global disarmament treaty on first nuclear strike — nations keep their arsenals and the simulation runs its full course
 - **Special weapons cut from 11 → 4**: removed Cyberweapons, Drone Swarms, Hypersonic Missiles, EMP Strike, AI Combat Systems, Directed Energy Defence, and Nanoweapons; kept only **Neutron Bombs**, **Orbital Kinetic Impactors**, **Orbital Laser Platform**, and **Tectonic Weapons**
