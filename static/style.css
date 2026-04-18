@@ -202,8 +202,8 @@ body {
 
 /* ── SIDEBAR ── */
 #sidebar {
-  width: 360px;
-  min-width: 360px;
+  width: 400px;
+  min-width: 400px;
   background: #0d1117;
   border-left: 1px solid #30363d;
   display: flex;
@@ -387,8 +387,8 @@ body {
 #log {
   flex: 1;
   overflow-y: auto;
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.7;
   padding-bottom: 12px;
 }
 
@@ -396,7 +396,7 @@ body {
 #log::-webkit-scrollbar-track  { background: transparent; }
 #log::-webkit-scrollbar-thumb  { background: #30363d; border-radius: 2px; }
 
-.log-entry { padding: 1px 0; word-break: break-word; cursor: pointer; }
+.log-entry { padding: 2px 0; word-break: break-word; cursor: pointer; }
 .log-war      { color: #f85149; }
 .log-alliance { color: #58a6ff; }
 .log-event    { color: #d29922; }
