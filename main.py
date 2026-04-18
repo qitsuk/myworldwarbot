@@ -1256,6 +1256,9 @@ def simulate_day(world, events, skip_war=False):
         weights = _war_target_weights(country, targets)
         target = random.choices(targets, weights=weights, k=1)[0]
 
+        # Don't pile on: if the target is already someone else's defender, skip
+        if any(c.defender == target for c in world.active_conflicts):
+            continue
         if _war_count(target, world) >= MAX_SIMULTANEOUS_WARS:
             continue
 

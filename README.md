@@ -8,6 +8,9 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v2.2.2 — No Unallied Pile-ons
+- **Single attacker per defender**: unallied nations can no longer independently declare war on a country that is already someone's defender; coalition wars (allied nations vs a hegemon) are still handled separately and unaffected
+
 ### v2.2.1 — Performance Fix
 - **Early-exit war check restored**: the `_war_count` check now runs before `_war_target_weights`, not after — v2.2 accidentally moved it after the expensive O(N²) haversine calculation, so all ~193 nations were paying that cost every month even when already at war
 - **Centroid cache**: `_country_centroid` results are now cached per simulate_day tick, eliminating redundant city-sum calculations across the N² war-target loop
