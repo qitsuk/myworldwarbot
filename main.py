@@ -45,7 +45,7 @@ PEACE_MONTHS      = 24    # no wars for the first 2 years
 RAMP_MONTHS       = 18    # risk ramps 0 → BASE_RISK over the following 1.5 years
 BASE_RISK         = 0.25
 RISK_ESCALATION   = 0.0004  # risk grows by this much per month after the ramp ends
-MAX_RISK          = 0.70    # hard ceiling
+MAX_RISK          = 0.50    # hard ceiling
 STALEMATE_MONTHS  = 36    # if no new conflict starts in this many months, force one
 
 # Nuclear proliferation thresholds
@@ -1235,9 +1235,9 @@ def simulate_day(world, events, skip_war=False):
         # Nuclear deterrence: defender's nukes reduce attacker's willingness
         nuclear_deterrence = 1.0 / (1.0 + 0.5 * (target.nukes / 100) ** 0.5) if target.nukes > 0 else 1.0
 
-        # Nuclear aggression: attacker's nukes embolden them against stronger foes.
-        # Each tier of warheads multiplies the attack chance (capped at 5×).
-        nuke_aggression = min(5.0, 1.0 + (country.nukes / 10) ** 0.5) if country.nukes > 0 else 1.0
+        # Nuclear aggression: nukes embolden nations against stronger foes.
+        # Scaled per 100 warheads so superpowers don't get an outsized bonus; capped at 2×.
+        nuke_aggression = min(2.0, 1.0 + (country.nukes / 100) ** 0.5) if country.nukes > 0 else 1.0
 
         # Underdog floor: even the weakest nation occasionally picks a fight.
         underdog_floor = base_probability * world.risk * 0.08 * (1.0 - country.war_exhaustion)
@@ -1273,9 +1273,10 @@ def simulate_day(world, events, skip_war=False):
                 flavor = random.choice(_WAR_DECLARATION_FLAVORS).format(attacker=country.name, defender=target.name)
             log(f"  >> {flavor}")
 
-            # Nuclear first strike: underdogs open with a high chance; any nuclear
-            # attacker has a lower baseline chance regardless of strength ratio.
-            first_strike_chance = 0.80 if nuclear_underdog else (0.25 if country.nukes > 0 else 0.0)
+            # Nuclear first strike: underdogs always have a high chance. Small arsenals
+            # (<500 warheads) get a baseline opportunistic chance. Superpowers (US/Russia tier)
+            # only open with nukes when genuinely outgunned — they wouldn't strike casually.
+            first_strike_chance = 0.80 if nuclear_underdog else (0.25 if 0 < country.nukes < 500 else 0.0)
             if first_strike_chance > 0 and random.random() < first_strike_chance:
                 first_strike_flavor = random.choice(_NUCLEAR_FIRST_STRIKE_FLAVORS).format(
                     attacker=country.name, defender=target.name)

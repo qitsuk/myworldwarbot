@@ -8,6 +8,11 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.9 — Superpower Nuclear Restraint & War Frequency Tuning
+- **Nuclear aggression rescaled**: formula changed from `1 + (nukes/10)^0.5` capped at 5× to `1 + (nukes/100)^0.5` capped at 2× — US/Russia were hitting the 5× ceiling with any arsenal above 164 warheads, making them hyper-aggressive; now superpowers get ~1.7× and small nuclear states ~1.1–1.3×
+- **Superpower first strikes suppressed**: the opportunistic 25% opening-strike chance is now restricted to nations with fewer than 500 warheads; US/Russia-tier arsenals only open with nukes when genuinely outgunned (strength ratio < 0.5), which almost never occurs
+- **Max world tension lowered**: `MAX_RISK` 0.70 → 0.50, reducing late-game war fever and giving the simulation more room to breathe before nations are at permanent peak aggression
+
 ### v1.8.5 — Space Grotesk Font
 - **Font changed to Space Grotesk** across the entire UI; loaded via Google Fonts
 
