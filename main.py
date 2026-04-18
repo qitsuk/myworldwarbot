@@ -28,7 +28,7 @@ ALLIANCE_CHANCE        = 0.002  # chance per month an unaligned country seeks an
 ALLIANCE_DECAY_CHANCE  = 0.008  # chance per member per month to defect
 MAX_ALLIANCE_SIZE      = 6      # hard cap on members per alliance
 
-HEGEMON_RATIO          = 2.5   # top/second military ratio that flags a hegemon
+HEGEMON_RATIO          = 1.6   # top/second military ratio that flags a hegemon
 HEGEMON_ALLIANCE_CHANCE = 0.25  # per non-hegemon country per month when hegemon exists
 MAX_COALITION_SIZE     = 12    # anti-hegemon coalitions can grow much larger
 
@@ -729,7 +729,7 @@ def check_coalition_war(world):
         # Trigger war if coalition has at least 30% of hegemon's strength
         if coalition_str < 0.30 * hegemon.military_strength:
             continue
-        if random.random() > 0.06:  # 6% chance per month once threshold met
+        if random.random() > 0.15:  # 15% chance per month once threshold met
             continue
         lead = max(alliance.members, key=lambda m: m.military_strength)
         flavor = random.choice(_COALITION_WAR_FLAVORS).format(
@@ -1017,6 +1017,10 @@ def _run_war_loop(world, scale=1.0):
             if loser:
                 loser.war_exhaustion  = min(1.0, loser.war_exhaustion  + exhaustion)
 
+            # Annexing a nation is costly to digest — extra exhaustion on top
+            if conflict.peace_deal in ('annexation', None) and winner and loser:
+                winner.war_exhaustion = min(1.0, winner.war_exhaustion + 0.30)
+
             if conflict.peace_deal == 'merger':
                 alliance = get_alliance(winner, world)
                 merge_countries(winner, loser, world)
@@ -1126,7 +1130,7 @@ def simulate_day(world, events, skip_war=False):
     # War exhaustion decays over time — nations gradually recover their appetite for conflict
     for country in world.countries:
         if country.war_exhaustion > 0:
-            country.war_exhaustion = max(0.0, country.war_exhaustion - 0.04)
+            country.war_exhaustion = max(0.0, country.war_exhaustion - 0.025)
 
     # Natural population growth (annual rate applied monthly)
     # Nations at war skip growth — civilian casualties in Conflict handle their population.

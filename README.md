@@ -8,6 +8,12 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.7 — Anti-Snowball Tuning
+- **Hegemon threshold lowered**: `HEGEMON_RATIO` 2.5→1.6 — coalitions form much earlier, before the leading nation becomes truly unstoppable
+- **Coalition war more aggressive**: trigger chance raised 6%→15%/month once a coalition has ≥30% of the hegemon's strength
+- **Slower exhaustion recovery**: war exhaustion now decays at 0.025/month (was 0.04) — full recovery takes ~3 years instead of ~2, meaningfully slowing repeat aggression
+- **Annexation costs more**: winner absorbing a nation takes an additional +0.30 exhaustion on top of the base, representing the burden of occupation and integration
+
 ### v1.6 — White Peace & Proximity-Based War Targeting
 - **White peace**: any war can now end with a mutual ceasefire and full withdrawal — no territory, resources, or concessions change hands; both sides get peace treaty protection and war exhaustion; previously only possible between evenly matched nations
 - **Proximity-based war targeting**: nations now strongly prefer attacking nearby countries; target weight decays continuously with distance (`1 / (1 + dist_km / 1500)`) so a border neighbour is ~5× more likely to be attacked than a nation 5 000 km away; direct neighbours retain an additional 3× bonus on top
