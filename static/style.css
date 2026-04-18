@@ -3,7 +3,7 @@
 body {
   background: #0d1117;
   color: #c9d1d9;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Space Grotesk', sans-serif;
   height: 100vh;
   overflow: hidden;
 }
@@ -483,7 +483,7 @@ body {
 .conflict-label-attacker,
 .conflict-label-defender {
   pointer-events: none;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Space Grotesk', sans-serif;
   font-weight: bold;
 }
 

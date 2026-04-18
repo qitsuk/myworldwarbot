@@ -8,6 +8,9 @@ Flask + Flask-SocketIO application served by Gunicorn (eventlet worker) behind C
 
 ## Changelog
 
+### v1.8.5 — Space Grotesk Font
+- **Font changed to Space Grotesk** across the entire UI; loaded via Google Fonts
+
 ### v1.8.4 — Nuclear First Strikes Fire More Often
 - **First strike condition relaxed**: any nuclear-armed nation now has a 25% chance of opening a war with a nuclear strike (up from never); outgunned nuclear underdogs retain an 80% chance (up from 65%); previously first strikes only fired when the attacker had less than half the defender's strength, which almost never occurred against similarly-sized neighbours
 
